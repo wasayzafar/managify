@@ -1,0 +1,221 @@
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { db } from '../storage'
+
+export default function DashboardPage() {
+	const [stats, setStats] = useState({
+		totalItems: 0,
+		totalPurchases: 0,
+		totalSales: 0,
+		totalStock: 0,
+		totalRevenue: 0,
+		totalCost: 0,
+		grossProfit: 0,
+		profitMargin: 0,
+		lowStockItems: 0,
+		todayRevenue: 0,
+		todaySales: 0
+	})
+	const [loading, setLoading] = useState(true)
+
+	useEffect(() => {
+		const loadStats = async () => {
+			try {
+				const [items, purchases, sales, inventory] = await Promise.all([
+					db.listItems(),
+					db.listPurchases(),
+					db.listSales(),
+					db.inventory()
+				])
+				
+				const totalItems = items.length
+				const totalPurchases = purchases.length
+				const totalSales = sales.length
+				const totalStock = inventory.reduce((sum, item) => sum + item.stock, 0)
+				
+				// Calculate revenue from sales
+				const totalRevenue = sales.reduce((sum, sale) => {
+					const item = items.find(i => i.id === sale.itemId)
+					return sum + ((sale.quantity || 0) * (item?.price || 0))
+				}, 0)
+				
+				// Calculate cost from purchases
+				const totalCost = purchases.reduce((sum, purchase) => {
+					return sum + ((purchase.quantity || 0) * (purchase.costPrice || 0))
+				}, 0)
+				
+				const grossProfit = totalRevenue - totalCost
+				const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
+				
+				const lowStockItems = inventory.filter(item => item.stock < 5).length
+				
+				// Today's calculations
+				const today = new Date().toISOString().slice(0, 10)
+				const todaySalesData = sales.filter(sale => {
+					const saleDate = sale.date ? new Date(sale.date).toISOString().slice(0, 10) : ''
+					return saleDate === today
+				})
+				
+				const todayRevenue = todaySalesData.reduce((sum, sale) => {
+					const item = items.find(i => i.id === sale.itemId)
+					return sum + ((sale.quantity || 0) * (item?.price || 0))
+				}, 0)
+				
+				const todaySalesCount = todaySalesData.length
+				
+				setStats({
+					totalItems,
+					totalPurchases,
+					totalSales,
+					totalStock,
+					totalRevenue,
+					totalCost,
+					grossProfit,
+					profitMargin,
+					lowStockItems,
+					todayRevenue,
+					todaySales: todaySalesCount
+				})
+			} catch (error) {
+				console.error('Error loading dashboard stats:', error)
+			} finally {
+				setLoading(false)
+			}
+		}
+		
+		loadStats()
+	}, [])
+
+	if (loading) {
+		return (
+			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
+				Loading dashboard...
+			</div>
+		)
+	}
+
+	return (
+		<div>
+			<div className="card" style={{ marginBottom: '24px' }}>
+				<h1 style={{ margin: '0 0 8px 0', fontSize: '28px' }}>Dashboard</h1>
+				<p style={{ margin: '0', color: '#8b949e' }}>Welcome to Managify Management System</p>
+			</div>
+
+			<div className="dashboard-stats">
+				<div className="stat-card">
+					<h3>Total Items</h3>
+					<p className="value">{stats.totalItems}</p>
+					<p className="change">Products in catalog</p>
+				</div>
+				
+				<div className="stat-card">
+					<h3>Total Stock</h3>
+					<p className="value">{stats.totalStock}</p>
+					<p className="change">Units available</p>
+				</div>
+				
+				<div className="stat-card">
+					<h3>Total Sales</h3>
+					<p className="value">{stats.totalSales}</p>
+					<p className="change">Transactions completed</p>
+				</div>
+				
+				<div className="stat-card">
+					<h3>Total Revenue</h3>
+					<p className="value">price {stats.totalRevenue.toFixed(2)}</p>
+					<p className="change">All time sales</p>
+				</div>
+				
+				<div className="stat-card">
+					<h3>Today's Sales</h3>
+					<p className="value">{stats.todaySales}</p>
+					<p className="change">Transactions today</p>
+				</div>
+				
+				<div className="stat-card">
+					<h3>Today's Revenue</h3>
+					<p className="value">price {stats.todayRevenue.toFixed(2)}</p>
+					<p className="change">Sales today</p>
+				</div>
+				
+				<div className="stat-card">
+					<h3>Gross Profit</h3>
+					<p className="value" style={{ color: stats.grossProfit >= 0 ? '#4caf50' : '#f44336' }}>
+						price {stats.grossProfit.toFixed(2)}
+					</p>
+					<p className="change">Profit margin: {stats.profitMargin.toFixed(1)}%</p>
+				</div>
+				
+				<div className="stat-card">
+					<h3>Low Stock Alert</h3>
+					<p className="value" style={{ color: stats.lowStockItems > 0 ? '#f44336' : '#4caf50' }}>
+						{stats.lowStockItems}
+					</p>
+					<p className="change">Items need restocking</p>
+				</div>
+			</div>
+
+			<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+				<div className="card">
+					<h3 style={{ margin: '0 0 16px 0' }}>Quick Actions</h3>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+						<Link to="/billing" style={{ display: 'block', padding: '12px', background: '#2263ff', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							Create New Bill
+						</Link>
+						<Link to="/purchases" style={{ display: 'block', padding: '12px', background: '#233043', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							Add Purchase
+						</Link>
+						<Link to="/items" style={{ display: 'block', padding: '12px', background: '#233043', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							Manage Items
+						</Link>
+						<Link to="/scan" style={{ display: 'block', padding: '12px', background: '#233043', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							Scan Barcode
+						</Link>
+					</div>
+				</div>
+
+				<div className="card">
+					<h3 style={{ margin: '0 0 16px 0' }}>Reports</h3>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+						<Link to="/profit-loss" style={{ display: 'block', padding: '12px', background: '#233043', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							Profit & Loss Statement
+						</Link>
+						<Link to="/daily-sales" style={{ display: 'block', padding: '12px', background: '#233043', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							Daily Sales Report
+						</Link>
+						<Link to="/sales" style={{ display: 'block', padding: '12px', background: '#233043', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							View All Sales
+						</Link>
+						<Link to="/purchases" style={{ display: 'block', padding: '12px', background: '#233043', color: 'white', borderRadius: '8px', textAlign: 'center', textDecoration: 'none' }}>
+							View All Purchases
+						</Link>
+					</div>
+				</div>
+
+				<div className="card">
+					<h3 style={{ margin: '0 0 16px 0' }}>System Status</h3>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+							<span>Database Status</span>
+							<span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Online</span>
+						</div>
+						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+							<span>Scanner Status</span>
+							<span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Ready</span>
+						</div>
+						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+							<span>PDF Generation</span>
+							<span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Available</span>
+						</div>
+						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+							<span>Low Stock Items</span>
+							<span style={{ color: stats.lowStockItems > 0 ? '#f44336' : '#4caf50', fontWeight: 'bold' }}>
+								{stats.lowStockItems > 0 ? '⚠ Alert' : '✓ Good'}
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	)
+}
