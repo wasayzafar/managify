@@ -122,7 +122,7 @@ export default function DashboardPage() {
 				
 				<div className="stat-card">
 					<h3>Total Revenue</h3>
-					<p className="value">price {stats.totalRevenue.toFixed(2)}</p>
+					<p className="value">Amount {stats.totalRevenue.toFixed(2)}</p>
 					<p className="change">All time sales</p>
 				</div>
 				
@@ -134,14 +134,14 @@ export default function DashboardPage() {
 				
 				<div className="stat-card">
 					<h3>Today's Revenue</h3>
-					<p className="value">price {stats.todayRevenue.toFixed(2)}</p>
+					<p className="value">Amount {stats.todayRevenue.toFixed(2)}</p>
 					<p className="change">Sales today</p>
 				</div>
 				
 				<div className="stat-card">
 					<h3>Gross Profit</h3>
 					<p className="value" style={{ color: stats.grossProfit >= 0 ? '#4caf50' : '#f44336' }}>
-						price {stats.grossProfit.toFixed(2)}
+						Amount {stats.grossProfit.toFixed(2)}
 					</p>
 					<p className="change">Profit margin: {stats.profitMargin.toFixed(1)}%</p>
 				</div>
