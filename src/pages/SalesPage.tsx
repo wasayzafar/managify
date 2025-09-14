@@ -1,6 +1,7 @@
 import { FormEvent, useState, useEffect } from 'react'
 import { db, Item, Sale, StoreInfo } from '../storage'
 import { Link } from 'react-router-dom'
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
@@ -11,6 +12,12 @@ export default function SalesPage() {
 	const [sku, setSku] = useState('')
 	const [qty, setQty] = useState('')
 	const [loading, setLoading] = useState(true)
+	const [scannerEnabled, setScannerEnabled] = useState(false)
+
+	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(
+		(code) => setSku(code),
+		scannerEnabled
+	)
 	const [selectedSale, setSelectedSale] = useState<(Sale & { item?: Item }) | null>(null)
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
@@ -86,9 +93,19 @@ export default function SalesPage() {
 				<input placeholder="Scan or enter SKU" value={sku} onChange={e => setSku(e.target.value)} />
 				<input placeholder="Qty" type="number" value={qty} onChange={e => setQty(e.target.value)} />
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-					<Link className="badge" to="/scan">Open Scanner</Link>
+					<button type="button" onClick={() => setScannerEnabled(!scannerEnabled)}>
+						{scannerEnabled ? 'Hide Scanner' : 'Show Scanner'}
+					</button>
+					<Link className="badge" to="/scan">Open Scanner Page</Link>
 					<button type="submit" disabled={!item}>Add Line</button>
 				</div>
+				{scannerEnabled && (
+					<div style={{ gridColumn: '1 / -1' }}>
+						<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
+						{scanError && <div className="badge" style={{ background: '#ff4444', marginTop: 8 }}>{scanError}</div>}
+						{isScanning && <div className="badge" style={{ marginTop: 8 }}>Scanner active - point camera at barcode</div>}
+					</div>
+				)}
 			</form>
 
 			<div className="table-container">

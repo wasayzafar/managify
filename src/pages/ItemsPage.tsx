@@ -1,5 +1,6 @@
 import { FormEvent, useMemo, useState, useEffect } from 'react'
 import { db, Item } from '../storage'
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 
 export default function ItemsPage() {
 	const [items, setItems] = useState<Item[]>([])
@@ -8,6 +9,12 @@ export default function ItemsPage() {
 	const [editingId, setEditingId] = useState<string | null>(null)
 	const [editForm, setEditForm] = useState<{ sku: string, name: string, price: string }>({ sku: '', name: '', price: '' })
 	const [loading, setLoading] = useState(true)
+	const [scannerEnabled, setScannerEnabled] = useState(false)
+
+	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(
+		(code) => setForm({ ...form, sku: code }),
+		scannerEnabled
+	)
 
 	useEffect(() => {
 		const loadItems = async () => {
@@ -92,8 +99,18 @@ export default function ItemsPage() {
 				<input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
 				<input placeholder="Price" type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
+					<button type="button" onClick={() => setScannerEnabled(!scannerEnabled)}>
+						{scannerEnabled ? 'Hide Scanner' : 'Scan SKU'}
+					</button>
 					<button type="submit">Add Item</button>
 				</div>
+				{scannerEnabled && (
+					<div style={{ gridColumn: '1 / -1' }}>
+						<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
+						{scanError && <div className="badge" style={{ background: '#ff4444', marginTop: 8 }}>{scanError}</div>}
+						{isScanning && <div className="badge" style={{ marginTop: 8 }}>Scanner active - point camera at barcode</div>}
+					</div>
+				)}
 			</form>
 			<div className="table-container">
 				<table className="table">

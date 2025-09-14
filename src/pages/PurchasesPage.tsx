@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { db, Item, Purchase, StoreInfo } from '../storage'
-import { BrowserMultiFormatReader, Result } from '@zxing/library'
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
@@ -55,27 +55,11 @@ export default function PurchasesPage() {
 	}, [])
 
 	// scanner
-	const videoRef = useRef<HTMLVideoElement | null>(null)
-	const [scanEnabled, setScanEnabled] = useState(true)
-	useEffect(() => {
-		if (!scanEnabled) return
-		const reader = new BrowserMultiFormatReader()
-		let stop = false
-		async function run() {
-			try {
-				const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-				if (!videoRef.current) return
-				videoRef.current.srcObject = stream
-				await videoRef.current.play()
-				reader.decodeFromVideoDevice(undefined, videoRef.current, (res: Result | undefined) => {
-					if (stop) return
-					if (res) setSku(res.getText())
-				})
-			} catch {}
-		}
-		run()
-		return () => { stop = true; reader.reset() }
-	}, [scanEnabled])
+	const [scanEnabled, setScanEnabled] = useState(false)
+	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(
+		(code) => setSku(code),
+		scanEnabled
+	)
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault()
@@ -183,7 +167,13 @@ export default function PurchasesPage() {
 					<div style={{ gridColumn: '1 / -1' }}>
 						<label>Enable Scanner</label>
 						<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} />
-						<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
+						{scanEnabled && (
+							<>
+								<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
+								{scanError && <div className="badge" style={{ background: '#ff4444', marginTop: 8 }}>{scanError}</div>}
+								{isScanning && <div className="badge" style={{ marginTop: 8 }}>Scanner active - point camera at barcode</div>}
+							</>
+						)}
 					</div>
 					{sku && !existing && (
 						<>

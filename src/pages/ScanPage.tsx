@@ -1,21 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { BrowserMultiFormatReader } from '@zxing/library'
 import { db } from '../storage'
+import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 
 export default function ScanPage() {
-	const videoRef = useRef<HTMLVideoElement | null>(null)
 	const inputRef = useRef<HTMLInputElement | null>(null)
-	const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null)
 	const [value, setValue] = useState('')
-	const [error, setError] = useState('')
 	const [autoAdd, setAutoAdd] = useState(true)
 	const [info, setInfo] = useState('')
-	const [isScanning, setIsScanning] = useState(false)
+	const [scannerEnabled, setScannerEnabled] = useState(false)
 	const lastCreatedRef = useRef<string>('')
 	const [editOpen, setEditOpen] = useState(false)
 	const [editId, setEditId] = useState<string>('')
 	const [editName, setEditName] = useState('')
 	const [editPrice, setEditPrice] = useState('0')
+
+	const { videoRef, isScanning, error, startScanning, stopScanning } = useBarcodeScanner(
+		(code) => processBarcode(code),
+		scannerEnabled
+	)
 
 	const processBarcode = (text: string) => {
 		setValue(text)
@@ -35,48 +37,14 @@ export default function ScanPage() {
 		}
 	}
 
-	const startCamera = async () => {
-		try {
-			setError('')
-			setIsScanning(true)
-			const codeReader = new BrowserMultiFormatReader()
-			codeReaderRef.current = codeReader
-			
-			const constraints = {
-				video: {
-					facingMode: 'environment',
-					width: { ideal: 1280 },
-					height: { ideal: 720 }
-				}
-			}
-			
-			const stream = await navigator.mediaDevices.getUserMedia(constraints)
-			if (videoRef.current) {
-				videoRef.current.srcObject = stream
-				await videoRef.current.play()
-				
-				codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
-					if (result) {
-						processBarcode(result.getText())
-					}
-				})
-			}
-		} catch (e: any) {
-			setError(e?.message || 'Camera access failed')
-			setIsScanning(false)
+	const toggleScanner = () => {
+		if (isScanning) {
+			stopScanning()
+			setScannerEnabled(false)
+		} else {
+			setScannerEnabled(true)
+			startScanning()
 		}
-	}
-
-	const stopCamera = () => {
-		if (codeReaderRef.current) {
-			codeReaderRef.current.reset()
-		}
-		if (videoRef.current?.srcObject) {
-			const stream = videoRef.current.srcObject as MediaStream
-			stream.getTracks().forEach(track => track.stop())
-			videoRef.current.srcObject = null
-		}
-		setIsScanning(false)
 	}
 
 	useEffect(() => {
@@ -88,7 +56,6 @@ export default function ScanPage() {
 		document.addEventListener('keypress', handleKeyPress)
 		return () => {
 			document.removeEventListener('keypress', handleKeyPress)
-			stopCamera()
 		}
 	}, [value, autoAdd])
 
@@ -105,11 +72,9 @@ export default function ScanPage() {
 			<h2>Barcode Scanner</h2>
 			
 			<div className="form-actions" style={{ marginBottom: 12 }}>
-				{!isScanning ? (
-					<button onClick={startCamera}>Start Camera</button>
-				) : (
-					<button onClick={stopCamera} className="secondary">Stop Camera</button>
-				)}
+				<button onClick={toggleScanner}>
+					{isScanning ? 'Stop Camera' : 'Start Camera'}
+				</button>
 			</div>
 			
 			{isScanning && (
