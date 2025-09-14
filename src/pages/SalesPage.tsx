@@ -13,6 +13,8 @@ export default function SalesPage() {
 	const [qty, setQty] = useState('')
 	const [loading, setLoading] = useState(true)
 	const [scannerEnabled, setScannerEnabled] = useState(false)
+	const [searchTerm, setSearchTerm] = useState('')
+	const [dateFilter, setDateFilter] = useState('')
 
 	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(
 		(code) => setSku(code),
@@ -89,20 +91,21 @@ export default function SalesPage() {
 	return (
 		<div className="card">
 			<h2>Sales</h2>
-			<form onSubmit={addLine} className="form-grid">
-				<input placeholder="Scan or enter SKU" value={sku} onChange={e => setSku(e.target.value)} autoFocus />
-				<input placeholder="Qty" type="number" value={qty} onChange={e => setQty(e.target.value)} />
-				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-					<button type="submit" disabled={!item}>Add Line</button>
-				</div>
-				{scannerEnabled && (
-					<div style={{ gridColumn: '1 / -1' }}>
-						<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
-						{scanError && <div className="badge" style={{ background: '#ff4444', marginTop: 8 }}>{scanError}</div>}
-						{isScanning && <div className="badge" style={{ marginTop: 8 }}>Scanner active - point camera at barcode</div>}
-					</div>
-				)}
-			</form>
+
+
+			<div className="form-grid" style={{ marginBottom: 16 }}>
+				<input 
+					placeholder="Search by Sale ID" 
+					value={searchTerm} 
+					onChange={e => setSearchTerm(e.target.value)} 
+				/>
+				<input 
+					type="date" 
+					value={dateFilter} 
+					onChange={e => setDateFilter(e.target.value)}
+					placeholder="Filter by date"
+				/>
+			</div>
 
 			<div className="table-container">
 				<table className="table">
@@ -116,7 +119,11 @@ export default function SalesPage() {
 						</tr>
 					</thead>
 					<tbody>
-						{sales.map(s => {
+						{sales.filter(s => {
+							const matchesSearch = !searchTerm || s.id.toLowerCase().includes(searchTerm.toLowerCase())
+							const matchesDate = !dateFilter || (s.date && new Date(s.date).toISOString().slice(0, 10) === dateFilter)
+							return matchesSearch && matchesDate
+						}).map(s => {
 							const saleItem = items.find(i => i.id === s.itemId)
 							return (
 								<tr key={s.id}>
