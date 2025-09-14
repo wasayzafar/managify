@@ -93,10 +93,6 @@ export default function SalesPage() {
 				<input placeholder="Scan or enter SKU" value={sku} onChange={e => setSku(e.target.value)} autoFocus />
 				<input placeholder="Qty" type="number" value={qty} onChange={e => setQty(e.target.value)} />
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-					<button type="button" onClick={() => setScannerEnabled(!scannerEnabled)}>
-						{scannerEnabled ? 'Hide Scanner' : 'Show Scanner'}
-					</button>
-					<Link className="badge" to="/scan">Open Scanner Page</Link>
 					<button type="submit" disabled={!item}>Add Line</button>
 				</div>
 				{scannerEnabled && (
