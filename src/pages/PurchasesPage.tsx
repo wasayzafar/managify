@@ -125,7 +125,7 @@ export default function PurchasesPage() {
 				<div className="form-grid">
 					<div>
 						<label>SKU</label>
-						<input value={sku} onChange={e => setSku(e.target.value)} placeholder="Scan or enter SKU" />
+						<input value={sku} onChange={e => setSku(e.target.value)} placeholder="Scan or enter SKU" autoFocus />
 					</div>
 					<div>
 						<label>Quantity</label>

@@ -95,7 +95,7 @@ export default function ItemsPage() {
 				<input placeholder="Search by SKU or Name" value={filter} onChange={e => setFilter(e.target.value)} />
 			</div>
 			<form onSubmit={onSubmit} className="form-grid">
-				<input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} />
+				<input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} autoFocus />
 				<input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
 				<input placeholder="Price" type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>

@@ -90,7 +90,7 @@ export default function SalesPage() {
 		<div className="card">
 			<h2>Sales</h2>
 			<form onSubmit={addLine} className="form-grid">
-				<input placeholder="Scan or enter SKU" value={sku} onChange={e => setSku(e.target.value)} />
+				<input placeholder="Scan or enter SKU" value={sku} onChange={e => setSku(e.target.value)} autoFocus />
 				<input placeholder="Qty" type="number" value={qty} onChange={e => setQty(e.target.value)} />
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
 					<button type="button" onClick={() => setScannerEnabled(!scannerEnabled)}>

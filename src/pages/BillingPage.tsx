@@ -237,7 +237,7 @@ export default function BillingPage() {
 			<div className="card">
 				<h3>Add Items</h3>
 				<div className="form-grid">
-					<input placeholder="Scan or enter SKU" value={skuInput} onChange={e => setSkuInput(e.target.value)} />
+					<input placeholder="Scan or enter SKU" value={skuInput} onChange={e => setSkuInput(e.target.value)} autoFocus />
 					<input placeholder="Qty" type="number" value={qtyInput} onChange={e => setQtyInput(e.target.value)} />
 					<input placeholder="Price (manual only)" type="number" step="0.01" value={priceInput} onChange={e => setPriceInput(e.target.value)} />
 					<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
