@@ -45,6 +45,7 @@ export default function EmployeesPage() {
 			await db.createEmployee({
 				name: form.name,
 				salary: Number(form.salary),
+				firstMonthPay: Number(form.salary),
 				phone: form.phone,
 				address: form.address,
 				email: form.email,

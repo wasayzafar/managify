@@ -15,7 +15,7 @@ export default function BillingPage() {
 	const [priceInput, setPriceInput] = useState('')
 	const [cart, setCart] = useState<CartLine[]>([])
 	const [billDiscount, setBillDiscount] = useState(0)
-	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string } | null>(null)
+	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
@@ -173,7 +173,7 @@ export default function BillingPage() {
 				billDiscount
 			})
 			
-			const snapshot = { invoiceNo, customer, phone: customerPhone, lines: cart, total, billDiscount, createdAt: new Date().toLocaleString() }
+			const snapshot = { invoiceNo, customer, phone: customerPhone, lines: cart, total, billDiscount, createdAt: new Date().toLocaleString(), storeInfo }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
@@ -309,9 +309,9 @@ export default function BillingPage() {
 					</div>
 					<div id="invoice-print" style={{ fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto', padding: '20px', background: 'white', color: 'black' }}>
 						<div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
-							{storeInfo.logo && (
+							{(lastInvoice.storeInfo?.logo || storeInfo.logo) && (
 								<img 
-									src={storeInfo.logo} 
+									src={lastInvoice.storeInfo?.logo || storeInfo.logo} 
 									alt="Store Logo" 
 									style={{ 
 										maxHeight: '60px', 
@@ -325,31 +325,31 @@ export default function BillingPage() {
 								/>
 							)}
 							<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>
-								{(storeInfo.storeName || 'MANAGIFY').toUpperCase()}
+								{((lastInvoice.storeInfo?.storeName || storeInfo.storeName) || 'MANAGIFY').toUpperCase()}
 							</h1>
-							{storeInfo.address && (
+							{(lastInvoice.storeInfo?.address || storeInfo.address) && (
 								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									{storeInfo.address}
+									{lastInvoice.storeInfo?.address || storeInfo.address}
 								</p>
 							)}
-							{storeInfo.phone && (
+							{(lastInvoice.storeInfo?.phone || storeInfo.phone) && (
 								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Phone: {storeInfo.phone}
+									Phone: {lastInvoice.storeInfo?.phone || storeInfo.phone}
 								</p>
 							)}
-							{storeInfo.email && (
+							{(lastInvoice.storeInfo?.email || storeInfo.email) && (
 								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Email: {storeInfo.email}
+									Email: {lastInvoice.storeInfo?.email || storeInfo.email}
 								</p>
 							)}
-							{storeInfo.website && (
+							{(lastInvoice.storeInfo?.website || storeInfo.website) && (
 								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Website: {storeInfo.website}
+									Website: {lastInvoice.storeInfo?.website || storeInfo.website}
 								</p>
 							)}
-							{storeInfo.taxNumber && (
+							{(lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber) && (
 								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Tax #: {storeInfo.taxNumber}
+									Tax #: {lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber}
 								</p>
 							)}
 						</div>

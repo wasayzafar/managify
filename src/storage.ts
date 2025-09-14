@@ -37,6 +37,15 @@ export type Sale = {
 	billDiscount?: number
 	customerName?: string
 	customerPhone?: string
+	storeInfo?: {
+		storeName: string
+		phone: string
+		address: string
+		email?: string
+		website?: string
+		taxNumber?: string
+		logo?: string
+	}
 }
 
 export type SaleItem = {
@@ -89,6 +98,15 @@ export type Invoice = {
 	billDiscount: number
 	createdAt: string
 	date: string
+	storeInfo?: {
+		storeName: string
+		phone: string
+		address: string
+		email?: string
+		website?: string
+		taxNumber?: string
+		logo?: string
+	}
 }
 
 import { auth } from './firebase';
@@ -176,6 +194,7 @@ export const db = {
 	},
 	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string }): Promise<Sale> {
 		const userId = getUserId();
+		const storeInfo = await this.getStoreInfo();
 		const sale = {
 			itemId: data.itemId,
 			quantity: data.quantity,
@@ -186,13 +205,22 @@ export const db = {
 			billDiscount: data.billDiscount,
 			customerName: data.customerName,
 			customerPhone: data.customerPhone,
-			invoiceNo: data.invoiceNo
+			invoiceNo: data.invoiceNo,
+			storeInfo: {
+				storeName: storeInfo.storeName,
+				phone: storeInfo.phone,
+				address: storeInfo.address,
+				email: storeInfo.email,
+				website: storeInfo.website,
+				taxNumber: storeInfo.taxNumber,
+				logo: storeInfo.logo
+			}
 		};
 		const id = await cloudStorage.addSale(userId, sale);
 		return { id, ...sale };
 	},
 
-	async inventory(): Promise<Array<{ itemId: string, itemName: string, stock: number }>> {
+	async inventory(): Promise<Array<{ itemId: string, itemName: string, itemSku: string, stock: number }>> {
 		const userId = getUserId();
 		if (!userId) return [];
 		try {
@@ -308,6 +336,7 @@ export const db = {
 
 	async createInvoice(data: { invoiceNo: string, customer: string, phone?: string, lines: any[], total: number, billDiscount: number }): Promise<Invoice> {
 		const userId = getUserId();
+		const storeInfo = await this.getStoreInfo();
 		const invoice = {
 			invoiceNo: data.invoiceNo,
 			customer: data.customer,
@@ -316,7 +345,16 @@ export const db = {
 			total: data.total,
 			billDiscount: data.billDiscount,
 			date: new Date().toISOString(),
-			createdAt: new Date().toLocaleString()
+			createdAt: new Date().toLocaleString(),
+			storeInfo: {
+				storeName: storeInfo.storeName,
+				phone: storeInfo.phone,
+				address: storeInfo.address,
+				email: storeInfo.email,
+				website: storeInfo.website,
+				taxNumber: storeInfo.taxNumber,
+				logo: storeInfo.logo
+			}
 		};
 		const id = await cloudStorage.addInvoice(userId, invoice);
 		return { id, ...invoice };

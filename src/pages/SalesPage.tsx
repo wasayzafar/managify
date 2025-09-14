@@ -18,7 +18,7 @@ export default function SalesPage() {
 		(code) => setSku(code),
 		scannerEnabled
 	)
-	const [selectedSale, setSelectedSale] = useState<(Sale & { item?: Item }) | null>(null)
+	const [selectedSale, setSelectedSale] = useState<(Sale & { item?: Item, storeInfo?: any }) | null>(null)
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
 		phone: '',
@@ -155,7 +155,47 @@ export default function SalesPage() {
 						</div>
 						<div id="sale-bill-print" style={{ fontFamily: 'Arial, sans-serif', padding: '40px', background: 'white', color: 'black', maxWidth: '800px', margin: '0 auto' }}>
 							<div style={{ textAlign: 'center', marginBottom: '40px' }}>
-								<h1 style={{ margin: '0', fontSize: '36px', color: '#333', fontWeight: 'bold', letterSpacing: '2px' }}>MANAGIFY</h1>
+								{(selectedSale.storeInfo?.logo || storeInfo.logo) && (
+									<img 
+										src={selectedSale.storeInfo?.logo || storeInfo.logo} 
+										alt="Store Logo" 
+										style={{ 
+											maxHeight: '60px', 
+											maxWidth: '120px', 
+											objectFit: 'contain',
+											marginBottom: '10px'
+										}}
+										onError={(e) => {
+											e.currentTarget.style.display = 'none'
+										}}
+									/>
+								)}
+								<h1 style={{ margin: '0', fontSize: '36px', color: '#333', fontWeight: 'bold', letterSpacing: '2px' }}>{((selectedSale.storeInfo?.storeName || storeInfo.storeName) || 'MANAGIFY').toUpperCase()}</h1>
+								{(selectedSale.storeInfo?.address || storeInfo.address) && (
+									<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+										{selectedSale.storeInfo?.address || storeInfo.address}
+									</p>
+								)}
+								{(selectedSale.storeInfo?.phone || storeInfo.phone) && (
+									<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+										Phone: {selectedSale.storeInfo?.phone || storeInfo.phone}
+									</p>
+								)}
+								{(selectedSale.storeInfo?.email || storeInfo.email) && (
+									<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+										Email: {selectedSale.storeInfo?.email || storeInfo.email}
+									</p>
+								)}
+								{(selectedSale.storeInfo?.website || storeInfo.website) && (
+									<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+										Website: {selectedSale.storeInfo?.website || storeInfo.website}
+									</p>
+								)}
+								{(selectedSale.storeInfo?.taxNumber || storeInfo.taxNumber) && (
+									<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
+										Tax #: {selectedSale.storeInfo?.taxNumber || storeInfo.taxNumber}
+									</p>
+								)}
 								<hr style={{ border: 'none', borderTop: '2px solid #333', margin: '20px 0' }} />
 							</div>
 							<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>

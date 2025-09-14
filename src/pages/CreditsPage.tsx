@@ -8,6 +8,8 @@ export default function CreditsPage() {
 	const [loading, setLoading] = useState(true)
 	const [selectedPurchase, setSelectedPurchase] = useState<(Purchase & { item?: Item }) | null>(null)
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({ storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '' })
+	const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
+	const [searchTerm, setSearchTerm] = useState('')
 
 	useEffect(() => {
 		const loadCredits = async () => {
@@ -76,28 +78,70 @@ export default function CreditsPage() {
 				</div>
 			)}
 
-			{creditPurchases.length === 0 ? (
-				<div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-					<h3>No Credit Purchases</h3>
-					<p>All purchases have been made with debit payments</p>
+			<div className="form-grid" style={{ marginBottom: 16 }}>
+				<div>
+					<label>Search by Supplier or ID</label>
+					<input 
+						placeholder="Search supplier name or PO ID" 
+						value={searchTerm} 
+						onChange={e => setSearchTerm(e.target.value)} 
+					/>
 				</div>
-			) : (
-				<table className="table">
-					<thead>
-						<tr>
-							<th>PO #</th>
-							<th>Item</th>
-							<th>Supplier</th>
-							<th>Amount</th>
-							<th>Purchase Date</th>
-							<th>Deadline</th>
-							<th>Status</th>
-							<th>Paid</th>
-							<th>Action</th>
-						</tr>
-					</thead>
-					<tbody>
-						{creditPurchases.map(p => {
+				<div>
+					<label>Filter by Payment Status</label>
+					<select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value as 'all' | 'paid' | 'unpaid')}>
+						<option value="all">All Credits</option>
+						<option value="paid">Paid</option>
+						<option value="unpaid">Unpaid</option>
+					</select>
+				</div>
+			</div>
+
+			{(() => {
+				const filteredPurchases = creditPurchases.filter(p => {
+					// Payment filter
+					let passesPaymentFilter = true
+					if (paymentFilter === 'paid') passesPaymentFilter = p.isPaid || false
+					if (paymentFilter === 'unpaid') passesPaymentFilter = !(p.isPaid || false)
+					
+					// Search filter
+					let passesSearchFilter = true
+					if (searchTerm) {
+						const term = searchTerm.toLowerCase()
+						const supplierMatch = (p.supplier || '').toLowerCase().includes(term)
+						const idMatch = p.id.slice(-6).toLowerCase().includes(term)
+						passesSearchFilter = supplierMatch || idMatch
+					}
+					
+					return passesPaymentFilter && passesSearchFilter
+				})
+
+				if (filteredPurchases.length === 0) {
+					return (
+						<div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+							<h3>No {paymentFilter === 'all' ? 'Credit Purchases' : paymentFilter === 'paid' ? 'Paid Credits' : 'Unpaid Credits'}</h3>
+							<p>{paymentFilter === 'all' ? 'All purchases have been made with debit payments' : `No ${paymentFilter} credit purchases found`}</p>
+						</div>
+					)
+				}
+
+				return (
+						<table className="table">
+							<thead>
+								<tr>
+									<th>PO #</th>
+									<th>Item</th>
+									<th>Supplier</th>
+									<th>Amount</th>
+									<th>Purchase Date</th>
+									<th>Deadline</th>
+									<th>Status</th>
+									<th>Paid</th>
+									<th>Action</th>
+								</tr>
+							</thead>
+							<tbody>
+								{filteredPurchases.map(p => {
 							const days = p.creditDeadline ? getDaysUntilDeadline(p.creditDeadline) : null
 							const amount = (p.quantity || 0) * (p.costPrice || 0)
 							
@@ -165,10 +209,11 @@ export default function CreditsPage() {
 									</td>
 								</tr>
 							)
-						})}
-					</tbody>
-				</table>
-			)}
+							})}
+							</tbody>
+						</table>
+					)
+				})()}
 
 			{selectedPurchase && (
 				<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>

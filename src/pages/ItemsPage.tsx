@@ -92,7 +92,7 @@ export default function ItemsPage() {
 		<div className="card">
 			<h2>Items</h2>
 			<div className="form-grid" style={{ marginBottom: 12 }}>
-				<input placeholder="Search by SKU or Name" value={filter} onChange={e => setFilter(e.target.value)} />
+				<input placeholder="Search by SKU or Name" value={filter} onChange={e => setFilter(e.target.value)} autoFocus />
 			</div>
 			<form onSubmit={onSubmit} className="form-grid">
 				<input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} autoFocus />

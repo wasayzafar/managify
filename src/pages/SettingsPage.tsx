@@ -19,13 +19,20 @@ export default function SettingsPage() {
 	const navigate = useNavigate()
 
 	useEffect(() => {
-		const info = db.getStoreInfo()
-		setStoreInfo(info)
+		const loadStoreInfo = async () => {
+			try {
+				const info = await db.getStoreInfo()
+				setStoreInfo(info)
+			} catch (error) {
+				console.error('Error loading store info:', error)
+			}
+		}
+		loadStoreInfo()
 	}, [])
 
-	const handleSave = () => {
+	const handleSave = async () => {
 		try {
-			db.updateStoreInfo(storeInfo)
+			await db.updateStoreInfo(storeInfo)
 			setIsEditing(false)
 			setMessage('Store information saved successfully!')
 			setTimeout(() => setMessage(''), 3000)
@@ -35,11 +42,15 @@ export default function SettingsPage() {
 		}
 	}
 
-	const handleCancel = () => {
-		const info = db.getStoreInfo()
-		setStoreInfo(info)
-		setIsEditing(false)
-		setMessage('')
+	const handleCancel = async () => {
+		try {
+			const info = await db.getStoreInfo()
+			setStoreInfo(info)
+			setIsEditing(false)
+			setMessage('')
+		} catch (error) {
+			console.error('Error loading store info:', error)
+		}
 	}
 
 	const handleChange = (field: keyof StoreInfo, value: string) => {
@@ -199,7 +210,7 @@ export default function SettingsPage() {
 
 					<div>
 						<label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-							Logo URL
+							Logo
 						</label>
 						<input
 							type="url"
@@ -207,7 +218,26 @@ export default function SettingsPage() {
 							onChange={(e) => handleChange('logo', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter logo image URL"
+							style={{ marginBottom: '8px' }}
 						/>
+						{isEditing && (
+							<input
+								type="file"
+								accept="image/*"
+								onChange={(e) => {
+									const file = e.target.files?.[0]
+									if (file) {
+										const reader = new FileReader()
+										reader.onload = (event) => {
+											const result = event.target?.result as string
+											handleChange('logo', result)
+										}
+										reader.readAsDataURL(file)
+									}
+								}}
+								style={{ fontSize: '14px' }}
+							/>
+						)}
 					</div>
 				</div>
 

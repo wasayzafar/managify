@@ -45,6 +45,15 @@ export interface Sale {
   customerName?: string;
   customerPhone?: string;
   invoiceNo?: string;
+  storeInfo?: {
+    storeName: string;
+    phone: string;
+    address: string;
+    email?: string;
+    website?: string;
+    taxNumber?: string;
+    logo?: string;
+  };
 }
 
 export interface StoreInfo {
@@ -91,6 +100,15 @@ export interface Invoice {
   createdAt: string;
   date: string;
   userId: string;
+  storeInfo?: {
+    storeName: string;
+    phone: string;
+    address: string;
+    email?: string;
+    website?: string;
+    taxNumber?: string;
+    logo?: string;
+  };
 }
 
 // Items
@@ -252,7 +270,7 @@ export const clearAllData = async (userId: string): Promise<void> => {
 };
 
 // Inventory calculation
-export const getInventory = async (userId: string): Promise<Array<{ itemId: string; itemName: string; stock: number }>> => {
+export const getInventory = async (userId: string): Promise<Array<{ itemId: string; itemName: string; itemSku: string; stock: number }>> => {
   const [items, purchases, sales] = await Promise.all([
     listItems(userId),
     listPurchases(userId),
@@ -271,6 +289,7 @@ export const getInventory = async (userId: string): Promise<Array<{ itemId: stri
     return {
       itemId: item.id,
       itemName: item.name,
+      itemSku: item.sku,
       stock: totalPurchased - totalSold
     };
   });

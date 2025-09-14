@@ -66,7 +66,7 @@ export default function ProfitLossPage() {
 				])
 
 				// Get employees for salary calculation
-				const employees = JSON.parse(localStorage.getItem('employees') || '[]')
+				const employees = await db.listEmployees()
 
 				// Filter by date range
 				const filteredPurchases = purchases.filter(p => {

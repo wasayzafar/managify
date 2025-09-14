@@ -321,14 +321,14 @@ export default function PurchasesPage() {
 										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{item?.sku || 'N/A'}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{item?.name || 'Unknown'}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'center', fontSize: '13px' }}>{r.quantity || r.qty || 0}</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice ? `$${r.costPrice.toFixed(2)}` : 'N/A'}</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice && (r.quantity || r.qty) ? `$${(r.costPrice * (r.quantity || r.qty || 0)).toFixed(2)}` : 'N/A'}</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice ? `Amount ${r.costPrice.toFixed(2)}` : 'N/A'}</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice && (r.quantity || r.qty) ? `Amount ${(r.costPrice * (r.quantity || r.qty || 0)).toFixed(2)}` : 'N/A'}</td>
 									</tr>
 								</tbody>
 								<tfoot>
 									<tr style={{ background: '#f9f9f9' }}>
 										<td colSpan={4} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL COST</td>
-										<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{r.costPrice && (r.quantity || r.qty) ? `$${(r.costPrice * (r.quantity || r.qty || 0)).toFixed(2)}` : 'N/A'}</td>
+										<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{r.costPrice && (r.quantity || r.qty) ? `Amount ${(r.costPrice * (r.quantity || r.qty || 0)).toFixed(2)}` : 'N/A'}</td>
 									</tr>
 								</tfoot>
 							</table>
