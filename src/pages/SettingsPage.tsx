@@ -15,6 +15,9 @@ export default function SettingsPage() {
 	})
 	const [isEditing, setIsEditing] = useState(false)
 	const [message, setMessage] = useState('')
+	const [thermalPrinting, setThermalPrinting] = useState(() => {
+		return localStorage.getItem('thermalPrinting') === 'true'
+	})
 	const { logout } = useAuth()
 	const navigate = useNavigate()
 
@@ -340,6 +343,29 @@ export default function SettingsPage() {
 					<div style={{ textAlign: 'center', color: '#666', fontSize: '14px' }}>
 						<p>Sample Invoice Header</p>
 					</div>
+				</div>
+			</div>
+
+			<div className="card">
+				<h3 style={{ margin: '0 0 16px 0' }}>Printing Settings</h3>
+				<div style={{ marginBottom: '20px' }}>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+						<input 
+							type="checkbox" 
+							checked={thermalPrinting} 
+							onChange={(e) => {
+								setThermalPrinting(e.target.checked)
+								localStorage.setItem('thermalPrinting', e.target.checked.toString())
+								setMessage('Thermal printing ' + (e.target.checked ? 'enabled' : 'disabled') + '. All invoices will now use ' + (e.target.checked ? 'thermal' : 'standard') + ' format.')
+								setTimeout(() => setMessage(''), 3000)
+							}}
+							style={{ width: '18px', height: '18px' }}
+						/>
+						<span style={{ fontWeight: 'bold' }}>Enable Thermal Printing</span>
+					</label>
+					<p style={{ margin: '8px 0 0 30px', color: '#8b949e', fontSize: '14px' }}>
+						When enabled, all invoices will be formatted for thermal printers (58mm/80mm width)
+					</p>
 				</div>
 			</div>
 

@@ -116,6 +116,7 @@ export default function ItemsPage() {
 				<table className="table">
 					<thead>
 						<tr>
+							<th>Article</th>
 							<th>SKU</th>
 							<th>Name</th>
 							<th>Price</th>
@@ -126,6 +127,7 @@ export default function ItemsPage() {
 					<tbody>
 						{filtered.map(i => (
 							<tr key={i.id}>
+								<td>{i.id.slice(-6)}</td>
 								<td>
 									{editingId === i.id ? (
 										<input value={editForm.sku} onChange={e => setEditForm({ ...editForm, sku: e.target.value })} />

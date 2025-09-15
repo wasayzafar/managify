@@ -163,6 +163,10 @@ export const addSale = async (userId: string, sale: Omit<Sale, 'id' | 'userId'>)
   return docRef.id;
 };
 
+export const deleteSale = async (id: string): Promise<void> => {
+  await deleteDoc(doc(firestore, 'sales', id));
+};
+
 // Store Info
 export const getStoreInfo = async (userId: string): Promise<StoreInfo> => {
   const q = query(collection(firestore, 'storeInfo'), where('userId', '==', userId));

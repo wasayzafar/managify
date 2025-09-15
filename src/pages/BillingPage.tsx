@@ -3,6 +3,7 @@ import { BrowserMultiFormatReader, Result } from '@zxing/library'
 import { db, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { getThermalPrintStyles, isThermalPrinting } from '../utils/thermalPrintStyles'
 
  type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number }
 
@@ -62,6 +63,7 @@ export default function BillingPage() {
 	// Embedded scanner
 	const videoRef = useRef<HTMLVideoElement | null>(null)
 	const [scanEnabled, setScanEnabled] = useState(true)
+	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 	useEffect(() => {
 		if (!scanEnabled) return
 		const reader = new BrowserMultiFormatReader()
@@ -76,7 +78,9 @@ export default function BillingPage() {
 					if (stop) return
 					if (res) {
 						const text = res.getText()
-						addSku(text, 1)
+						setSkuInput(text)
+						setQtyInput('1')
+						addManual()
 					}
 				})
 			} catch {}
@@ -84,6 +88,18 @@ export default function BillingPage() {
 		run()
 		return () => { stop = true; reader.reset() }
 	}, [scanEnabled])
+
+	// Handle external barcode scanner
+	useEffect(() => {
+		const handleKeyPress = (e: KeyboardEvent) => {
+			if (e.key === 'Enter' && skuInput && document.activeElement?.getAttribute('placeholder') === 'Scan or enter SKU') {
+				setQtyInput('1')
+				addManual()
+			}
+		}
+		document.addEventListener('keypress', handleKeyPress)
+		return () => document.removeEventListener('keypress', handleKeyPress)
+	}, [skuInput])
 
 	async function addSku(sku: string, qty: number) {
 		try {
@@ -242,12 +258,14 @@ export default function BillingPage() {
 					<input placeholder="Price (manual only)" type="number" step="0.01" value={priceInput} onChange={e => setPriceInput(e.target.value)} />
 					<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
 						<button onClick={addManual}>Add</button>
-						<label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-							<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} /> Enable scanner
-						</label>
+						{isMobile && (
+							<label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+								<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} /> Enable scanner
+							</label>
+						)}
 					</div>
 				</div>
-				<video ref={videoRef} style={{ width: '100%', maxHeight: 240, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
+				{isMobile && <video ref={videoRef} style={{ width: '100%', maxHeight: 240, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />}
 			</div>
 
 			<table className="table">
@@ -307,7 +325,81 @@ export default function BillingPage() {
 						<button onClick={printInvoice}>Print</button>
 						<button className="secondary" onClick={downloadPdf}>Download PDF</button>
 					</div>
-					<div id="invoice-print" style={{ fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto', padding: '20px', background: 'white', color: 'black' }}>
+					<div id="invoice-print" style={getThermalPrintStyles().container}>
+						{isThermalPrinting() ? (
+							<div style={{ fontFamily: 'Arial, sans-serif', fontSize: '8px', lineHeight: '1.1', padding: '5px' }}>
+								<div style={{ textAlign: 'center', marginBottom: '8px' }}>
+									{(lastInvoice.storeInfo?.logo || storeInfo.logo) && (
+										<img src={lastInvoice.storeInfo?.logo || storeInfo.logo} alt="Logo" style={{ maxHeight: '20px', marginBottom: '3px' }} />
+									)}
+									<div style={{ fontWeight: 'bold', fontSize: '10px' }}>{((lastInvoice.storeInfo?.storeName || storeInfo.storeName) || 'MANAGIFY').toUpperCase()}</div>
+									{(lastInvoice.storeInfo?.phone || storeInfo.phone) && <div>Phone: {lastInvoice.storeInfo?.phone || storeInfo.phone}</div>}
+									{(lastInvoice.storeInfo?.email || storeInfo.email) && <div>Email: {lastInvoice.storeInfo?.email || storeInfo.email}</div>}
+									{(lastInvoice.storeInfo?.address || storeInfo.address) && <div>{lastInvoice.storeInfo?.address || storeInfo.address}</div>}
+									{(lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber) && <div>Tax#: {lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber}</div>}
+								</div>
+								<hr style={{ border: 'none', borderTop: '1px solid #000', margin: '5px 0' }} />
+								<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+									<div><strong>INVOICE</strong></div>
+									<div><strong>BILL TO</strong></div>
+								</div>
+								<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '7px' }}>
+									<div>
+										<div>Invoice #: {lastInvoice.invoiceNo}</div>
+										<div>Date: {new Date(lastInvoice.createdAt).toLocaleDateString()}</div>
+									</div>
+									<div style={{ textAlign: 'right' }}>
+										<div>Customer: {lastInvoice.customer || 'Walk-in'}</div>
+										<div>Phone: {lastInvoice.phone || '-'}</div>
+									</div>
+								</div>
+								<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '7px', marginBottom: '5px' }}>
+									<thead>
+										<tr style={{ borderBottom: '1px solid #000' }}>
+											<th style={{ textAlign: 'left', padding: '1px' }}>Article</th>
+											<th style={{ textAlign: 'left', padding: '1px' }}>Item Description</th>
+											<th style={{ textAlign: 'center', padding: '1px' }}>Qty</th>
+											<th style={{ textAlign: 'right', padding: '1px' }}>Unit Price</th>
+											<th style={{ textAlign: 'center', padding: '1px' }}>Discount</th>
+											<th style={{ textAlign: 'right', padding: '1px' }}>Amount</th>
+										</tr>
+									</thead>
+									<tbody>
+										{lastInvoice.lines.map((line: any) => (
+											<tr key={line.id}>
+												<td style={{ padding: '1px' }}>{line.itemId ? line.itemId.slice(-6) : line.sku.slice(-6)}</td>
+												<td style={{ padding: '1px' }}>{line.name}</td>
+												<td style={{ textAlign: 'center', padding: '1px' }}>{line.qty}</td>
+												<td style={{ textAlign: 'right', padding: '1px' }}>Price {line.price.toFixed(2)}</td>
+												<td style={{ textAlign: 'center', padding: '1px' }}>{line.discount || 0}%</td>
+												<td style={{ textAlign: 'right', padding: '1px' }}>Price {(line.qty * line.price * (1 - (line.discount || 0) / 100)).toFixed(2)}</td>
+											</tr>
+										))}
+									</tbody>
+								</table>
+								<div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>
+									<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
+										<span>SUBTOTAL</span>
+										<span>Price {(lastInvoice.total / (1 - lastInvoice.billDiscount / 100)).toFixed(2)}</span>
+									</div>
+									{lastInvoice.billDiscount > 0 && (
+										<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
+											<span>BILL DISCOUNT ({lastInvoice.billDiscount}%)</span>
+											<span>Price {((lastInvoice.total / (1 - lastInvoice.billDiscount / 100)) * lastInvoice.billDiscount / 100).toFixed(2)}</span>
+										</div>
+									)}
+									<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '2px', marginTop: '2px' }}>
+										<span>TOTAL AMOUNT</span>
+										<span>Price {lastInvoice.total.toFixed(2)}</span>
+									</div>
+								</div>
+								<div style={{ textAlign: 'center', marginTop: '8px', fontSize: '6px' }}>
+									<div>Thank you for your business!</div>
+									<div>For any queries, please contact us.</div>
+								</div>
+							</div>
+						) : (
+						<>
 						<div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
 							{(lastInvoice.storeInfo?.logo || storeInfo.logo) && (
 								<img 
@@ -420,6 +512,8 @@ export default function BillingPage() {
 							<p>Thank you for your business!</p>
 							<p>For any queries, please contact us.</p>
 						</div>
+						</>
+						)}
 					</div>
 				</div>
 			)}

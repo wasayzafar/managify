@@ -219,6 +219,9 @@ export const db = {
 		const id = await cloudStorage.addSale(userId, sale);
 		return { id, ...sale };
 	},
+	async deleteSale(id: string): Promise<void> {
+		await cloudStorage.deleteSale(id);
+	},
 
 	async inventory(): Promise<Array<{ itemId: string, itemName: string, itemSku: string, stock: number }>> {
 		const userId = getUserId();

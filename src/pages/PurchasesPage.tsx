@@ -56,42 +56,63 @@ export default function PurchasesPage() {
 
 	// scanner
 	const [scanEnabled, setScanEnabled] = useState(false)
+	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(
 		(code) => setSku(code),
-		scanEnabled
+		scanEnabled && isMobile
 	)
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault()
-		const qtyNum = Number(qty || '0'); if (!qtyNum) return
+		console.log('Form submitted with:', { sku, qty, costPrice, supplier })
+		const qtyNum = Number(qty || '0')
+		if (!qtyNum) {
+			console.log('No quantity provided')
+			alert('Please enter a quantity')
+			return
+		}
+		if (!sku) {
+			console.log('No SKU provided')
+			alert('Please enter a SKU')
+			return
+		}
 		try {
 			let found = existing
 			if (!found) {
+				console.log('Creating new item for SKU:', sku)
 				// Auto-create item if SKU not found
 				const selling = newPrice ? Number(newPrice) : 0
 				const name = newName || sku
 				found = await db.createItem({ sku, name, price: selling })
+				console.log('Created item:', found)
 				const updatedItems = await db.listItems()
 				setItems(updatedItems)
 			}
-			await db.createPurchase({ 
+			console.log('Creating purchase for item:', found.id)
+			const purchaseData = { 
 				itemId: found.id, 
 				qty: qtyNum, 
 				costPrice: Number(costPrice || '0'),
-				supplier,
-				supplierPhone,
-				note,
+				supplier: supplier || 'Unknown',
+				supplierPhone: supplierPhone || '',
+				note: note || '',
 				purchasedAt,
 				paymentType,
-				creditDeadline: paymentType === 'credit' ? creditDeadline : undefined
-			})
+				creditDeadline: paymentType === 'credit' ? creditDeadline : ''
+			}
+			console.log('Purchase data:', purchaseData)
+			const result = await db.createPurchase(purchaseData)
+			console.log('Purchase created:', result)
 			const updatedPurchases = await db.listPurchases()
+			console.log('Updated purchases:', updatedPurchases.length)
 			setRows(updatedPurchases)
 			setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone(''); setNote(''); setNewName(''); setNewPrice(''); setNewCostPrice('')
 			// Auto-update time for next purchase
 			setPurchasedAt(new Date().toISOString().slice(0, 16))
+			alert('Purchase added successfully!')
 		} catch (error) {
 			console.error('Error creating purchase:', error)
+			alert('Error creating purchase: ' + error.message)
 		}
 	}
 
@@ -122,7 +143,7 @@ export default function PurchasesPage() {
 			<h2>Purchases</h2>
 			<div className="card">
 				<h3>Add Purchase</h3>
-				<div className="form-grid">
+				<form onSubmit={onSubmit} className="form-grid">
 					<div>
 						<label>SKU</label>
 						<input value={sku} onChange={e => setSku(e.target.value)} placeholder="Scan or enter SKU" autoFocus />
@@ -164,17 +185,19 @@ export default function PurchasesPage() {
 							<input type="date" value={creditDeadline} onChange={e => setCreditDeadline(e.target.value)} />
 						</div>
 					)}
-					<div style={{ gridColumn: '1 / -1' }}>
-						<label>Enable Scanner</label>
-						<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} />
-						{scanEnabled && (
-							<>
-								<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
-								{scanError && <div className="badge" style={{ background: '#ff4444', marginTop: 8 }}>{scanError}</div>}
-								{isScanning && <div className="badge" style={{ marginTop: 8 }}>Scanner active - point camera at barcode</div>}
-							</>
-						)}
-					</div>
+					{isMobile && (
+						<div style={{ gridColumn: '1 / -1' }}>
+							<label>Enable Scanner</label>
+							<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} />
+							{scanEnabled && (
+								<>
+									<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
+									{scanError && <div className="badge" style={{ background: '#ff4444', marginTop: 8 }}>{scanError}</div>}
+									{isScanning && <div className="badge" style={{ marginTop: 8 }}>Scanner active - point camera at barcode</div>}
+								</>
+							)}
+						</div>
+					)}
 					{sku && !existing && (
 						<>
 							<div>
@@ -192,9 +215,9 @@ export default function PurchasesPage() {
 						</>
 					)}
 					<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-						<button onClick={onSubmit as any}>Add Purchase</button>
+						<button type="submit">Add Purchase</button>
 					</div>
-				</div>
+				</form>
 			</div>
 
 			<div className="card">

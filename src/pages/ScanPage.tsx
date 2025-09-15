@@ -14,9 +14,10 @@ export default function ScanPage() {
 	const [editName, setEditName] = useState('')
 	const [editPrice, setEditPrice] = useState('0')
 
+	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 	const { videoRef, isScanning, error, startScanning, stopScanning } = useBarcodeScanner(
 		(code) => processBarcode(code),
-		scannerEnabled
+		scannerEnabled && isMobile
 	)
 
 	const processBarcode = (text: string) => {
@@ -71,19 +72,27 @@ export default function ScanPage() {
 		<div className="card">
 			<h2>Barcode Scanner</h2>
 			
-			<div className="form-actions" style={{ marginBottom: 12 }}>
-				<button onClick={toggleScanner}>
-					{isScanning ? 'Stop Camera' : 'Start Camera'}
-				</button>
-			</div>
-			
-			{isScanning && (
-				<video 
-					ref={videoRef} 
-					style={{ width: '100%', maxHeight: 320, background: '#111', borderRadius: 12 }} 
-					muted 
-					playsInline 
-				/>
+			{isMobile ? (
+				<>
+					<div className="form-actions" style={{ marginBottom: 12 }}>
+						<button onClick={toggleScanner}>
+							{isScanning ? 'Stop Camera' : 'Start Camera'}
+						</button>
+					</div>
+					
+					{isScanning && (
+						<video 
+							ref={videoRef} 
+							style={{ width: '100%', maxHeight: 320, background: '#111', borderRadius: 12 }} 
+							muted 
+							playsInline 
+						/>
+					)}
+				</>
+			) : (
+				<div className="badge" style={{ background: '#2196f3', marginBottom: 12 }}>
+					Camera scanner is only available on mobile devices. Use the input field below to enter barcodes manually.
+				</div>
 			)}
 			
 			<div className="form-grid" style={{ marginTop: 12 }}>
