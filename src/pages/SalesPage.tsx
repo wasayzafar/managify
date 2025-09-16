@@ -5,7 +5,7 @@ import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { getThermalPrintStyles, isThermalPrinting } from '../utils/thermalPrintStyles'
-
+//test
 export default function SalesPage() {
 	const [sales, setSales] = useState<Sale[]>([])
 	const [items, setItems] = useState<Item[]>([])
@@ -187,15 +187,25 @@ export default function SalesPage() {
 									if (!el) return
 									
 									// Convert images to base64
-									const images = el.querySelectorAll('img')
+									const images = Array.from(el.querySelectorAll('img'))
 									for (const img of images) {
 										try {
-											const canvas = document.createElement('canvas')
-											const ctx = canvas.getContext('2d')
-											canvas.width = img.naturalWidth || img.width
-											canvas.height = img.naturalHeight || img.height
-											ctx?.drawImage(img, 0, 0)
-											img.src = canvas.toDataURL('image/png')
+											// Wait for image to load if not already loaded
+											if (!img.complete) {
+												await new Promise((resolve) => {
+													img.onload = resolve
+													img.onerror = resolve
+												})
+											}
+											
+											if (img.naturalWidth > 0) {
+												const canvas = document.createElement('canvas')
+												const ctx = canvas.getContext('2d')
+												canvas.width = img.naturalWidth
+												canvas.height = img.naturalHeight
+												ctx?.drawImage(img, 0, 0)
+												img.src = canvas.toDataURL('image/png')
+											}
 										} catch (e) {
 											console.warn('Could not convert image to base64:', e)
 										}
