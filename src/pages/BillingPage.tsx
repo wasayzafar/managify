@@ -204,6 +204,22 @@ export default function BillingPage() {
 	async function printInvoice() {
 		const el = document.getElementById('invoice-print')
 		if (!el) return
+		
+		// Convert images to base64
+		const images = el.querySelectorAll('img')
+		for (const img of images) {
+			try {
+				const canvas = document.createElement('canvas')
+				const ctx = canvas.getContext('2d')
+				canvas.width = img.naturalWidth || img.width
+				canvas.height = img.naturalHeight || img.height
+				ctx?.drawImage(img, 0, 0)
+				img.src = canvas.toDataURL('image/png')
+			} catch (e) {
+				console.warn('Could not convert image to base64:', e)
+			}
+		}
+		
 		const w = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150')
 		if (!w) return
 		w.document.write('<html><head><title>Invoice</title>')

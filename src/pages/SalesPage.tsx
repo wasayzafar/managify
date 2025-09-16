@@ -182,9 +182,25 @@ export default function SalesPage() {
 						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
 							<h3>Sale Receipt</h3>
 							<div>
-								<button onClick={() => {
+								<button onClick={async () => {
 									const el = document.getElementById('sale-bill-print')
 									if (!el) return
+									
+									// Convert images to base64
+									const images = el.querySelectorAll('img')
+									for (const img of images) {
+										try {
+											const canvas = document.createElement('canvas')
+											const ctx = canvas.getContext('2d')
+											canvas.width = img.naturalWidth || img.width
+											canvas.height = img.naturalHeight || img.height
+											ctx?.drawImage(img, 0, 0)
+											img.src = canvas.toDataURL('image/png')
+										} catch (e) {
+											console.warn('Could not convert image to base64:', e)
+										}
+									}
+									
 									const w = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150')
 									if (!w) return
 									w.document.write('<html><head><title>Sale Receipt</title>')
