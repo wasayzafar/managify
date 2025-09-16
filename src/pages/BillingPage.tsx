@@ -4,6 +4,7 @@ import { db, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { getThermalPrintStyles, isThermalPrinting } from '../utils/thermalPrintStyles'
+import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
 
  type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number }
 //test
@@ -43,6 +44,10 @@ export default function BillingPage() {
 			try {
 				const info = await db.getStoreInfo()
 				setStoreInfo(info)
+				// Preload logo for instant printing
+				if (info.logo) {
+					preloadImageAsBase64(info.logo).catch(console.warn)
+				}
 			} catch (error) {
 				console.error('Error loading store info:', error)
 			}
@@ -201,34 +206,18 @@ export default function BillingPage() {
 		}
 	}
 
-	async function printInvoice() {
+	function printInvoice() {
 		const el = document.getElementById('invoice-print')
 		if (!el) return
 		
-		// Convert images to base64
+		// Use cached base64 images for instant printing
 		const images = Array.from(el.querySelectorAll('img'))
-		for (const img of images) {
-			try {
-				// Wait for image to load if not already loaded
-				if (!img.complete) {
-					await new Promise((resolve) => {
-						img.onload = resolve
-						img.onerror = resolve
-					})
-				}
-				
-				if (img.naturalWidth > 0) {
-					const canvas = document.createElement('canvas')
-					const ctx = canvas.getContext('2d')
-					canvas.width = img.naturalWidth
-					canvas.height = img.naturalHeight
-					ctx?.drawImage(img, 0, 0)
-					img.src = canvas.toDataURL('image/png')
-				}
-			} catch (e) {
-				console.warn('Could not convert image to base64:', e)
+		images.forEach(img => {
+			const cached = getCachedImage(img.src)
+			if (cached) {
+				img.src = cached
 			}
-		}
+		})
 		
 		const w = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150')
 		if (!w) return

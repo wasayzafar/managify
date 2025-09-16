@@ -5,6 +5,7 @@ import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { getThermalPrintStyles, isThermalPrinting } from '../utils/thermalPrintStyles'
+import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
 //test
 export default function SalesPage() {
 	const [sales, setSales] = useState<Sale[]>([])
@@ -45,6 +46,10 @@ export default function SalesPage() {
 				setSales(salesData)
 				setItems(itemsData)
 				setStoreInfo(storeData)
+				// Preload logo for instant printing
+				if (storeData.logo) {
+					preloadImageAsBase64(storeData.logo).catch(console.warn)
+				}
 			} catch (error) {
 				console.error('Error loading data:', error)
 			} finally {
@@ -182,34 +187,18 @@ export default function SalesPage() {
 						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
 							<h3>Sale Receipt</h3>
 							<div>
-								<button onClick={async () => {
+								<button onClick={() => {
 									const el = document.getElementById('sale-bill-print')
 									if (!el) return
 									
-									// Convert images to base64
+									// Use cached base64 images for instant printing
 									const images = Array.from(el.querySelectorAll('img'))
-									for (const img of images) {
-										try {
-											// Wait for image to load if not already loaded
-											if (!img.complete) {
-												await new Promise((resolve) => {
-													img.onload = resolve
-													img.onerror = resolve
-												})
-											}
-											
-											if (img.naturalWidth > 0) {
-												const canvas = document.createElement('canvas')
-												const ctx = canvas.getContext('2d')
-												canvas.width = img.naturalWidth
-												canvas.height = img.naturalHeight
-												ctx?.drawImage(img, 0, 0)
-												img.src = canvas.toDataURL('image/png')
-											}
-										} catch (e) {
-											console.warn('Could not convert image to base64:', e)
+									images.forEach(img => {
+										const cached = getCachedImage(img.src)
+										if (cached) {
+											img.src = cached
 										}
-									}
+									})
 									
 									const w = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150')
 									if (!w) return
