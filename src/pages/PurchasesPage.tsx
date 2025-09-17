@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { db, Item, Purchase, StoreInfo } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
@@ -54,6 +54,18 @@ export default function PurchasesPage() {
 		loadData()
 	}, [])
 
+	// Keyboard shortcut for submit
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.ctrlKey && e.key === 'm') {
+				e.preventDefault()
+				onSubmit()
+			}
+		}
+		document.addEventListener('keydown', handleKeyDown)
+		return () => document.removeEventListener('keydown', handleKeyDown)
+	}, [sku, qty, costPrice, supplier, supplierPhone, purchasedAt, note, paymentType, creditDeadline, newName, newPrice])
+
 	// scanner
 	const [scanEnabled, setScanEnabled] = useState(false)
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -62,8 +74,7 @@ export default function PurchasesPage() {
 		scanEnabled && isMobile
 	)
 
-	async function onSubmit(e: FormEvent) {
-		e.preventDefault()
+	const onSubmit = async () => {
 		console.log('Form submitted with:', { sku, qty, costPrice, supplier })
 		const qtyNum = Number(qty || '0')
 		if (!qtyNum) {
@@ -87,6 +98,11 @@ export default function PurchasesPage() {
 				console.log('Created item:', found)
 				const updatedItems = await db.listItems()
 				setItems(updatedItems)
+			} else if (newPrice && Number(newPrice) !== found.price) {
+				// Update selling price if provided and different
+				await db.updateItem(found.id, { price: Number(newPrice) })
+				const updatedItems = await db.listItems()
+				setItems(updatedItems)
 			}
 			console.log('Creating purchase for item:', found.id)
 			const purchaseData = { 
@@ -106,7 +122,7 @@ export default function PurchasesPage() {
 			const updatedPurchases = await db.listPurchases()
 			console.log('Updated purchases:', updatedPurchases.length)
 			setRows(updatedPurchases)
-			setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone(''); setNote(''); setNewName(''); setNewPrice(''); setNewCostPrice('')
+			setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone(''); setNote(''); setNewName(''); setNewPrice('')
 			// Auto-update time for next purchase
 			setPurchasedAt(new Date().toISOString().slice(0, 16))
 			alert('Purchase added successfully!')
@@ -140,10 +156,10 @@ export default function PurchasesPage() {
 
 	return (
 		<div className="card">
-			<h2>Purchases</h2>
+			<h2>Purchases<p>To Add (Ctrl + M)</p></h2>
 			<div className="card">
 				<h3>Add Purchase</h3>
-				<form onSubmit={onSubmit} className="form-grid">
+				<div className="form-grid">
 					<div>
 						<label>SKU</label>
 						<input value={sku} onChange={e => setSku(e.target.value)} placeholder="Scan or enter SKU" autoFocus />
@@ -155,6 +171,10 @@ export default function PurchasesPage() {
 					<div>
 						<label>Cost Price</label>
 						<input type="number" step="0.01" value={costPrice} onChange={e => setCostPrice(e.target.value)} placeholder="Cost Price" />
+					</div>
+					<div>
+						<label>Selling Price</label>
+						<input type="number" step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="Selling Price" />
 					</div>
 					<div>
 						<label>Supplier Name</label>
@@ -199,25 +219,15 @@ export default function PurchasesPage() {
 						</div>
 					)}
 					{sku && !existing && (
-						<>
-							<div>
-								<label>Cost Price (new product)</label>
-								<input type="number" step="0.01" value={newCostPrice} onChange={e => setNewCostPrice(e.target.value)} placeholder="Cost Price (new)" />
-							</div>
-							<div>
-								<label>Item Name (new)</label>
-								<input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Item Name" />
-							</div>
-							<div>
-								<label>Selling Price (new)</label>
-								<input type="number" step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="Selling Price" />
-							</div>
-						</>
+						<div>
+							<label>Item Name (new product)</label>
+							<input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Item Name" />
+						</div>
 					)}
 					<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-						<button type="submit">Add Purchase</button>
+						<button onClick={onSubmit}>Add Purchase</button>
 					</div>
-				</form>
+				</div>
 			</div>
 
 			<div className="card">
