@@ -222,36 +222,7 @@ export default function DailySalesPage() {
 						</tbody>
 					</table>
 
-					{/* Item Breakdown */}
-					<h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#333' }}>Item Sales Breakdown</h3>
-					<table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
-						<thead>
-							<tr style={{ background: '#f5f5f5' }}>
-								<th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: 'bold' }}>SKU</th>
-								<th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: 'bold' }}>Item Name</th>
-								<th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>Qty Sold</th>
-								<th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>Unit Price</th>
-								<th style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>Total</th>
-							</tr>
-						</thead>
-						<tbody>
-							{dailyData.itemBreakdown.map((item, index) => (
-								<tr key={index}>
-									<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{item.item?.sku || 'N/A'}</td>
-									<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{item.item?.name || 'Unknown Item'}</td>
-									<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'center', fontSize: '13px' }}>{item.qty}</td>
-									<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>price {item.unitPrice.toFixed(2)}</td>
-									<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>price {item.total.toFixed(2)}</td>
-								</tr>
-							))}
-						</tbody>
-						<tfoot>
-							<tr style={{ background: '#f9f9f9' }}>
-								<td colSpan={4} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL REVENUE</td>
-								<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>price {dailyData.totalRevenue.toFixed(2)}</td>
-							</tr>
-						</tfoot>
-					</table>
+
 
 					<div style={{ marginTop: '30px', textAlign: 'center', fontSize: '12px', color: '#666' }}>
 						<p>Daily sales report generated from inventory management system</p>
