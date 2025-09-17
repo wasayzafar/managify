@@ -82,15 +82,30 @@ export default function ProfitLossPage() {
 				// Get items for price lookup
 				const items = await db.listItems()
 
-				// Calculate Revenue from sales
+				// Calculate Revenue from sales using actual prices (includes discounts)
 				const totalRevenue = filteredSales.reduce((sum, sale) => {
+					// Use actualPrice if available (includes discounts), otherwise fallback to item price
+					if (sale.actualPrice) {
+						return sum + ((sale.quantity || 0) * sale.actualPrice)
+					}
+					// Fallback for older sales without actualPrice
 					const item = items.find(i => i.id === sale.itemId)
 					return sum + ((sale.quantity || 0) * (item?.price || 0))
 				}, 0)
 
-				// Calculate Cost of Goods Sold from purchases
-				const totalCOGS = filteredPurchases.reduce((sum, purchase) => {
-					return sum + ((purchase.quantity || 0) * (purchase.costPrice || 0))
+				// Calculate Cost of Goods Sold from sold items only
+				const totalCOGS = filteredSales.reduce((sum, sale) => {
+					const item = items.find(i => i.id === sale.itemId)
+					if (!item) return sum
+					
+					// Find the most recent purchase for this item to get cost price
+					const itemPurchases = purchases.filter(p => p.itemId === item.id)
+					const latestPurchase = itemPurchases.sort((a, b) => 
+						new Date(b.date || '').getTime() - new Date(a.date || '').getTime()
+					)[0]
+					
+					const costPrice = latestPurchase?.costPrice || 0
+					return sum + ((sale.quantity || 0) * costPrice)
 				}, 0)
 
 				// Filter expenses by date range
@@ -255,7 +270,7 @@ export default function ProfitLossPage() {
 							<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>price {plData.totalCOGS.toFixed(2)}</td>
 						</tr>
 						<tr>
-							<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px', paddingLeft: '20px' }}>Total Purchases ({plData.purchaseCount} transactions)</td>
+							<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px', paddingLeft: '20px' }}>Cost of Sold Items ({plData.saleCount} transactions)</td>
 							<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>price {plData.totalCOGS.toFixed(2)}</td>
 						</tr>
 						<tr style={{ background: '#e8f5e8' }}>

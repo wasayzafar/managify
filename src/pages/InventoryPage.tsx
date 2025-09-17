@@ -2,24 +2,35 @@ import { useState, useEffect } from 'react'
 import { db } from '../storage'
 
 export default function InventoryPage() {
-	const [items, setItems] = useState<Array<{ itemId: string, itemName: string, itemSku: string, stock: number, price: number, totalValue: number }>>([])
+	const [items, setItems] = useState<Array<{ itemId: string, itemName: string, itemSku: string, stock: number, price: number, costPrice: number, totalValue: number, totalCostValue: number }>>([])
 	const [loading, setLoading] = useState(true)
 	const [searchTerm, setSearchTerm] = useState('')
 
 	useEffect(() => {
 		const loadInventory = async () => {
 			try {
-				const [inventoryData, itemsData] = await Promise.all([
+				const [inventoryData, itemsData, purchasesData] = await Promise.all([
 					db.inventory(),
-					db.listItems()
+					db.listItems(),
+					db.listPurchases()
 				])
 				const enrichedInventory = inventoryData.map(inv => {
 					const item = itemsData.find(i => i.id === inv.itemId)
 					const price = item?.price || 0
+					
+					// Find most recent purchase for cost price
+					const itemPurchases = purchasesData.filter(p => p.itemId === inv.itemId)
+					const latestPurchase = itemPurchases.sort((a, b) => 
+						new Date(b.date || '').getTime() - new Date(a.date || '').getTime()
+					)[0]
+					const costPrice = latestPurchase?.costPrice || 0
+					
 					return {
 						...inv,
 						price,
-						totalValue: inv.stock * price
+						costPrice,
+						totalValue: inv.stock * price,
+						totalCostValue: inv.stock * costPrice
 					}
 				})
 				setItems(enrichedInventory)
@@ -68,7 +79,7 @@ export default function InventoryPage() {
 					autoFocus
 				/>
 				<button onClick={() => {
-					const csvContent = 'SKU,Name,Stock,Rate/Unit,Total Value\n' + items.map(i => `${i.itemSku},"${i.itemName}",${i.stock},${i.price.toFixed(2)},${i.totalValue.toFixed(2)}`).join('\n')
+					const csvContent = 'SKU,Name,Stock,Cost Price,Rate/Unit,Total Cost Value,Total Value\n' + items.map(i => `${i.itemSku},"${i.itemName}",${i.stock},${i.costPrice.toFixed(2)},${i.price.toFixed(2)},${i.totalCostValue.toFixed(2)},${i.totalValue.toFixed(2)}`).join('\n')
 					const blob = new Blob([csvContent], { type: 'text/csv' })
 					const url = URL.createObjectURL(blob)
 					const a = document.createElement('a')
@@ -86,7 +97,9 @@ export default function InventoryPage() {
 							<th>SKU</th>
 							<th>Name</th>
 							<th>Stock</th>
+							<th>Cost Price</th>
 							<th>Rate/Unit</th>
+							<th>Total Cost Value</th>
 							<th>Total Value</th>
 						</tr>
 					</thead>
@@ -96,14 +109,21 @@ export default function InventoryPage() {
 								<td>{i.itemSku}</td>
 								<td>{i.itemName}</td>
 								<td><span className="badge" style={{ background: i.stock <= 5 ? '#f44336' : '#4caf50' }}>{i.stock}</span></td>
+								<td>Price {i.costPrice.toFixed(2)}</td>
 								<td>Price {i.price.toFixed(2)}</td>
+								<td>Price {i.totalCostValue.toFixed(2)}</td>
 								<td>Price {i.totalValue.toFixed(2)}</td>
 							</tr>
 						))}
 					</tbody>
 					<tfoot>
+						<tr style={{ background: '#ff9800', color: 'white', fontWeight: 'bold' }}>
+							<td colSpan={5} style={{ textAlign: 'right' }}>Total Cost Value:</td>
+							<td>Price {filteredItems.reduce((sum, i) => sum + i.totalCostValue, 0).toFixed(2)}</td>
+							<td></td>
+						</tr>
 						<tr style={{ background: '#2263ff', color: 'white', fontWeight: 'bold' }}>
-							<td colSpan={4} style={{ textAlign: 'right' }}>Total Inventory Value:</td>
+							<td colSpan={6} style={{ textAlign: 'right' }}>Total Inventory Value:</td>
 							<td>Price {filteredItems.reduce((sum, i) => sum + i.totalValue, 0).toFixed(2)}</td>
 						</tr>
 					</tfoot>

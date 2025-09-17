@@ -53,7 +53,6 @@ export default function DailySalesPage() {
 				// Calculate totals
 				const totalTransactions = filteredSales.length
 				const totalItems = filteredSales.reduce((sum, sale) => sum + (sale.quantity || 0), 0)
-				const totalRevenue = 0 // Will be calculated when price data is available
 
 				// Group by item for detailed breakdown
 				const itemBreakdown = filteredSales.reduce((acc, sale) => {
