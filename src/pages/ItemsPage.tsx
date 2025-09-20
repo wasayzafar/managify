@@ -5,9 +5,9 @@ import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 export default function ItemsPage() {
 	const [items, setItems] = useState<Item[]>([])
 	const [filter, setFilter] = useState('')
-	const [form, setForm] = useState({ sku: '', name: '', price: '' })
+	const [form, setForm] = useState({ sku: '', name: '', price: '', costPrice: '' })
 	const [editingId, setEditingId] = useState<string | null>(null)
-	const [editForm, setEditForm] = useState<{ sku: string, name: string, price: string }>({ sku: '', name: '', price: '' })
+	const [editForm, setEditForm] = useState<{ sku: string, name: string, price: string, costPrice: string }>({ sku: '', name: '', price: '', costPrice: '' })
 	const [loading, setLoading] = useState(true)
 	const [scannerEnabled, setScannerEnabled] = useState(false)
 
@@ -40,10 +40,11 @@ export default function ItemsPage() {
 		if (!form.sku || !form.name) return
 		try {
 			const price = Number(form.price || '0')
-			await db.createItem({ sku: form.sku, name: form.name, price })
+			const costPrice = Number(form.costPrice || '0')
+			await db.createItem({ sku: form.sku, name: form.name, price, costPrice })
 			const updatedItems = await db.listItems()
 			setItems(updatedItems)
-			setForm({ sku: '', name: '', price: '' })
+			setForm({ sku: '', name: '', price: '', costPrice: '' })
 		} catch (error) {
 			console.error('Error creating item:', error)
 		}
@@ -51,13 +52,14 @@ export default function ItemsPage() {
 
 	function startEdit(item: Item) {
 		setEditingId(item.id)
-		setEditForm({ sku: item.sku, name: item.name, price: String(item.price) })
+		setEditForm({ sku: item.sku, name: item.name, price: String(item.price), costPrice: String(item.costPrice || 0) })
 	}
 
 	async function saveEdit(id: string) {
 		try {
 			const price = Number(editForm.price || '0')
-			await db.updateItem(id, { sku: editForm.sku, name: editForm.name, price })
+			const costPrice = Number(editForm.costPrice || '0')
+			await db.updateItem(id, { sku: editForm.sku, name: editForm.name, price, costPrice })
 			const updatedItems = await db.listItems()
 			setItems(updatedItems)
 			setEditingId(null)
@@ -95,13 +97,16 @@ export default function ItemsPage() {
 				<input placeholder="Search by SKU or Name" value={filter} onChange={e => setFilter(e.target.value)} autoFocus />
 			</div>
 			<form onSubmit={onSubmit} className="form-grid">
-				<input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} autoFocus />
+				<input placeholder="SKU" value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} />
 				<input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
 				<input placeholder="Price" type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+				<input placeholder="Cost Price" type="number" step="0.01" value={form.costPrice} onChange={e => setForm({ ...form, costPrice: e.target.value })} />
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-					<button type="button" onClick={() => setScannerEnabled(!scannerEnabled)}>
-						{scannerEnabled ? 'Hide Scanner' : 'Scan SKU'}
-					</button>
+					{/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
+						<button type="button" onClick={() => setScannerEnabled(!scannerEnabled)}>
+							{scannerEnabled ? 'Hide Scanner' : 'Scan SKU'}
+						</button>
+					)}
 					<button type="submit">Add Item</button>
 				</div>
 				{scannerEnabled && (
@@ -120,6 +125,7 @@ export default function ItemsPage() {
 							<th>SKU</th>
 							<th>Name</th>
 							<th>Price</th>
+							<th>Cost Price</th>
 							<th>Created</th>
 							<th></th>
 						</tr>
@@ -142,6 +148,11 @@ export default function ItemsPage() {
 									{editingId === i.id ? (
 										<input type="number" step="0.01" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} />
 									) : i.price.toFixed(2)}
+								</td>
+								<td>
+									{editingId === i.id ? (
+										<input type="number" step="0.01" value={editForm.costPrice} onChange={e => setEditForm({ ...editForm, costPrice: e.target.value })} />
+									) : (i.costPrice || 0).toFixed(2)}
 								</td>
 								<td>{i.createdAt ? new Date(i.createdAt).toLocaleString() : 'N/A'}</td>
 								<td style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

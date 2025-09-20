@@ -117,8 +117,14 @@ export default function ProfitLossPage() {
 				// Calculate total expenses
 				const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
 
-				// Calculate total salaries (monthly)
-				const totalSalaries = employees.reduce((sum: number, emp: any) => sum + (emp.salary || 0), 0)
+				// Calculate total salaries (exclude joining month, start from next month)
+				const totalSalaries = employees.reduce((sum: number, emp: any) => {
+					if (!emp.joinDate) return sum + (emp.salary || 0)
+					const joinDate = new Date(emp.joinDate)
+					const periodStart = new Date(startDate)
+					const nextMonthAfterJoin = new Date(joinDate.getFullYear(), joinDate.getMonth() + 1, 1)
+					return nextMonthAfterJoin <= periodStart ? sum + (emp.salary || 0) : sum
+				}, 0)
 
 				// Calculate Gross Profit
 				const grossProfit = totalRevenue - totalCOGS
