@@ -33,18 +33,29 @@ export default function DashboardPage() {
 				const totalSales = sales.length
 				const totalStock = inventory.reduce((sum, item) => sum + item.stock, 0)
 				
-				// Calculate revenue from sales
+				// Calculate revenue from sales using actual sale prices
 				const totalRevenue = sales.reduce((sum, sale) => {
+					// Use actualPrice if available (includes discounts), otherwise fallback to item price
+					if (sale.actualPrice) {
+						return sum + ((sale.quantity || 0) * sale.actualPrice)
+					}
 					const item = items.find(i => i.id === sale.itemId)
 					return sum + ((sale.quantity || 0) * (item?.price || 0))
 				}, 0)
 				
-				// Calculate cost from purchases
-				const totalCost = purchases.reduce((sum, purchase) => {
-					return sum + ((purchase.quantity || 0) * (purchase.costPrice || 0))
+				// Calculate cost of goods sold (COGS) - cost of items that were actually sold
+				const totalCOGS = sales.reduce((sum, sale) => {
+					const item = items.find(i => i.id === sale.itemId)
+					if (!item) return sum
+					// Find the cost price from purchases for this item
+					const itemPurchases = purchases.filter(p => p.itemId === item.id)
+					if (itemPurchases.length === 0) return sum
+					// Use average cost price if multiple purchases exist
+					const avgCostPrice = itemPurchases.reduce((total, p) => total + (p.costPrice || 0), 0) / itemPurchases.length
+					return sum + ((sale.quantity || 0) * avgCostPrice)
 				}, 0)
 				
-				const grossProfit = totalRevenue - totalCost
+				const grossProfit = totalRevenue - totalCOGS
 				const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
 				
 				const lowStockItems = inventory.filter(item => item.stock < 5).length
@@ -57,6 +68,10 @@ export default function DashboardPage() {
 				})
 				
 				const todayRevenue = todaySalesData.reduce((sum, sale) => {
+					// Use actualPrice if available (includes discounts), otherwise fallback to item price
+					if (sale.actualPrice) {
+						return sum + ((sale.quantity || 0) * sale.actualPrice)
+					}
 					const item = items.find(i => i.id === sale.itemId)
 					return sum + ((sale.quantity || 0) * (item?.price || 0))
 				}, 0)
@@ -69,7 +84,7 @@ export default function DashboardPage() {
 					totalSales,
 					totalStock,
 					totalRevenue,
-					totalCost,
+					totalCost: totalCOGS,
 					grossProfit,
 					profitMargin,
 					lowStockItems,
@@ -139,7 +154,7 @@ export default function DashboardPage() {
 				</div>
 				
 				<div className="stat-card">
-					<h3>Gross Profit</h3>
+					<h3>Gross Profit Excluding Expenses</h3>
 					<p className="value" style={{ color: stats.grossProfit >= 0 ? '#4caf50' : '#f44336' }}>
 						Amount {stats.grossProfit.toFixed(2)}
 					</p>
