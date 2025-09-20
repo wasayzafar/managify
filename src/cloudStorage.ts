@@ -111,6 +111,16 @@ export interface Invoice {
   };
 }
 
+export interface Supplier {
+  id: string;
+  supplierId: string;
+  name: string;
+  phone: string;
+  address: string;
+  createdAt?: string;
+  userId: string;
+}
+
 // Items
 export const listItems = async (userId: string): Promise<Item[]> => {
   const q = query(collection(firestore, 'items'), where('userId', '==', userId));
@@ -260,9 +270,29 @@ export const addInvoice = async (userId: string, invoice: Omit<Invoice, 'id' | '
   return docRef.id;
 };
 
+// Suppliers
+export const listSuppliers = async (userId: string): Promise<Supplier[]> => {
+  const q = query(collection(firestore, 'suppliers'), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier));
+};
+
+export const addSupplier = async (userId: string, supplier: Omit<Supplier, 'id' | 'userId'>): Promise<string> => {
+  const docRef = await addDoc(collection(firestore, 'suppliers'), { ...supplier, userId });
+  return docRef.id;
+};
+
+export const updateSupplier = async (id: string, supplier: Partial<Omit<Supplier, 'id' | 'userId'>>): Promise<void> => {
+  await updateDoc(doc(firestore, 'suppliers', id), supplier);
+};
+
+export const deleteSupplier = async (id: string): Promise<void> => {
+  await deleteDoc(doc(firestore, 'suppliers', id));
+};
+
 // Clear all user data
 export const clearAllData = async (userId: string): Promise<void> => {
-  const collections = ['items', 'purchases', 'sales', 'storeInfo', 'expenses', 'employees', 'invoices'];
+  const collections = ['items', 'purchases', 'sales', 'storeInfo', 'expenses', 'employees', 'invoices', 'suppliers'];
   
   for (const collectionName of collections) {
     const q = query(collection(firestore, collectionName), where('userId', '==', userId));

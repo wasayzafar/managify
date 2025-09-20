@@ -17,6 +17,7 @@ import ScanPage from './pages/ScanPage';
 import CreditsPage from './pages/CreditsPage';
 import EmployeesPage from './pages/EmployeesPage';
 import ExpensesPage from './pages/ExpensesPage';
+import SuppliersPage from './pages/SuppliersPage';
 import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -51,6 +52,7 @@ export function AppRouter() {
           <Route path="credits" element={<CreditsPage />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>

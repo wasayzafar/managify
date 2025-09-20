@@ -130,7 +130,6 @@ export default function CreditsPage() {
 							<thead>
 								<tr>
 									<th>PO #</th>
-									<th>Item</th>
 									<th>Supplier</th>
 									<th>Amount</th>
 									<th>Purchase Date</th>
@@ -148,13 +147,14 @@ export default function CreditsPage() {
 							return (
 								<tr key={p.id}>
 									<td>{p.id.slice(-6)}</td>
-									<td>{p.item?.name || 'Unknown'}</td>
 									<td>{p.supplier || 'N/A'}</td>
 									<td>price {amount.toFixed(2)}</td>
 									<td>{p.date ? new Date(p.date).toLocaleDateString() : 'N/A'}</td>
 									<td>{p.creditDeadline ? new Date(p.creditDeadline).toLocaleDateString() : 'No deadline'}</td>
 									<td>
-										{days !== null ? (
+										{p.isPaid ? (
+											<span className="badge" style={{ background: '#4caf50', color: 'white' }}>Paid</span>
+										) : days !== null ? (
 											<span 
 												className="badge" 
 												style={{ 
@@ -199,13 +199,32 @@ export default function CreditsPage() {
 											/>
 										</label>
 									</td>
-									<td>
+									<td style={{ display: 'flex', gap: '4px' }}>
 										<button 
 											style={{ padding: '4px 8px', fontSize: '12px' }}
 											onClick={() => setSelectedPurchase(p)}
 										>
 											View Bill
 										</button>
+										{!p.isPaid && (
+											<button 
+												style={{ padding: '4px 8px', fontSize: '12px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '3px' }}
+												onClick={async () => {
+													try {
+														await db.updatePurchase(p.id, { isPaid: true })
+														setCreditPurchases(prev => prev.map(purchase => 
+															purchase.id === p.id ? { ...purchase, isPaid: true } : purchase
+														))
+														alert(`Credit of ${amount.toFixed(2)} paid for ${p.supplier}`)
+													} catch (error) {
+														console.error('Error paying credit:', error)
+														alert('Error paying credit')
+													}
+												}}
+											>
+												Pay Credit
+											</button>
+										)}
 									</td>
 								</tr>
 							)

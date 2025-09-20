@@ -7,6 +7,8 @@ import jsPDF from 'jspdf'
 export default function PurchasesPage() {
 	const [rows, setRows] = useState<Purchase[]>([])
 	const [items, setItems] = useState<Item[]>([])
+	const [suppliers, setSuppliers] = useState<any[]>([])
+	const [showSupplierDropdown, setShowSupplierDropdown] = useState(false)
 	const [sku, setSku] = useState('')
 	const [qty, setQty] = useState('1')
 	const [costPrice, setCostPrice] = useState('')
@@ -33,18 +35,32 @@ export default function PurchasesPage() {
 	const [loading, setLoading] = useState(true)
 	const existing = items.find(i => i.sku === sku)
 
+	// Hide dropdown when clicking outside
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			const target = event.target as HTMLElement
+			if (showSupplierDropdown && !target.closest('[data-supplier-dropdown]')) {
+				setShowSupplierDropdown(false)
+			}
+		}
+		document.addEventListener('click', handleClickOutside)
+		return () => document.removeEventListener('click', handleClickOutside)
+	}, [showSupplierDropdown])
+
 	// Load data
 	useEffect(() => {
 		const loadData = async () => {
 			try {
-				const [purchasesData, itemsData, storeData] = await Promise.all([
+				const [purchasesData, itemsData, storeData, suppliersData] = await Promise.all([
 					db.listPurchases(),
 					db.listItems(),
-					db.getStoreInfo()
+					db.getStoreInfo(),
+					db.listSuppliers()
 				])
 				setRows(purchasesData)
 				setItems(itemsData)
 				setStoreInfo(storeData)
+				setSuppliers(suppliersData)
 			} catch (error) {
 				console.error('Error loading data:', error)
 			} finally {
@@ -104,6 +120,17 @@ export default function PurchasesPage() {
 				const updatedItems = await db.listItems()
 				setItems(updatedItems)
 			}
+			// Auto-create supplier if not exists
+			if (supplier && !suppliers.find(s => s.name === supplier)) {
+				const supplierData: any = { 
+					name: supplier, 
+					phone: supplierPhone || '', 
+					address: '' 
+				}
+				await db.createSupplier(supplierData)
+				const updatedSuppliers = await db.listSuppliers()
+				setSuppliers(updatedSuppliers)
+			}
 			console.log('Creating purchase for item:', found.id)
 			const purchaseData = { 
 				itemId: found.id, 
@@ -122,7 +149,7 @@ export default function PurchasesPage() {
 			const updatedPurchases = await db.listPurchases()
 			console.log('Updated purchases:', updatedPurchases.length)
 			setRows(updatedPurchases)
-			setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone(''); setNote(''); setNewName(''); setNewPrice('')
+			setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone(''); setNote(''); setNewName(''); setNewPrice(''); setShowSupplierDropdown(false)
 			// Auto-update time for next purchase
 			setPurchasedAt(new Date().toISOString().slice(0, 16))
 			alert('Purchase added successfully!')
@@ -176,9 +203,34 @@ export default function PurchasesPage() {
 						<label>Selling Price</label>
 						<input type="number" step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="Selling Price" />
 					</div>
-					<div>
+					<div style={{ position: 'relative' }} data-supplier-dropdown>
 						<label>Supplier Name</label>
-						<input value={supplier} onChange={e => setSupplier(e.target.value)} placeholder="Supplier" />
+						<input 
+							value={supplier} 
+							onChange={e => setSupplier(e.target.value)} 
+							onFocus={() => setShowSupplierDropdown(true)}
+							placeholder="Supplier" 
+						/>
+						{showSupplierDropdown && suppliers.length > 0 && (
+							<div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #ddd', borderRadius: '4px', maxHeight: '200px', overflowY: 'auto', zIndex: 1000, color: 'black' }}>
+								{suppliers.filter(s => s.name.toLowerCase().includes(supplier.toLowerCase())).map(s => (
+									<div 
+										key={s.id} 
+										style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+										onClick={() => {
+											setSupplier(s.name)
+											setSupplierPhone(s.phone)
+											setShowSupplierDropdown(false)
+										}}
+										onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+										onMouseLeave={e => e.currentTarget.style.background = 'white'}
+									>
+										<div style={{ fontWeight: 'bold' }}>{s.name}</div>
+										<div style={{ fontSize: '12px', color: '#666' }}>{s.phone}</div>
+									</div>
+								))}
+							</div>
+						)}
 					</div>
 					<div>
 						<label>Supplier Phone</label>

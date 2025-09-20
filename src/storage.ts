@@ -110,6 +110,15 @@ export type Invoice = {
 	}
 }
 
+export type Supplier = {
+	id: string
+	supplierId: string
+	name: string
+	phone: string
+	address: string
+	createdAt?: string
+}
+
 import { auth } from './firebase';
 import * as cloudStorage from './cloudStorage';
 
@@ -372,6 +381,35 @@ export const db = {
 			console.error('Error listing invoices:', error);
 			return [];
 		}
+	},
+
+	async listSuppliers(): Promise<Supplier[]> {
+		const userId = getUserId();
+		if (!userId) return [];
+		try {
+			return await cloudStorage.listSuppliers(userId);
+		} catch (error) {
+			console.error('Error listing suppliers:', error);
+			return [];
+		}
+	},
+	async createSupplier(data: { name: string, phone: string, address: string }): Promise<Supplier> {
+		const userId = getUserId();
+		const supplier = {
+			supplierId: Math.floor(1000 + Math.random() * 9000).toString(),
+			name: data.name,
+			phone: data.phone,
+			address: data.address,
+			createdAt: new Date().toISOString()
+		};
+		const id = await cloudStorage.addSupplier(userId, supplier);
+		return { id, ...supplier };
+	},
+	async updateSupplier(id: string, data: Partial<Omit<Supplier, 'id'>>): Promise<void> {
+		await cloudStorage.updateSupplier(id, data);
+	},
+	async deleteSupplier(id: string): Promise<void> {
+		await cloudStorage.deleteSupplier(id);
 	},
 
 	async clearAllData(): Promise<void> {
