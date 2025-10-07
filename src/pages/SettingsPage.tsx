@@ -87,6 +87,62 @@ export default function SettingsPage() {
 		}
 	}
 
+	const handleClearInternalStorage = async () => {
+		if (window.confirm('⚠️ This will clear browser cache and local storage settings. Your business data will remain safe. Continue?')) {
+			try {
+				setMessage('Clearing internal storage...')
+				
+				// Preserve thermal printing setting
+				const thermalPrintingSetting = localStorage.getItem('thermalPrinting')
+				
+				// Clear localStorage
+				localStorage.clear()
+				
+				// Restore thermal printing setting
+				if (thermalPrintingSetting) {
+					localStorage.setItem('thermalPrinting', thermalPrintingSetting)
+				}
+				
+				// Clear sessionStorage
+				sessionStorage.clear()
+				
+				// Clear any cached data (if using IndexedDB or other browser storage)
+				if ('indexedDB' in window) {
+					// Clear IndexedDB if it exists
+					try {
+						const databases = await indexedDB.databases()
+						for (const database of databases) {
+							indexedDB.deleteDatabase(database.name)
+						}
+					} catch (e) {
+						// IndexedDB might not be available or accessible
+						console.warn('Could not clear IndexedDB:', e)
+					}
+				}
+				
+				// Clear any cached images
+				if ('caches' in window) {
+					try {
+						const cacheNames = await caches.keys()
+						await Promise.all(
+							cacheNames.map(cacheName => caches.delete(cacheName))
+						)
+					} catch (e) {
+						console.warn('Could not clear caches:', e)
+					}
+				}
+				
+				setMessage('Internal storage cleared successfully! The page will reload to apply changes.')
+				setTimeout(() => {
+					window.location.reload()
+				}, 2000)
+			} catch (error) {
+				setMessage('Error clearing internal storage. Please try again.')
+				console.error('Clear storage failed:', error)
+			}
+		}
+	}
+
 	return (
 		<div>
 			<div className="card" style={{ marginBottom: '24px' }}>
@@ -374,6 +430,12 @@ export default function SettingsPage() {
 				<p style={{ margin: '0 0 16px 0', color: '#8b949e' }}>
 					Dangerous operations that affect the entire system.
 				</p>
+				<div style={{ marginBottom: '16px', padding: '12px', background: '#1a1f2e', border: '1px solid #243245', borderRadius: '8px' }}>
+					<h4 style={{ margin: '0 0 8px 0', color: '#e8eef5' }}>Clear Internal Storage</h4>
+					<p style={{ margin: '0', color: '#8b949e', fontSize: '14px' }}>
+						Clears browser cache, localStorage, and cached data. Your business data (items, sales, purchases) will remain safe in the cloud.
+					</p>
+				</div>
 				<div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
 					<button 
 						onClick={handleResetSystem}
@@ -387,6 +449,19 @@ export default function SettingsPage() {
 						}}
 					>
 						🗑️ Reset System
+					</button>
+					<button 
+						onClick={handleClearInternalStorage}
+						style={{ 
+							background: '#ff9800', 
+							color: 'white', 
+							border: 'none', 
+							padding: '10px 20px', 
+							borderRadius: '8px', 
+							cursor: 'pointer' 
+						}}
+					>
+						🧹 Clear Internal Storage
 					</button>
 					<button 
 						onClick={handleLogout}
