@@ -1,112 +1,84 @@
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { db } from '../storage'
+import { useItems, usePurchases, useSales, useInventory } from '../hooks/useDataQueries'
+import { StatsSkeleton } from '../components/LoadingSkeleton'
 
 export default function DashboardPage() {
-	const [stats, setStats] = useState({
-		totalItems: 0,
-		totalPurchases: 0,
-		totalSales: 0,
-		totalStock: 0,
-		totalRevenue: 0,
-		totalCost: 0,
-		grossProfit: 0,
-		profitMargin: 0,
-		lowStockItems: 0,
-		todayRevenue: 0,
-		todaySales: 0
-	})
-	const [loading, setLoading] = useState(true)
+	const { data: items = [], isLoading: itemsLoading } = useItems()
+	const { data: purchases = [], isLoading: purchasesLoading } = usePurchases()
+	const { data: sales = [], isLoading: salesLoading } = useSales()
+	const { data: inventory = [], isLoading: inventoryLoading } = useInventory()
 
-	useEffect(() => {
-		const loadStats = async () => {
-			try {
-				const [items, purchases, sales, inventory] = await Promise.all([
-					db.listItems(),
-					db.listPurchases(),
-					db.listSales(),
-					db.inventory()
-				])
-				
-				const totalItems = items.length
-				const totalPurchases = purchases.length
-				const totalSales = sales.length
-				const totalStock = inventory.reduce((sum, item) => sum + item.stock, 0)
-				
-				// Calculate revenue from sales using actual sale prices
-				const totalRevenue = sales.reduce((sum, sale) => {
-					// Use actualPrice if available (includes discounts), otherwise fallback to item price
-					if (sale.actualPrice) {
-						return sum + ((sale.quantity || 0) * sale.actualPrice)
-					}
-					const item = items.find(i => i.id === sale.itemId)
-					return sum + ((sale.quantity || 0) * (item?.price || 0))
-				}, 0)
-				
-				// Calculate cost of goods sold (COGS) - cost of items that were actually sold
-				const totalCOGS = sales.reduce((sum, sale) => {
-					const item = items.find(i => i.id === sale.itemId)
-					if (!item) return sum
-					// Find the cost price from purchases for this item
-					const itemPurchases = purchases.filter(p => p.itemId === item.id)
-					if (itemPurchases.length === 0) return sum
-					// Use average cost price if multiple purchases exist
-					const avgCostPrice = itemPurchases.reduce((total, p) => total + (p.costPrice || 0), 0) / itemPurchases.length
-					return sum + ((sale.quantity || 0) * avgCostPrice)
-				}, 0)
-				
-				const grossProfit = totalRevenue - totalCOGS
-				const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
-				
-				const lowStockItems = inventory.filter(item => item.stock < 5).length
-				
-				// Today's calculations
-				const today = new Date().toISOString().slice(0, 10)
-				const todaySalesData = sales.filter(sale => {
-					const saleDate = sale.date ? new Date(sale.date).toISOString().slice(0, 10) : ''
-					return saleDate === today
-				})
-				
-				const todayRevenue = todaySalesData.reduce((sum, sale) => {
-					// Use actualPrice if available (includes discounts), otherwise fallback to item price
-					if (sale.actualPrice) {
-						return sum + ((sale.quantity || 0) * sale.actualPrice)
-					}
-					const item = items.find(i => i.id === sale.itemId)
-					return sum + ((sale.quantity || 0) * (item?.price || 0))
-				}, 0)
-				
-				const todaySalesCount = todaySalesData.length
-				
-				setStats({
-					totalItems,
-					totalPurchases,
-					totalSales,
-					totalStock,
-					totalRevenue,
-					totalCost: totalCOGS,
-					grossProfit,
-					profitMargin,
-					lowStockItems,
-					todayRevenue,
-					todaySales: todaySalesCount
-				})
-			} catch (error) {
-				console.error('Error loading dashboard stats:', error)
-			} finally {
-				setLoading(false)
-			}
-		}
+	const loading = itemsLoading || purchasesLoading || salesLoading || inventoryLoading
+
+	const stats = useMemo(() => {
+		const totalItems = items.length
+		const totalPurchases = purchases.length
+		const totalSales = sales.length
+		const totalStock = inventory.reduce((sum, item) => sum + item.stock, 0)
 		
-		loadStats()
-	}, [])
+		// Calculate revenue from sales using actual sale prices
+		const totalRevenue = sales.reduce((sum, sale) => {
+			// Use actualPrice if available (includes discounts), otherwise fallback to item price
+			if (sale.actualPrice) {
+				return sum + ((sale.quantity || 0) * sale.actualPrice)
+			}
+			const item = items.find(i => i.id === sale.itemId)
+			return sum + ((sale.quantity || 0) * (item?.price || 0))
+		}, 0)
+		
+		// Calculate cost of goods sold (COGS) - cost of items that were actually sold
+		const totalCOGS = sales.reduce((sum, sale) => {
+			const item = items.find(i => i.id === sale.itemId)
+			if (!item) return sum
+			// Find the cost price from purchases for this item
+			const itemPurchases = purchases.filter(p => p.itemId === item.id)
+			if (itemPurchases.length === 0) return sum
+			// Use average cost price if multiple purchases exist
+			const avgCostPrice = itemPurchases.reduce((total, p) => total + (p.costPrice || 0), 0) / itemPurchases.length
+			return sum + ((sale.quantity || 0) * avgCostPrice)
+		}, 0)
+		
+		const grossProfit = totalRevenue - totalCOGS
+		const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
+		
+		const lowStockItems = inventory.filter(item => item.stock < 5).length
+		
+		// Today's calculations
+		const today = new Date().toISOString().slice(0, 10)
+		const todaySalesData = sales.filter(sale => {
+			const saleDate = sale.date ? new Date(sale.date).toISOString().slice(0, 10) : ''
+			return saleDate === today
+		})
+		
+		const todayRevenue = todaySalesData.reduce((sum, sale) => {
+			// Use actualPrice if available (includes discounts), otherwise fallback to item price
+			if (sale.actualPrice) {
+				return sum + ((sale.quantity || 0) * sale.actualPrice)
+			}
+			const item = items.find(i => i.id === sale.itemId)
+			return sum + ((sale.quantity || 0) * (item?.price || 0))
+		}, 0)
+		
+		const todaySalesCount = todaySalesData.length
+		
+		return {
+			totalItems,
+			totalPurchases,
+			totalSales,
+			totalStock,
+			totalRevenue,
+			totalCost: totalCOGS,
+			grossProfit,
+			profitMargin,
+			lowStockItems,
+			todayRevenue,
+			todaySales: todaySalesCount
+		}
+	}, [items, purchases, sales, inventory])
 
 	if (loading) {
-		return (
-			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
-				Loading dashboard...
-			</div>
-		)
+		return <StatsSkeleton />
 	}
 
 	return (

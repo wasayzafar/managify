@@ -9,6 +9,7 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@tanstack/react-query": "^5.90.2",
 		"@zxing/browser": "0.1.5",
 		"@zxing/library": "0.21.2",
 		"firebase": "^12.2.1",

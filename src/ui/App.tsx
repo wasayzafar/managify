@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, Outlet, useLocation } from 'react-router-dom'
+import { useDataPrefetch } from '../hooks/useDataPrefetch'
 
 // Simple SVG icons
 const DashboardIcon = () => (
@@ -89,6 +90,23 @@ const SettingsIcon = () => (
 export default function App() {
 	const loc = useLocation()
 	const [sidebarOpen, setSidebarOpen] = useState(false)
+	const { prefetchPageData } = useDataPrefetch()
+
+	// Prefetch data based on current route
+	React.useEffect(() => {
+		const path = loc.pathname
+		if (path === '/') {
+			prefetchPageData('dashboard')
+		} else if (path.startsWith('/inventory')) {
+			prefetchPageData('inventory')
+		} else if (path.startsWith('/sales')) {
+			prefetchPageData('sales')
+		} else if (path.startsWith('/purchases')) {
+			prefetchPageData('purchases')
+		} else if (path.startsWith('/profit-loss')) {
+			prefetchPageData('profit-loss')
+		}
+	}, [loc.pathname, prefetchPageData])
 
 	return (
 		<div className="app-shell">
