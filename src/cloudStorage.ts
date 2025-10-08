@@ -168,6 +168,24 @@ export const listSales = async (userId: string): Promise<Sale[]> => {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sale));
 };
 
+export const listSalesByDateRange = async (userId: string, startDate: string, endDate: string): Promise<Sale[]> => {
+  const q = query(
+    collection(firestore, 'sales'), 
+    where('userId', '==', userId),
+    where('date', '>=', startDate),
+    where('date', '<=', endDate),
+    orderBy('date', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sale));
+};
+
+export const listSalesByDate = async (userId: string, date: string): Promise<Sale[]> => {
+  const startOfDay = date + 'T00:00:00.000Z';
+  const endOfDay = date + 'T23:59:59.999Z';
+  return listSalesByDateRange(userId, startOfDay, endOfDay);
+};
+
 export const addSale = async (userId: string, sale: Omit<Sale, 'id' | 'userId'>): Promise<string> => {
   const docRef = await addDoc(collection(firestore, 'sales'), { ...sale, userId });
   return docRef.id;

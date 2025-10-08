@@ -128,20 +128,22 @@ function uid(prefix: string) {
 
 function getUserId(): string {
 	if (!auth.currentUser) {
-		// Return empty string for now, will be handled by components
-		return '';
+		console.warn('No authenticated user found. Please log in.');
+		throw new Error('User not authenticated');
 	}
 	return auth.currentUser.uid;
 }
 
 export const db = {
 	async listItems(): Promise<Item[]> {
-		const userId = getUserId();
-		if (!userId) return [];
 		try {
+			const userId = getUserId();
 			return await cloudStorage.listItems(userId);
 		} catch (error) {
 			console.error('Error listing items:', error);
+			if (error instanceof Error && error.message === 'User not authenticated') {
+				throw error; // Re-throw auth errors so components can handle them
+			}
 			return [];
 		}
 	},
@@ -163,12 +165,14 @@ export const db = {
 	},
 
 	async listPurchases(): Promise<Purchase[]> {
-		const userId = getUserId();
-		if (!userId) return [];
 		try {
+			const userId = getUserId();
 			return await cloudStorage.listPurchases(userId);
 		} catch (error) {
 			console.error('Error listing purchases:', error);
+			if (error instanceof Error && error.message === 'User not authenticated') {
+				throw error;
+			}
 			return [];
 		}
 	},
@@ -193,12 +197,38 @@ export const db = {
 	},
 
 	async listSales(): Promise<Sale[]> {
-		const userId = getUserId();
-		if (!userId) return [];
 		try {
+			const userId = getUserId();
 			return await cloudStorage.listSales(userId);
 		} catch (error) {
 			console.error('Error listing sales:', error);
+			if (error instanceof Error && error.message === 'User not authenticated') {
+				throw error;
+			}
+			return [];
+		}
+	},
+	async listSalesByDateRange(startDate: string, endDate: string): Promise<Sale[]> {
+		try {
+			const userId = getUserId();
+			return await cloudStorage.listSalesByDateRange(userId, startDate, endDate);
+		} catch (error) {
+			console.error('Error listing sales by date range:', error);
+			if (error instanceof Error && error.message === 'User not authenticated') {
+				throw error;
+			}
+			return [];
+		}
+	},
+	async listSalesByDate(date: string): Promise<Sale[]> {
+		try {
+			const userId = getUserId();
+			return await cloudStorage.listSalesByDate(userId, date);
+		} catch (error) {
+			console.error('Error listing sales by date:', error);
+			if (error instanceof Error && error.message === 'User not authenticated') {
+				throw error;
+			}
 			return [];
 		}
 	},

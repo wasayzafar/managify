@@ -1,15 +1,29 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useItems, usePurchases, useSales, useInventory } from '../hooks/useDataQueries'
 import { StatsSkeleton } from '../components/LoadingSkeleton'
+import { seedTestData } from '../utils/testDataSeeder'
 
 export default function DashboardPage() {
 	const { data: items = [], isLoading: itemsLoading } = useItems()
 	const { data: purchases = [], isLoading: purchasesLoading } = usePurchases()
 	const { data: sales = [], isLoading: salesLoading } = useSales()
 	const { data: inventory = [], isLoading: inventoryLoading } = useInventory()
+	const [seeding, setSeeding] = useState(false)
 
 	const loading = itemsLoading || purchasesLoading || salesLoading || inventoryLoading
+
+	const handleSeedData = async () => {
+		setSeeding(true)
+		try {
+			await seedTestData()
+			window.location.reload()
+		} catch (error) {
+			console.error('Error seeding data:', error)
+		} finally {
+			setSeeding(false)
+		}
+	}
 
 	const stats = useMemo(() => {
 		const totalItems = items.length
@@ -84,8 +98,28 @@ export default function DashboardPage() {
 	return (
 		<div>
 			<div className="card" style={{ marginBottom: '24px' }}>
-				<h1 style={{ margin: '0 0 8px 0', fontSize: '28px' }}>Dashboard</h1>
-				<p style={{ margin: '0', color: '#8b949e' }}>Welcome to Managify Management System</p>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+					<div>
+						<h1 style={{ margin: '0 0 8px 0', fontSize: '28px' }}>Dashboard</h1>
+						<p style={{ margin: '0', color: '#8b949e' }}>Welcome to Managify Management System</p>
+					</div>
+					{items.length === 0 && (
+						<button 
+							onClick={handleSeedData}
+							disabled={seeding}
+							style={{
+								padding: '10px 20px',
+								backgroundColor: seeding ? '#ccc' : '#007bff',
+								color: 'white',
+								border: 'none',
+								borderRadius: '5px',
+								cursor: seeding ? 'not-allowed' : 'pointer'
+							}}
+						>
+							{seeding ? '🌱 Seeding...' : '🌱 Add Sample Data'}
+						</button>
+					)}
+				</div>
 			</div>
 
 			<div className="dashboard-stats">

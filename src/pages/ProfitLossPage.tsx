@@ -11,6 +11,7 @@ export default function ProfitLossPage() {
 		return date.toISOString().slice(0, 10)
 	})
 	const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
+	const [loading, setLoading] = useState(true)
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
 		phone: '',
@@ -58,6 +59,7 @@ export default function ProfitLossPage() {
 
 	useEffect(() => {
 		const loadPLData = async () => {
+			setLoading(true)
 			try {
 				const [purchases, sales, expenses] = await Promise.all([
 					db.listPurchases(),
@@ -148,6 +150,8 @@ export default function ProfitLossPage() {
 				})
 			} catch (error) {
 				console.error('Error loading P&L data:', error)
+			} finally {
+				setLoading(false)
 			}
 		}
 		
@@ -167,6 +171,35 @@ export default function ProfitLossPage() {
 		pdf.save(`profit_loss_${startDate}_to_${endDate}.pdf`)
 	}
 
+	if (loading) {
+		return (
+			<div className="card">
+				<h2>Profit & Loss Statement</h2>
+				<div style={{ 
+					display: 'flex', 
+					justifyContent: 'center', 
+					alignItems: 'center', 
+					height: '200px', 
+					color: '#6c757d',
+					fontSize: '16px'
+				}}>
+					<div style={{ textAlign: 'center' }}>
+						<div style={{ 
+							width: '40px', 
+							height: '40px', 
+							border: '4px solid #f3f3f3',
+							borderTop: '4px solid #007bff',
+							borderRadius: '50%',
+							animation: 'spin 1s linear infinite',
+							margin: '0 auto 16px'
+						}}></div>
+						Loading profit & loss data...
+					</div>
+				</div>
+			</div>
+		)
+	}
+
 	return (
 		<div className="card">
 			<h2>Profit & Loss Statement</h2>
@@ -174,7 +207,11 @@ export default function ProfitLossPage() {
 			<div className="form-grid" style={{ marginBottom: 16 }}>
 				<div>
 					<label>Period</label>
-					<select value={dateRange} onChange={e => setDateRange(e.target.value)}>
+					<select 
+						value={dateRange} 
+						onChange={e => setDateRange(e.target.value)}
+						disabled={loading}
+					>
 						<option value="thisMonth">This Month</option>
 						<option value="custom">Custom Range</option>
 					</select>
@@ -183,16 +220,28 @@ export default function ProfitLossPage() {
 					<>
 						<div>
 							<label>Start Date</label>
-							<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+							<input 
+								type="date" 
+								value={startDate} 
+								onChange={e => setStartDate(e.target.value)}
+								disabled={loading}
+							/>
 						</div>
 						<div>
 							<label>End Date</label>
-							<input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+							<input 
+								type="date" 
+								value={endDate} 
+								onChange={e => setEndDate(e.target.value)}
+								disabled={loading}
+							/>
 						</div>
 					</>
 				)}
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-					<button onClick={downloadPdf}>Download PDF</button>
+					<button onClick={downloadPdf} disabled={loading}>
+						{loading ? 'Loading...' : 'Download PDF'}
+					</button>
 				</div>
 			</div>
 

@@ -17,6 +17,9 @@ export default function SalesPage() {
 	const [scannerEnabled, setScannerEnabled] = useState(false)
 	const [searchTerm, setSearchTerm] = useState('')
 	const [dateFilter, setDateFilter] = useState('')
+	const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10)) // Today by default
+	const [endDate, setEndDate] = useState('')
+	const [filterType, setFilterType] = useState<'all' | 'date' | 'range'>('date')
 
 	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(
 		(code) => setSku(code),
@@ -35,15 +38,34 @@ export default function SalesPage() {
 
 	const item = items.find(i => i.sku === sku)
 
+	const loadSalesData = async () => {
+		setLoading(true)
+		try {
+			let salesData: Sale[] = []
+			
+			if (filterType === 'date' && startDate) {
+				salesData = await db.listSalesByDate(startDate)
+			} else if (filterType === 'range' && startDate && endDate) {
+				salesData = await db.listSalesByDateRange(startDate, endDate)
+			} else {
+				salesData = await db.listSales()
+			}
+			
+			setSales(salesData)
+		} catch (error) {
+			console.error('Error loading sales data:', error)
+		} finally {
+			setLoading(false)
+		}
+	}
+
 	useEffect(() => {
-		const loadData = async () => {
+		const loadInitialData = async () => {
 			try {
-				const [salesData, itemsData, storeData] = await Promise.all([
-					db.listSales(),
+				const [itemsData, storeData] = await Promise.all([
 					db.listItems(),
 					db.getStoreInfo()
 				])
-				setSales(salesData)
 				setItems(itemsData)
 				setStoreInfo(storeData)
 				// Preload logo for instant printing
@@ -51,13 +73,15 @@ export default function SalesPage() {
 					preloadImageAsBase64(storeData.logo).catch(console.warn)
 				}
 			} catch (error) {
-				console.error('Error loading data:', error)
-			} finally {
-				setLoading(false)
+				console.error('Error loading initial data:', error)
 			}
 		}
-		loadData()
+		loadInitialData()
 	}, [])
+
+	useEffect(() => {
+		loadSalesData()
+	}, [filterType, startDate, endDate])
 
 	async function addLine(e: FormEvent) {
 		e.preventDefault()
@@ -99,18 +123,78 @@ export default function SalesPage() {
 			<h2>Sales</h2>
 
 
-			<div className="form-grid" style={{ marginBottom: 16 }}>
-				<input 
-					placeholder="Search by Invoice No" 
-					value={searchTerm} 
-					onChange={e => setSearchTerm(e.target.value)} 
-				/>
-				<input 
-					type="date" 
-					value={dateFilter} 
-					onChange={e => setDateFilter(e.target.value)}
-					placeholder="Filter by date"
-				/>
+			<div style={{ marginBottom: 16, display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+				<div>
+					<label>Show sales from:</label>
+					<select 
+						value={filterType} 
+						onChange={e => {
+							const newFilterType = e.target.value as 'all' | 'date' | 'range';
+							setFilterType(newFilterType);
+							if (newFilterType === 'date') {
+								setStartDate(new Date().toISOString().slice(0, 10)); // Today
+							} else if (newFilterType === 'range') {
+								const today = new Date().toISOString().slice(0, 10);
+								const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+								setStartDate(lastWeek);
+								setEndDate(today);
+							}
+						}}
+						style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', marginLeft: '8px' }}
+					>
+						<option value="all">All Time</option>
+						<option value="date">Today</option>
+						<option value="range">Last 7 Days</option>
+					</select>
+				</div>
+
+				{filterType === 'date' && (
+					<div>
+						<input 
+							type="date" 
+							value={startDate} 
+							onChange={e => setStartDate(e.target.value)}
+							style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+						/>
+					</div>
+				)}
+
+				{filterType === 'range' && (
+					<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+						<input 
+							type="date" 
+							value={startDate} 
+							onChange={e => setStartDate(e.target.value)}
+							style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+						/>
+						<span>to</span>
+						<input 
+							type="date" 
+							value={endDate} 
+							onChange={e => setEndDate(e.target.value)}
+							style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
+						/>
+					</div>
+				)}
+
+				<div>
+					<input 
+						placeholder="Search by Invoice No" 
+						value={searchTerm} 
+						onChange={e => setSearchTerm(e.target.value)}
+						style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', width: '200px' }}
+					/>
+				</div>
+			</div>
+
+			<div style={{ marginBottom: '16px', padding: '8px 16px', backgroundColor: '#e9ecef', borderRadius: '4px' }}>
+				<strong>Showing {sales.length} sales</strong>
+				{filterType === 'date' && startDate && (
+					<span> for {new Date(startDate).toLocaleDateString()}</span>
+				)}
+				{filterType === 'range' && startDate && endDate && (
+					<span> from {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}</span>
+				)}
 			</div>
 
 			<div className="table-container">

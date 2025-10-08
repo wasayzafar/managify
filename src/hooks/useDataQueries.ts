@@ -22,6 +22,13 @@ export const useItems = () => {
     queryFn: () => db.listItems(),
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on authentication errors
+      if (error instanceof Error && error.message === 'User not authenticated') {
+        return false;
+      }
+      return failureCount < 3;
+    },
   })
 }
 
@@ -41,6 +48,12 @@ export const usePurchases = () => {
     queryFn: () => db.listPurchases(),
     staleTime: 2 * 60 * 1000, // 2 minutes
     cacheTime: 10 * 60 * 1000,
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message === 'User not authenticated') {
+        return false;
+      }
+      return failureCount < 3;
+    },
   })
 }
 
@@ -51,6 +64,12 @@ export const useSales = () => {
     queryFn: () => db.listSales(),
     staleTime: 2 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message === 'User not authenticated') {
+        return false;
+      }
+      return failureCount < 3;
+    },
   })
 }
 
