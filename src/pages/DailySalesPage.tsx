@@ -4,7 +4,8 @@ import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 export default function DailySalesPage() {
-	const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10))
+	const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
+	const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
 		phone: '',
@@ -44,11 +45,17 @@ export default function DailySalesPage() {
 					db.listItems()
 				])
 				
-				// Filter sales for selected date
+				console.log('All sales:', sales)
+				console.log('Date range:', startDate, 'to', endDate)
+				
+				// Filter sales for date range
 				const filteredSales = sales.filter(sale => {
 					const saleDate = sale.date ? new Date(sale.date).toISOString().slice(0, 10) : ''
-					return saleDate === selectedDate
+					console.log('Sale date:', saleDate, 'matches range:', saleDate >= startDate && saleDate <= endDate)
+					return saleDate >= startDate && saleDate <= endDate
 				})
+				
+				console.log('Filtered sales:', filteredSales)
 
 				// Calculate totals
 				const totalTransactions = filteredSales.length
@@ -87,7 +94,7 @@ export default function DailySalesPage() {
 		}
 		
 		loadDailyData()
-	}, [selectedDate])
+	}, [startDate, endDate])
 
 	async function downloadPdf() {
 		const el = document.getElementById('daily-sales-report')
@@ -99,7 +106,7 @@ export default function DailySalesPage() {
 		const imgWidth = pageWidth
 		const imgHeight = canvas.height * imgWidth / canvas.width
 		pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
-		pdf.save(`daily_sales_${selectedDate}.pdf`)
+		pdf.save(`sales_report_${startDate}_to_${endDate}.pdf`)
 	}
 
 	return (
@@ -108,12 +115,16 @@ export default function DailySalesPage() {
 			
 			<div className="form-grid" style={{ marginBottom: 16 }}>
 				<div>
-					<label>Select Date</label>
-					<input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+					<label>Start Date</label>
+					<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+				</div>
+				<div>
+					<label>End Date</label>
+					<input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
 				</div>
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
 					<button onClick={downloadPdf} disabled={dailyData.totalTransactions === 0}>
-						Download Daily Sales PDF
+						Download Sales Report PDF
 					</button>
 				</div>
 			</div>
@@ -121,7 +132,7 @@ export default function DailySalesPage() {
 			{dailyData.totalTransactions === 0 ? (
 				<div className="card" style={{ textAlign: 'center', padding: '40px' }}>
 					<h3>No Sales Found</h3>
-					<p>No sales were recorded on {new Date(selectedDate).toLocaleDateString()}</p>
+					<p>No sales were recorded from {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}</p>
 				</div>
 			) : (
 				<div id="daily-sales-report" style={{ fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto', padding: '20px', background: 'white', color: 'black' }}>
@@ -174,7 +185,7 @@ export default function DailySalesPage() {
 
 					<div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between' }}>
 						<div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-							<div><strong>Report Date:</strong> {new Date(selectedDate).toLocaleDateString()}</div>
+							<div><strong>Report Period:</strong> {new Date(startDate).toLocaleDateString()} - {new Date(endDate).toLocaleDateString()}</div>
 							<div><strong>Generated:</strong> {new Date().toLocaleString()}</div>
 						</div>
 						<div style={{ fontSize: '14px', textAlign: 'right' }}>
@@ -226,7 +237,7 @@ export default function DailySalesPage() {
 
 					<div style={{ marginTop: '30px', textAlign: 'center', fontSize: '12px', color: '#666' }}>
 						<p>Daily sales report generated from inventory management system</p>
-						<p>Report covers all sales transactions for {new Date(selectedDate).toLocaleDateString()}</p>
+						<p>Report covers all sales transactions from {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}</p>
 					</div>
 				</div>
 			)}
