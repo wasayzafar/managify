@@ -30,10 +30,7 @@ const Login: React.FC = () => {
       <input type="email" placeholder="Email" onChange={(e) => setEmail(e.target.value)} className="place" />
       <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)}className="place" />
       <button type="submit" className="login-btn">Login</button>
-               {/* <div className="login-header">
-      {/* <p> For Subscription Contact: <a href="tel:+923711376983">+92 371 1376983</a><br />Powered By NativeEdge Studio  © {new Date().getFullYear()} Managify. All rights reserved.</p> */}
-      </div> */}
-    </form>
+         </form>
     </section>
   );
 };
