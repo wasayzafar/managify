@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useDataPrefetch } from '../hooks/useDataPrefetch'
+import { SEO } from '../components/SEO'
 
 // Simple SVG icons
 const DashboardIcon = () => (
@@ -110,6 +111,7 @@ export default function App() {
 
 	return (
 		<div className="app-shell">
+			<SEO />
 			<header className="mobile-header">
 				<button className="mobile-menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
 				<div className="mobile-logo">
