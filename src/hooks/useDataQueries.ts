@@ -73,6 +73,18 @@ export const useSales = () => {
   })
 }
 
+export const useSalesByDateRange = (startDate: string, endDate: string) => {
+  return useQuery({
+    queryKey: [...queryKeys.sales, 'dateRange', startDate, endDate],
+    queryFn: () => startDate === endDate 
+      ? db.listSalesByDate(startDate)
+      : db.listSalesByDateRange(startDate, endDate),
+    enabled: !!startDate && !!endDate,
+    staleTime: 1 * 60 * 1000, // 1 minute
+    cacheTime: 5 * 60 * 1000,
+  })
+}
+
 // Inventory query
 export const useInventory = () => {
   return useQuery({
@@ -100,6 +112,22 @@ export const useExpenses = () => {
     queryFn: () => db.listExpenses(),
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+  })
+}
+
+export const useExpensesByDateRange = (startDate: string, endDate: string) => {
+  return useQuery({
+    queryKey: [...queryKeys.expenses, 'dateRange', startDate, endDate],
+    queryFn: async () => {
+      const expenses = await db.listExpenses()
+      return expenses.filter(e => {
+        const expenseDate = e.date ? new Date(e.date) : new Date()
+        return expenseDate >= new Date(startDate) && expenseDate <= new Date(endDate + 'T23:59:59')
+      })
+    },
+    enabled: !!startDate && !!endDate,
+    staleTime: 2 * 60 * 1000,
+    cacheTime: 5 * 60 * 1000,
   })
 }
 

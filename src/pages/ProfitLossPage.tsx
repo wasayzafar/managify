@@ -54,6 +54,18 @@ export default function ProfitLossPage() {
 			const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
 			setStartDate(start.toISOString().slice(0, 10))
 			setEndDate(end.toISOString().slice(0, 10))
+		} else if (dateRange === 'lastMonth') {
+			const now = new Date()
+			const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+			const end = new Date(now.getFullYear(), now.getMonth(), 0)
+			setStartDate(start.toISOString().slice(0, 10))
+			setEndDate(end.toISOString().slice(0, 10))
+		} else if (dateRange === 'thisYear') {
+			const now = new Date()
+			const start = new Date(now.getFullYear(), 0, 1)
+			const end = new Date(now.getFullYear(), 11, 31)
+			setStartDate(start.toISOString().slice(0, 10))
+			setEndDate(end.toISOString().slice(0, 10))
 		}
 	}, [dateRange])
 
@@ -213,6 +225,8 @@ export default function ProfitLossPage() {
 						disabled={loading}
 					>
 						<option value="thisMonth">This Month</option>
+						<option value="lastMonth">Last Month</option>
+						<option value="thisYear">This Year</option>
 						<option value="custom">Custom Range</option>
 					</select>
 				</div>
@@ -225,6 +239,7 @@ export default function ProfitLossPage() {
 								value={startDate} 
 								onChange={e => setStartDate(e.target.value)}
 								disabled={loading}
+								style={{ cursor: 'pointer' }}
 							/>
 						</div>
 						<div>
@@ -234,6 +249,7 @@ export default function ProfitLossPage() {
 								value={endDate} 
 								onChange={e => setEndDate(e.target.value)}
 								disabled={loading}
+								style={{ cursor: 'pointer' }}
 							/>
 						</div>
 					</>

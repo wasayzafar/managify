@@ -1,4 +1,4 @@
-import { auth } from './firebase';
+// Complete storage.ts replacement for Supabase
 import { supabase } from './supabase';
 import * as supabaseStorage from './supabaseStorage';
 
@@ -115,27 +115,20 @@ export type Supplier = {
 	createdAt?: string
 }
 
-function getUserId(): string {
-	if (!auth.currentUser) {
+async function getUserId(): Promise<string> {
+	const { data: { user } } = await supabase.auth.getUser();
+	if (!user) {
 		console.warn('No authenticated user found. Please log in.');
 		throw new Error('User not authenticated');
 	}
-	return auth.currentUser.uid;
+	return user.id;
 }
 
 export const db = {
 	async listItems(): Promise<Item[]> {
 		try {
-			const userId = getUserId();
-			const itemsData = await supabaseStorage.listItems(userId);
-			return itemsData.map(item => ({
-				id: item.id,
-				sku: item.sku,
-				name: item.name,
-				price: item.price,
-				costPrice: item.cost_price || 0,
-				createdAt: item.created_at
-			}));
+			const userId = await getUserId();
+			return await supabaseStorage.listItems(userId);
 		} catch (error) {
 			console.error('Error listing items:', error);
 			if (error instanceof Error && error.message === 'User not authenticated') {
@@ -149,22 +142,13 @@ export const db = {
 		return items.find(i => i.sku === sku);
 	},
 	async createItem(data: Omit<Item, 'id'>): Promise<Item> {
-		const userId = getUserId();
-		const mappedData: any = { ...data, created_at: new Date().toISOString() };
-		if (data.costPrice !== undefined) {
-			mappedData.cost_price = data.costPrice;
-			delete mappedData.costPrice;
-		}
-		const id = await supabaseStorage.addItem(userId, mappedData);
-		return { id, ...data, createdAt: mappedData.created_at };
+		const userId = await getUserId();
+		const itemWithDate = { ...data, createdAt: new Date().toISOString() };
+		const id = await supabaseStorage.addItem(userId, itemWithDate);
+		return { id, ...itemWithDate };
 	},
 	async updateItem(id: string, data: Partial<Omit<Item, 'id'>>): Promise<void> {
-		const mappedData: any = { ...data };
-		if (data.costPrice !== undefined) {
-			mappedData.cost_price = data.costPrice;
-			delete mappedData.costPrice;
-		}
-		await supabaseStorage.updateItem(id, mappedData);
+		await supabaseStorage.updateItem(id, data);
 	},
 	async deleteItem(id: string): Promise<void> {
 		await supabaseStorage.deleteItem(id);
@@ -172,19 +156,8 @@ export const db = {
 
 	async listPurchases(): Promise<Purchase[]> {
 		try {
-			const userId = getUserId();
-			const purchasesData = await supabaseStorage.listPurchases(userId);
-			return purchasesData.map(purchase => ({
-				id: purchase.id,
-				itemId: purchase.item_id,
-				quantity: purchase.quantity,
-				qty: purchase.quantity,
-				date: purchase.date,
-				costPrice: purchase.cost_price,
-				supplier: purchase.supplier,
-				supplierPhone: purchase.supplier_phone,
-				note: purchase.note
-			}));
+			const userId = await getUserId();
+			return await supabaseStorage.listPurchases(userId);
 		} catch (error) {
 			console.error('Error listing purchases:', error);
 			if (error instanceof Error && error.message === 'User not authenticated') {
@@ -194,7 +167,7 @@ export const db = {
 		}
 	},
 	async createPurchase(data: { itemId: string, qty: number, costPrice?: number, supplier?: string, supplierPhone?: string, note?: string, purchasedAt?: string, date?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string }): Promise<Purchase> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		const purchase = {
 			item_id: data.itemId,
 			quantity: data.qty,
@@ -213,21 +186,8 @@ export const db = {
 
 	async listSales(): Promise<Sale[]> {
 		try {
-			const userId = getUserId();
-			const salesData = await supabaseStorage.listSales(userId);
-			return salesData.map(sale => ({
-				id: sale.id,
-				itemId: sale.item_id,
-				quantity: sale.quantity,
-				date: sale.date,
-				actualPrice: sale.actual_price,
-				originalPrice: sale.original_price,
-				itemDiscount: sale.item_discount,
-				billDiscount: sale.bill_discount,
-				customerName: sale.customer_name,
-				customerPhone: sale.customer_phone,
-				invoiceNo: sale.invoice_no
-			}));
+			const userId = await getUserId();
+			return await supabaseStorage.listSales(userId);
 		} catch (error) {
 			console.error('Error listing sales:', error);
 			if (error instanceof Error && error.message === 'User not authenticated') {
@@ -238,21 +198,8 @@ export const db = {
 	},
 	async listSalesByDateRange(startDate: string, endDate: string): Promise<Sale[]> {
 		try {
-			const userId = getUserId();
-			const salesData = await supabaseStorage.listSalesByDateRange(userId, startDate, endDate);
-			return salesData.map(sale => ({
-				id: sale.id,
-				itemId: sale.item_id,
-				quantity: sale.quantity,
-				date: sale.date,
-				actualPrice: sale.actual_price,
-				originalPrice: sale.original_price,
-				itemDiscount: sale.item_discount,
-				billDiscount: sale.bill_discount,
-				customerName: sale.customer_name,
-				customerPhone: sale.customer_phone,
-				invoiceNo: sale.invoice_no
-			}));
+			const userId = await getUserId();
+			return await supabaseStorage.listSalesByDateRange(userId, startDate, endDate);
 		} catch (error) {
 			console.error('Error listing sales by date range:', error);
 			if (error instanceof Error && error.message === 'User not authenticated') {
@@ -263,21 +210,8 @@ export const db = {
 	},
 	async listSalesByDate(date: string): Promise<Sale[]> {
 		try {
-			const userId = getUserId();
-			const salesData = await supabaseStorage.listSalesByDate(userId, date);
-			return salesData.map(sale => ({
-				id: sale.id,
-				itemId: sale.item_id,
-				quantity: sale.quantity,
-				date: sale.date,
-				actualPrice: sale.actual_price,
-				originalPrice: sale.original_price,
-				itemDiscount: sale.item_discount,
-				billDiscount: sale.bill_discount,
-				customerName: sale.customer_name,
-				customerPhone: sale.customer_phone,
-				invoiceNo: sale.invoice_no
-			}));
+			const userId = await getUserId();
+			return await supabaseStorage.listSalesByDate(userId, date);
 		} catch (error) {
 			console.error('Error listing sales by date:', error);
 			if (error instanceof Error && error.message === 'User not authenticated') {
@@ -287,7 +221,7 @@ export const db = {
 		}
 	},
 	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string }): Promise<Sale> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		const storeInfo = await this.getStoreInfo();
 		const sale = {
 			item_id: data.itemId,
@@ -310,7 +244,7 @@ export const db = {
 
 	async inventory(): Promise<Array<{ itemId: string, itemName: string, itemSku: string, stock: number }>> {
 		try {
-			const userId = getUserId();
+			const userId = await getUserId();
 			return await supabaseStorage.getInventory(userId);
 		} catch (error) {
 			console.error('Error getting inventory:', error);
@@ -320,39 +254,39 @@ export const db = {
 
 	async getStoreInfo(): Promise<StoreInfo> {
 		try {
-			const userId = getUserId();
+			const userId = await getUserId();
 			const info = await supabaseStorage.getStoreInfo(userId);
 			return {
-				store_name: info.store_name,
+				storeName: info.store_name,
 				phone: info.phone,
 				address: info.address,
 				email: info.email,
 				website: info.website,
-				tax_number: info.tax_number,
+				taxNumber: info.tax_number,
 				logo: info.logo
 			};
 		} catch (error) {
 			console.error('Error getting store info:', error);
 			return {
-				store_name: 'Managify',
+				storeName: 'Managify',
 				phone: '',
 				address: '',
 				email: '',
 				website: '',
-				tax_number: '',
+				taxNumber: '',
 				logo: ''
 			};
 		}
 	},
 	async updateStoreInfo(data: Partial<StoreInfo>): Promise<StoreInfo> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		const mappedData = {
-			store_name: data.store_name || 'Managify',
+			store_name: data.storeName || 'Managify',
 			phone: data.phone || '',
 			address: data.address || '',
 			email: data.email || '',
 			website: data.website || '',
-			tax_number: data.tax_number || '',
+			tax_number: data.taxNumber || '',
 			logo: data.logo || ''
 		};
 		await supabaseStorage.updateStoreInfo(userId, mappedData);
@@ -361,7 +295,7 @@ export const db = {
 
 	async listExpenses(): Promise<Expense[]> {
 		try {
-			const userId = getUserId();
+			const userId = await getUserId();
 			return await supabaseStorage.listExpenses(userId);
 		} catch (error) {
 			console.error('Error listing expenses:', error);
@@ -369,7 +303,7 @@ export const db = {
 		}
 	},
 	async createExpense(data: { type: string, amount: number, description?: string, date?: string }): Promise<Expense> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		const expense = {
 			type: data.type,
 			amount: data.amount,
@@ -388,7 +322,7 @@ export const db = {
 
 	async listEmployees(): Promise<Employee[]> {
 		try {
-			const userId = getUserId();
+			const userId = await getUserId();
 			return await supabaseStorage.listEmployees(userId);
 		} catch (error) {
 			console.error('Error listing employees:', error);
@@ -396,7 +330,7 @@ export const db = {
 		}
 	},
 	async createEmployee(data: { name: string, salary: number, firstMonthPay: number, phone: string, address: string, email?: string, position?: string, joinDate?: string }): Promise<Employee> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		const employee = {
 			name: data.name,
 			salary: data.salary,
@@ -418,7 +352,7 @@ export const db = {
 	},
 
 	async createInvoice(data: { invoiceNo: string, customer: string, phone?: string, lines: any[], total: number, billDiscount: number }): Promise<Invoice> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		const storeInfo = await this.getStoreInfo();
 		const invoice = {
 			invoice_no: data.invoiceNo,
@@ -428,14 +362,14 @@ export const db = {
 			total: data.total,
 			bill_discount: data.billDiscount,
 			date: new Date().toISOString(),
-			created_at: new Date().toISOString(),
+			created_at: new Date().toLocaleString(),
 		};
 		const id = await supabaseStorage.addInvoice(userId, invoice);
-		return { id, invoiceNo: data.invoiceNo, customer: data.customer, phone: data.phone, lines: data.lines, total: data.total, billDiscount: data.billDiscount, date: invoice.date, createdAt: new Date().toLocaleString(), storeInfo };
+		return { id, invoiceNo: data.invoiceNo, customer: data.customer, phone: data.phone, lines: data.lines, total: data.total, billDiscount: data.billDiscount, date: invoice.date, createdAt: invoice.created_at, storeInfo };
 	},
 	async listInvoices(): Promise<Invoice[]> {
 		try {
-			const userId = getUserId();
+			const userId = await getUserId();
 			return await supabaseStorage.listInvoices(userId);
 		} catch (error) {
 			console.error('Error listing invoices:', error);
@@ -445,7 +379,7 @@ export const db = {
 
 	async listSuppliers(): Promise<Supplier[]> {
 		try {
-			const userId = getUserId();
+			const userId = await getUserId();
 			return await supabaseStorage.listSuppliers(userId);
 		} catch (error) {
 			console.error('Error listing suppliers:', error);
@@ -453,7 +387,7 @@ export const db = {
 		}
 	},
 	async createSupplier(data: { name: string, phone: string, address: string }): Promise<Supplier> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		const supplier = {
 			supplier_id: Math.floor(1000 + Math.random() * 9000).toString(),
 			name: data.name,
@@ -472,7 +406,7 @@ export const db = {
 	},
 
 	async clearAllData(): Promise<void> {
-		const userId = getUserId();
+		const userId = await getUserId();
 		await supabaseStorage.clearAllData(userId);
 	},
 }

@@ -7,7 +7,7 @@ export default function CreditsPage() {
 	const [creditPurchases, setCreditPurchases] = useState<(Purchase & { item?: Item })[]>([])
 	const [loading, setLoading] = useState(true)
 	const [selectedPurchase, setSelectedPurchase] = useState<(Purchase & { item?: Item }) | null>(null)
-	const [storeInfo, setStoreInfo] = useState<StoreInfo>({ storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '' })
+	const [storeInfo, setStoreInfo] = useState<StoreInfo>({ store_name: 'Managify', phone: '', address: '', email: '', website: '', tax_number: '', logo: '' })
 	const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all')
 	const [searchTerm, setSearchTerm] = useState('')
 
@@ -257,7 +257,7 @@ export default function CreditsPage() {
 						</div>
 						<div id="credit-bill-print" style={{ fontFamily: 'Arial, sans-serif', padding: '20px', background: 'white', color: 'black', borderRadius: '8px' }}>
 							<div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
-								<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>{storeInfo.storeName.toUpperCase()}</h1>
+								<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>{storeInfo.store_name.toUpperCase()}</h1>
 								{storeInfo.address && <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>{storeInfo.address}</p>}
 								{storeInfo.phone && <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>Phone: {storeInfo.phone}</p>}
 								<p style={{ margin: '10px 0 5px 0', fontSize: '14px', color: '#666' }}>Purchase Invoice</p>

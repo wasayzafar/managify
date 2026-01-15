@@ -1,39 +1,42 @@
 import { FormEvent, useMemo, useState, useEffect } from 'react'
 import { db, Item } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
+import { useItems, usePurchases } from '../hooks/useDataQueries'
 
 export default function ItemsPage() {
-	const [items, setItems] = useState<Item[]>([])
 	const [filter, setFilter] = useState('')
 	const [form, setForm] = useState({ sku: '', name: '', price: '', costPrice: '' })
 	const [editingId, setEditingId] = useState<string | null>(null)
 	const [editForm, setEditForm] = useState<{ sku: string, name: string, price: string, costPrice: string }>({ sku: '', name: '', price: '', costPrice: '' })
-	const [loading, setLoading] = useState(true)
 	const [scannerEnabled, setScannerEnabled] = useState(false)
+
+	const { data: items = [], isLoading: itemsLoading, refetch } = useItems()
+	const { data: purchases = [] } = usePurchases()
 
 	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(
 		(code) => setForm({ ...form, sku: code }),
 		scannerEnabled
 	)
 
-	useEffect(() => {
-		const loadItems = async () => {
-			try {
-				const itemsData = await db.listItems()
-				setItems(itemsData)
-			} catch (error) {
-				console.error('Error loading items:', error)
-			} finally {
-				setLoading(false)
+	const enrichedItems = useMemo(() => {
+		return items.map(item => {
+			const itemPurchases = purchases.filter(p => p.itemId === item.id)
+			const latestPurchase = itemPurchases.sort((a, b) => 
+				new Date(b.date || '').getTime() - new Date(a.date || '').getTime()
+			)[0]
+			const costPrice = latestPurchase?.costPrice || 0
+			
+			return {
+				...item,
+				costPrice
 			}
-		}
-		loadItems()
-	}, [])
+		})
+	}, [items, purchases])
 
-	const filtered = useMemo(() => items.filter(i => (
+	const filtered = useMemo(() => enrichedItems.filter(i => (
 		i.sku.toLowerCase().includes(filter.toLowerCase()) ||
 		i.name.toLowerCase().includes(filter.toLowerCase())
-	)), [items, filter])
+	)), [enrichedItems, filter])
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault()
@@ -42,8 +45,7 @@ export default function ItemsPage() {
 			const price = Number(form.price || '0')
 			const costPrice = Number(form.costPrice || '0')
 			await db.createItem({ sku: form.sku, name: form.name, price, costPrice })
-			const updatedItems = await db.listItems()
-			setItems(updatedItems)
+			refetch()
 			setForm({ sku: '', name: '', price: '', costPrice: '' })
 		} catch (error) {
 			console.error('Error creating item:', error)
@@ -60,8 +62,7 @@ export default function ItemsPage() {
 			const price = Number(editForm.price || '0')
 			const costPrice = Number(editForm.costPrice || '0')
 			await db.updateItem(id, { sku: editForm.sku, name: editForm.name, price, costPrice })
-			const updatedItems = await db.listItems()
-			setItems(updatedItems)
+			refetch()
 			setEditingId(null)
 		} catch (error) {
 			console.error('Error updating item:', error)
@@ -75,14 +76,13 @@ export default function ItemsPage() {
 	async function deleteItem(id: string) {
 		try {
 			await db.deleteItem(id)
-			const updatedItems = await db.listItems()
-			setItems(updatedItems)
+			refetch()
 		} catch (error) {
 			console.error('Error deleting item:', error)
 		}
 	}
 
-	if (loading) {
+	if (itemsLoading) {
 		return (
 			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
 				Loading items...
@@ -152,7 +152,7 @@ export default function ItemsPage() {
 								<td>
 									{editingId === i.id ? (
 										<input type="number" step="0.01" value={editForm.costPrice} onChange={e => setEditForm({ ...editForm, costPrice: e.target.value })} />
-									) : (i.costPrice || 0).toFixed(2)}
+									) : (i.costPrice !== undefined ? i.costPrice.toFixed(2) : '0.00')}
 								</td>
 								<td>{i.createdAt ? new Date(i.createdAt).toLocaleString() : 'N/A'}</td>
 								<td style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

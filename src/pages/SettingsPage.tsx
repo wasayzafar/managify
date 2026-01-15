@@ -5,12 +5,12 @@ import { useAuth } from '../auth/useAuth'
 
 export default function SettingsPage() {
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
-		storeName: 'Managify',
+		store_name: 'Managify',
 		phone: '',
 		address: '',
 		email: '',
 		website: '',
-		taxNumber: '',
+		tax_number: '',
 		logo: ''
 	})
 	const [isEditing, setIsEditing] = useState(false)
@@ -25,6 +25,7 @@ export default function SettingsPage() {
 		const loadStoreInfo = async () => {
 			try {
 				const info = await db.getStoreInfo()
+				console.log('Loaded store info:', info)
 				setStoreInfo(info)
 			} catch (error) {
 				console.error('Error loading store info:', error)
@@ -185,8 +186,8 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="text"
-							value={storeInfo.storeName}
-							onChange={(e) => handleChange('storeName', e.target.value)}
+							value={storeInfo.store_name || ''}
+							onChange={(e) => handleChange('store_name', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter store name"
 						/>
@@ -198,7 +199,7 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="tel"
-							value={storeInfo.phone}
+							value={storeInfo.phone || ''}
 							onChange={(e) => handleChange('phone', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter phone number"
@@ -210,7 +211,7 @@ export default function SettingsPage() {
 							Address *
 						</label>
 						<textarea
-							value={storeInfo.address}
+							value={storeInfo.address || ''}
 							onChange={(e) => handleChange('address', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter complete store address"
@@ -234,7 +235,7 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="email"
-							value={storeInfo.email}
+							value={storeInfo.email || ''}
 							onChange={(e) => handleChange('email', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter email address"
@@ -247,7 +248,7 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="url"
-							value={storeInfo.website}
+							value={storeInfo.website || ''}
 							onChange={(e) => handleChange('website', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter website URL"
@@ -260,8 +261,8 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="text"
-							value={storeInfo.taxNumber}
-							onChange={(e) => handleChange('taxNumber', e.target.value)}
+							value={storeInfo.tax_number || ''}
+							onChange={(e) => handleChange('tax_number', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter tax registration number"
 						/>
@@ -273,7 +274,7 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="url"
-							value={storeInfo.logo}
+							value={storeInfo.logo || ''}
 							onChange={(e) => handleChange('logo', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter logo image URL"
@@ -327,7 +328,7 @@ export default function SettingsPage() {
 								}}
 							/>
 							<span style={{ color: '#8b949e', fontSize: '14px' }}>
-								{storeInfo.storeName} Logo
+								{storeInfo.store_name} Logo
 							</span>
 						</div>
 					</div>
@@ -367,7 +368,7 @@ export default function SettingsPage() {
 							/>
 						)}
 						<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>
-							{(storeInfo.storeName || 'MANAGIFY').toUpperCase()}
+							{(storeInfo.store_name || 'MANAGIFY').toUpperCase()}
 						</h1>
 						{storeInfo.address && (
 							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
@@ -389,9 +390,9 @@ export default function SettingsPage() {
 								Website: {storeInfo.website}
 							</p>
 						)}
-						{storeInfo.taxNumber && (
+						{storeInfo.tax_number && (
 							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-								Tax #: {storeInfo.taxNumber}
+								Tax #: {storeInfo.tax_number}
 							</p>
 						)}
 					</div>

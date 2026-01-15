@@ -1,100 +1,49 @@
-import { useMemo, useState, useEffect } from 'react'
-import { db, StoreInfo } from '../storage'
+import { useMemo, useState } from 'react'
+import { useItems, useSalesByDateRange, useStoreInfo } from '../hooks/useDataQueries'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 export default function DailySalesPage() {
 	const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
 	const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
-	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
-		storeName: 'Managify',
-		phone: '',
-		address: '',
-		email: '',
-		website: '',
-		taxNumber: '',
-		logo: ''
-	})
+	// Use optimized React Query hooks
+	const { data: storeInfo = { storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '' } } = useStoreInfo()
+	const { data: items = [] } = useItems()
+	const { data: filteredSales = [], isLoading } = useSalesByDateRange(startDate, endDate)
 
-	// Load store info
-	useEffect(() => {
-		const loadStoreInfo = async () => {
-			try {
-				const info = await db.getStoreInfo()
-				setStoreInfo(info)
-			} catch (error) {
-				console.error('Error loading store info:', error)
-			}
-		}
-		loadStoreInfo()
-	}, [])
+	// Calculate data using useMemo for performance
+	const dailyData = useMemo(() => {
+		const totalTransactions = filteredSales.length
+		const totalItems = filteredSales.reduce((sum, sale) => sum + (sale.quantity || 0), 0)
 
-	const [dailyData, setDailyData] = useState({
-		filteredSales: [],
-		itemBreakdown: [],
-		totalRevenue: 0,
-		totalTransactions: 0,
-		totalItems: 0
-	})
-
-	useEffect(() => {
-		const loadDailyData = async () => {
-			try {
-				const [sales, items] = await Promise.all([
-					db.listSales(),
-					db.listItems()
-				])
-				
-				console.log('All sales:', sales)
-				console.log('Date range:', startDate, 'to', endDate)
-				
-				// Filter sales for date range
-				const filteredSales = sales.filter(sale => {
-					const saleDate = sale.date ? new Date(sale.date).toISOString().slice(0, 10) : ''
-					console.log('Sale date:', saleDate, 'matches range:', saleDate >= startDate && saleDate <= endDate)
-					return saleDate >= startDate && saleDate <= endDate
+		// Group by item for detailed breakdown
+		const itemBreakdown = filteredSales.reduce((acc, sale) => {
+			const item = items.find(i => i.id === sale.itemId)
+			const existing = acc.find(i => i.itemId === sale.itemId)
+			const salePrice = sale.actualPrice || item?.price || 0
+			if (existing) {
+				existing.qty += sale.quantity || 0
+				existing.total += (sale.quantity || 0) * salePrice
+			} else {
+				acc.push({
+					itemId: sale.itemId,
+					item: item,
+					qty: sale.quantity || 0,
+					unitPrice: salePrice,
+					total: (sale.quantity || 0) * salePrice
 				})
-				
-				console.log('Filtered sales:', filteredSales)
-
-				// Calculate totals
-				const totalTransactions = filteredSales.length
-				const totalItems = filteredSales.reduce((sum, sale) => sum + (sale.quantity || 0), 0)
-
-				// Group by item for detailed breakdown
-				const itemBreakdown = filteredSales.reduce((acc, sale) => {
-					const item = items.find(i => i.id === sale.itemId)
-					const existing = acc.find(i => i.itemId === sale.itemId)
-					const salePrice = sale.actualPrice || item?.price || 0
-					if (existing) {
-						existing.qty += sale.quantity || 0
-						existing.total += (sale.quantity || 0) * salePrice
-					} else {
-						acc.push({
-							itemId: sale.itemId,
-							item: item,
-							qty: sale.quantity || 0,
-							unitPrice: salePrice,
-							total: (sale.quantity || 0) * salePrice
-						})
-					}
-					return acc
-				}, [] as any[])
-
-				setDailyData({
-					filteredSales,
-					itemBreakdown,
-					totalRevenue: itemBreakdown.reduce((sum, item) => sum + item.total, 0),
-					totalTransactions,
-					totalItems
-				})
-			} catch (error) {
-				console.error('Error loading daily data:', error)
 			}
+			return acc
+		}, [] as any[])
+
+		return {
+			filteredSales,
+			itemBreakdown,
+			totalRevenue: itemBreakdown.reduce((sum, item) => sum + item.total, 0),
+			totalTransactions,
+			totalItems
 		}
-		
-		loadDailyData()
-	}, [startDate, endDate])
+	}, [filteredSales, items])
 
 	async function downloadPdf() {
 		const el = document.getElementById('daily-sales-report')
@@ -129,7 +78,12 @@ export default function DailySalesPage() {
 				</div>
 			</div>
 
-			{dailyData.totalTransactions === 0 ? (
+			{isLoading ? (
+				<div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+					<h3>Loading...</h3>
+					<p>Fetching sales data...</p>
+				</div>
+			) : dailyData.totalTransactions === 0 ? (
 				<div className="card" style={{ textAlign: 'center', padding: '40px' }}>
 					<h3>No Sales Found</h3>
 					<p>No sales were recorded from {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}</p>

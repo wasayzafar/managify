@@ -24,12 +24,12 @@ export default function PurchasesPage() {
 	const [showAllPurchases, setShowAllPurchases] = useState(false)
 	const [paymentFilter, setPaymentFilter] = useState<'all' | 'debit' | 'credit'>('all')
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
-		storeName: 'Managify',
+		store_name: 'Managify',
 		phone: '',
 		address: '',
 		email: '',
 		website: '',
-		taxNumber: '',
+		tax_number: '',
 		logo: ''
 	})
 	const [loading, setLoading] = useState(true)
@@ -340,7 +340,7 @@ export default function PurchasesPage() {
 									/>
 								)}
 								<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>
-									{storeInfo.storeName.toUpperCase()}
+									{storeInfo.store_name.toUpperCase()}
 								</h1>
 								{storeInfo.address && (
 									<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
@@ -362,9 +362,9 @@ export default function PurchasesPage() {
 										Website: {storeInfo.website}
 									</p>
 								)}
-								{storeInfo.taxNumber && (
+								{storeInfo.tax_number && (
 									<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-										Tax #: {storeInfo.taxNumber}
+										Tax #: {storeInfo.tax_number}
 									</p>
 								)}
 								<p style={{ margin: '10px 0 5px 0', fontSize: '14px', color: '#666' }}>Purchase Invoice</p>
