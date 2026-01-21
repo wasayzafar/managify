@@ -183,9 +183,7 @@ export const db = {
 				costPrice: purchase.cost_price,
 				supplier: purchase.supplier,
 				supplierPhone: purchase.supplier_phone,
-				note: purchase.note,
-				paymentType: purchase.payment_type,
-				creditDeadline: purchase.credit_deadline
+				note: purchase.note
 			}));
 		} catch (error) {
 			console.error('Error listing purchases:', error);
@@ -204,14 +202,8 @@ export const db = {
 			cost_price: data.costPrice,
 			supplier: data.supplier,
 			supplier_phone: data.supplierPhone,
-			note: data.note,
-			payment_type: data.paymentType || 'debit'
+			note: data.note
 		};
-		
-		// Only add credit_deadline if it has a valid value
-		if (data.creditDeadline && data.creditDeadline.trim() !== '') {
-			purchase.credit_deadline = data.creditDeadline;
-		}
 		
 		const id = await supabaseStorage.addPurchase(userId, purchase);
 		return { 

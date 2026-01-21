@@ -3,6 +3,7 @@ import { db, Item, Purchase, StoreInfo } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { auth } from '../firebase'
 
 export default function PurchasesPage() {
 	const [rows, setRows] = useState<Purchase[]>([])
@@ -92,6 +93,7 @@ export default function PurchasesPage() {
 
 	const onSubmit = async () => {
 		console.log('Form submitted with:', { sku, qty, costPrice, supplier })
+		console.log('Current user ID:', auth.currentUser?.uid)
 		const qtyNum = Number(qty || '0')
 		if (!qtyNum) {
 			console.log('No quantity provided')
@@ -112,7 +114,9 @@ export default function PurchasesPage() {
 				const name = newName || sku
 				found = await db.createItem({ sku, name, price: selling })
 				console.log('Created item:', found)
+				console.log('Created item for user:', auth.currentUser?.uid)
 				const updatedItems = await db.listItems()
+				console.log('Items list after creation:', updatedItems.length, 'Contains new item?', updatedItems.some(i => i.id === found.id))
 				setItems(updatedItems)
 			} else if (newPrice && Number(newPrice) !== found.price) {
 				// Update selling price if provided and different
@@ -146,10 +150,20 @@ export default function PurchasesPage() {
 			console.log('Purchase data:', purchaseData)
 			const result = await db.createPurchase(purchaseData)
 			console.log('Purchase created:', result)
-			const updatedPurchases = await db.listPurchases()
-			console.log('Updated purchases:', updatedPurchases.length)
+			// Small delay to ensure database sync
+			await new Promise(resolve => setTimeout(resolve, 500))
+			// Refresh both items and purchases lists
+			const [updatedPurchases, updatedItems] = await Promise.all([
+				db.listPurchases(),
+				db.listItems()
+			])
+			console.log('Updated purchases:', updatedPurchases.length, 'Updated items:', updatedItems.length)
+			console.log('Newly created item in list?', updatedItems.find(i => i.id === found.id))
+			console.log('Newly created purchase in list?', updatedPurchases.find(p => p.id === result.id))
 			setRows(updatedPurchases)
-			setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone(''); setNote(''); setNewName(''); setNewPrice(''); setShowSupplierDropdown(false)
+			setItems(updatedItems)
+			// Clear form fields
+			setSku(''); setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone(''); setNote(''); setNewName(''); setNewPrice(''); setShowSupplierDropdown(false)
 			// Auto-update time for next purchase
 			setPurchasedAt(new Date().toISOString().slice(0, 16))
 			alert('Purchase added successfully!')

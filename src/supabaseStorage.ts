@@ -20,8 +20,6 @@ export interface Purchase {
   supplier?: string
   supplier_phone?: string
   note?: string
-  payment_type?: 'debit' | 'credit'
-  credit_deadline?: string
 }
 
 export interface Sale {
@@ -102,7 +100,9 @@ export const listItems = async (userId: string): Promise<Item[]> => {
     .from('items')
     .select('*')
     .eq('user_id', userId)
+    .order('created_at', { ascending: false })
   if (error) throw error
+  console.log('listItems returned:', data?.length, 'items')
   return data || []
 }
 
