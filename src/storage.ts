@@ -183,7 +183,9 @@ export const db = {
 				costPrice: purchase.cost_price,
 				supplier: purchase.supplier,
 				supplierPhone: purchase.supplier_phone,
-				note: purchase.note
+				note: purchase.note,
+				paymentType: purchase.payment_type,
+				creditDeadline: purchase.credit_deadline
 			}));
 		} catch (error) {
 			console.error('Error listing purchases:', error);
@@ -195,7 +197,7 @@ export const db = {
 	},
 	async createPurchase(data: { itemId: string, qty: number, costPrice?: number, supplier?: string, supplierPhone?: string, note?: string, purchasedAt?: string, date?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string }): Promise<Purchase> {
 		const userId = getUserId();
-		const purchase = {
+		const purchase: any = {
 			item_id: data.itemId,
 			quantity: data.qty,
 			date: data.date || data.purchasedAt || new Date().toISOString(),
@@ -203,9 +205,28 @@ export const db = {
 			supplier: data.supplier,
 			supplier_phone: data.supplierPhone,
 			note: data.note,
+			payment_type: data.paymentType || 'debit'
 		};
+		
+		// Only add credit_deadline if it has a valid value
+		if (data.creditDeadline && data.creditDeadline.trim() !== '') {
+			purchase.credit_deadline = data.creditDeadline;
+		}
+		
 		const id = await supabaseStorage.addPurchase(userId, purchase);
-		return { id, itemId: data.itemId, qty: data.qty, quantity: data.qty, costPrice: data.costPrice, supplier: data.supplier, supplierPhone: data.supplierPhone, note: data.note, date: purchase.date };
+		return { 
+			id, 
+			itemId: data.itemId, 
+			qty: data.qty, 
+			quantity: data.qty, 
+			costPrice: data.costPrice, 
+			supplier: data.supplier, 
+			supplierPhone: data.supplierPhone, 
+			note: data.note, 
+			date: purchase.date,
+			paymentType: data.paymentType,
+			creditDeadline: data.creditDeadline
+		};
 	},
 	async updatePurchase(id: string, data: Partial<Omit<Purchase, 'id'>>): Promise<void> {
 		await supabaseStorage.updatePurchase(id, data);
