@@ -20,6 +20,8 @@ export interface Purchase {
   supplier?: string
   supplier_phone?: string
   note?: string
+  payment_type?: 'debit' | 'credit'
+  credit_deadline?: string
 }
 
 export interface Sale {
