@@ -167,7 +167,8 @@ export const db = {
 		await supabaseStorage.updateItem(id, mappedData);
 	},
 	async deleteItem(id: string): Promise<void> {
-		await supabaseStorage.deleteItem(id);
+		const userId = getUserId();
+		await supabaseStorage.deleteItem(userId, id);
 	},
 
 	async listPurchases(): Promise<Purchase[]> {
