@@ -124,11 +124,12 @@ export const updateItem = async (id: string, item: Partial<Omit<Item, 'id' | 'us
   if (error) throw error
 }
 
-export const deleteItem = async (id: string): Promise<void> => {
+export const deleteItem = async (userId: string, id: string): Promise<void> => {
   const { error } = await supabase
     .from('items')
     .delete()
     .eq('id', id)
+    .eq('user_id', userId)
   if (error) throw error
 }
 

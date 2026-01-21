@@ -74,11 +74,18 @@ export default function ItemsPage() {
 	}
 
 	async function deleteItem(id: string) {
+		if (!confirm('Delete this item? This will also delete all related purchases and sales.')) return
 		try {
+			const userId = (await import('../firebase')).auth.currentUser?.uid
+			if (!userId) throw new Error('Not authenticated')
+			
+			await (await import('../supabase')).supabase.from('purchases').delete().eq('item_id', id).eq('user_id', userId)
+			await (await import('../supabase')).supabase.from('sales').delete().eq('item_id', id).eq('user_id', userId)
 			await db.deleteItem(id)
 			refetch()
 		} catch (error) {
 			console.error('Error deleting item:', error)
+			alert('Cannot delete item: ' + (error?.message || 'Unknown error'))
 		}
 	}
 
