@@ -5,12 +5,12 @@ import { useAuth } from '../auth/useAuth'
 
 export default function SettingsPage() {
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
-		store_name: 'Managify',
+		storeName: 'Managify',
 		phone: '',
 		address: '',
 		email: '',
 		website: '',
-		tax_number: '',
+		taxNumber: '',
 		logo: ''
 	})
 	const [isEditing, setIsEditing] = useState(false)
@@ -186,8 +186,8 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="text"
-							value={storeInfo.store_name || ''}
-							onChange={(e) => handleChange('store_name', e.target.value)}
+							value={storeInfo.storeName || ''}
+							onChange={(e) => handleChange('storeName', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter store name"
 						/>
@@ -261,8 +261,8 @@ export default function SettingsPage() {
 						</label>
 						<input
 							type="text"
-							value={storeInfo.tax_number || ''}
-							onChange={(e) => handleChange('tax_number', e.target.value)}
+							value={storeInfo.taxNumber || ''}
+							onChange={(e) => handleChange('taxNumber', e.target.value)}
 							disabled={!isEditing}
 							placeholder="Enter tax registration number"
 						/>
@@ -328,7 +328,7 @@ export default function SettingsPage() {
 								}}
 							/>
 							<span style={{ color: '#8b949e', fontSize: '14px' }}>
-								{storeInfo.store_name} Logo
+								{storeInfo.storeName} Logo
 							</span>
 						</div>
 					</div>
@@ -368,7 +368,7 @@ export default function SettingsPage() {
 							/>
 						)}
 						<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>
-							{(storeInfo.store_name || 'MANAGIFY').toUpperCase()}
+							{(storeInfo.storeName || 'MANAGIFY').toUpperCase()}
 						</h1>
 						{storeInfo.address && (
 							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
@@ -390,9 +390,9 @@ export default function SettingsPage() {
 								Website: {storeInfo.website}
 							</p>
 						)}
-						{storeInfo.tax_number && (
+						{storeInfo.taxNumber && (
 							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-								Tax #: {storeInfo.tax_number}
+								Tax #: {storeInfo.taxNumber}
 							</p>
 						)}
 					</div>
