@@ -337,23 +337,23 @@ export const db = {
 			const userId = getUserId();
 			const info = await supabaseStorage.getStoreInfo(userId);
 			return {
-				store_name: info.store_name,
+				storeName: info.store_name,
 				phone: info.phone,
 				address: info.address,
 				email: info.email,
 				website: info.website,
-				tax_number: info.tax_number,
+				taxNumber: info.tax_number,
 				logo: info.logo
 			};
 		} catch (error) {
 			console.error('Error getting store info:', error);
 			return {
-				store_name: 'Managify',
+				storeName: 'Managify',
 				phone: '',
 				address: '',
 				email: '',
 				website: '',
-				tax_number: '',
+				taxNumber: '',
 				logo: ''
 			};
 		}
@@ -361,12 +361,12 @@ export const db = {
 	async updateStoreInfo(data: Partial<StoreInfo>): Promise<StoreInfo> {
 		const userId = getUserId();
 		const mappedData = {
-			store_name: data.store_name || 'Managify',
+			store_name: data.storeName || 'Managify',
 			phone: data.phone || '',
 			address: data.address || '',
 			email: data.email || '',
 			website: data.website || '',
-			tax_number: data.tax_number || '',
+			tax_number: data.taxNumber || '',
 			logo: data.logo || ''
 		};
 		await supabaseStorage.updateStoreInfo(userId, mappedData);
