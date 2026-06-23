@@ -12,13 +12,15 @@ import { loadCurrency, formatCurrency } from '../utils/currency'
 export default function BillingPage() {
 	const [customer, setCustomer] = useState('')
 	const [customerPhone, setCustomerPhone] = useState('')
+	const [customerAddress, setCustomerAddress] = useState('')
+	const [ecommerceMode] = useState(() => localStorage.getItem('ecommerceMode') === 'true')
 	const [invoiceNo, setInvoiceNo] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
 	const [skuInput, setSkuInput] = useState('')
 	const [qtyInput, setQtyInput] = useState('1')
 	const [priceInput, setPriceInput] = useState('')
 	const [cart, setCart] = useState<CartLine[]>([])
 	const [billDiscount, setBillDiscount] = useState(0)
-	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any } | null>(null)
+	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
@@ -192,12 +194,13 @@ export default function BillingPage() {
 				invoiceNo,
 				customer,
 				phone: customerPhone,
+				customerAddress: customerAddress || undefined,
 				lines: cart,
 				total,
 				billDiscount
 			})
 			
-			const snapshot = { invoiceNo, customer, phone: customerPhone, lines: cart, total, billDiscount, createdAt: new Date().toLocaleString(), storeInfo }
+			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date().toLocaleString(), storeInfo }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
@@ -270,6 +273,14 @@ export default function BillingPage() {
 				<input placeholder="Invoice No" value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} />
 				<input placeholder="Customer" value={customer} onChange={e => setCustomer(e.target.value)} />
 				<input placeholder="Phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+				{ecommerceMode && (
+					<input
+						placeholder="Customer Delivery Address"
+						value={customerAddress}
+						onChange={e => setCustomerAddress(e.target.value)}
+						style={{ gridColumn: '1 / -1' }}
+					/>
+				)}
 			</div>
 
 			<div className="card">
@@ -373,6 +384,9 @@ export default function BillingPage() {
 									<div style={{ textAlign: 'right' }}>
 										<div>Customer: {lastInvoice.customer || 'Walk-in'}</div>
 										<div>Phone: {lastInvoice.phone || '-'}</div>
+										{lastInvoice.customerAddress && (
+											<div>Address: {lastInvoice.customerAddress}</div>
+										)}
 									</div>
 								</div>
 								<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '7px', marginBottom: '5px' }}>
@@ -481,6 +495,9 @@ export default function BillingPage() {
 								<div style={{ fontSize: '14px', lineHeight: '1.6' }}>
 									<div><strong>Customer:</strong> {lastInvoice.customer || 'Walk-in Customer'}</div>
 									<div><strong>Phone:</strong> {lastInvoice.phone || '-'}</div>
+									{lastInvoice.customerAddress && (
+										<div><strong>Address:</strong> {lastInvoice.customerAddress}</div>
+									)}
 								</div>
 							</div>
 						</div>
