@@ -3,12 +3,19 @@ import { useItems, usePurchases, useInventory } from '../hooks/useDataQueries'
 import { usePagination } from '../hooks/usePagination'
 import { VirtualList } from '../components/VirtualList'
 import { TableSkeleton } from '../components/LoadingSkeleton'
+import { useEffect } from 'react'
+import { loadCurrency, formatCurrency } from '../utils/currency'
 
 export default function InventoryPage() {
 	const [searchTerm, setSearchTerm] = useState('')
+	const [currency, setCurrency] = useState('PKR')
 	const { data: items = [], isLoading: itemsLoading } = useItems()
 	const { data: purchases = [], isLoading: purchasesLoading } = usePurchases()
 	const { data: inventory = [], isLoading: inventoryLoading } = useInventory()
+
+	useEffect(() => {
+		loadCurrency().then(curr => setCurrency(curr))
+	}, [])
 
 	const loading = itemsLoading || purchasesLoading || inventoryLoading
 
@@ -163,9 +170,9 @@ export default function InventoryPage() {
 								}}>
 									{item.stock}
 								</td>
-								<td style={{ padding: '12px', textAlign: 'right' }}>${item.price.toFixed(2)}</td>
-								<td style={{ padding: '12px', textAlign: 'right' }}>${item.costPrice.toFixed(2)}</td>
-								<td style={{ padding: '12px', textAlign: 'right' }}>${item.totalValue.toFixed(2)}</td>
+								<td style={{ padding: '12px', textAlign: 'right' }}>{formatCurrency(item.price, currency)}</td>
+								<td style={{ padding: '12px', textAlign: 'right' }}>{formatCurrency(item.costPrice, currency)}</td>
+								<td style={{ padding: '12px', textAlign: 'right' }}>{formatCurrency(item.totalValue, currency)}</td>
 							</tr>
 						))}
 					</tbody>

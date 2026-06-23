@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { getThermalPrintStyles, isThermalPrinting } from '../utils/thermalPrintStyles'
+import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
 import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
+import { loadCurrency, formatCurrency } from '../utils/currency'
 //test
 export default function SalesPage() {
 	const [sales, setSales] = useState<Sale[]>([])
@@ -33,7 +34,8 @@ export default function SalesPage() {
 		email: '',
 		website: '',
 		taxNumber: '',
-		logo: ''
+		logo: '',
+		currency: 'PKR'
 	})
 
 	const item = items.find(i => i.sku === sku)
@@ -68,6 +70,7 @@ export default function SalesPage() {
 				])
 				setItems(itemsData)
 				setStoreInfo(storeData)
+				await loadCurrency()
 				// Preload logo for instant printing
 				if (storeData.logo) {
 					preloadImageAsBase64(storeData.logo).catch(console.warn)
@@ -102,7 +105,10 @@ export default function SalesPage() {
 		if (!el) return
 		const canvas = await html2canvas(el)
 		const imgData = canvas.toDataURL('image/png')
-		const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
+		const size = getPrintSize()
+		const orientation = (size === 'A4' || size === 'A5') && getPrintOrientation() === 'landscape' ? 'l' : 'p'
+		const format = size === 'A5' ? 'a5' : 'a4'
+		const pdf = new jsPDF({ orientation, unit: 'mm', format })
 		const pageWidth = pdf.internal.pageSize.getWidth()
 		const imgWidth = pageWidth
 		const imgHeight = canvas.height * imgWidth / canvas.width
@@ -217,7 +223,7 @@ export default function SalesPage() {
 							return (
 								<tr key={s.id}>
 									<td>{s.invoiceNo || s.id.slice(-6)}</td>
-									<td>Price {((s.actualPrice || saleItem?.price || 0) * (s.quantity || 0)).toFixed(2)}</td>
+									<td>{formatCurrency((s.actualPrice || saleItem?.price || 0) * (s.quantity || 0), storeInfo.currency)}</td>
 									<td>{s.date ? new Date(s.date).toLocaleString() : 'N/A'}</td>
 									<td style={{ display: 'flex', gap: '4px' }}>
 										<button 
@@ -284,10 +290,11 @@ export default function SalesPage() {
 										}
 									})
 									
-									const w = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150')
+									const { width, height } = getPrintWindowSize()
+									const w = window.open('', 'PRINT', `height=${height},width=${width},top=100,left=150`)
 									if (!w) return
 									w.document.write('<html><head><title>Sale Receipt</title>')
-									w.document.write('<style>body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;} table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left}</style>')
+									w.document.write(`<style>${getPrintPageCSS()} body{margin:0;padding:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;} table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left}</style>`)
 									w.document.write('</head><body>')
 									w.document.write(el.innerHTML)
 									w.document.write('</body></html>')
