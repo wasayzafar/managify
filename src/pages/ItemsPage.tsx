@@ -3,6 +3,7 @@ import { db, Item } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import { useItems, usePurchases } from '../hooks/useDataQueries'
 import { loadCurrency, formatCurrency, getCurrency } from '../utils/currency'
+import { exportItemsToShopifyCSV } from '../utils/exportCSV'
 
 export default function ItemsPage() {
 	const [filter, setFilter] = useState('')
@@ -105,7 +106,18 @@ export default function ItemsPage() {
 
 	return (
 		<div className="card">
-			<h2>Items</h2>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+				<h2 style={{ margin: 0 }}>Items</h2>
+				<button
+					className="secondary"
+					onClick={() => exportItemsToShopifyCSV(
+						filtered.map(i => ({ sku: i.sku, name: i.name, price: i.price, costPrice: i.costPrice })),
+						'items_shopify.csv'
+					)}
+				>
+					Export to CSV (Shopify)
+				</button>
+			</div>
 			<div className="form-grid" style={{ marginBottom: 12 }}>
 				<input placeholder="Search by SKU or Name" value={filter} onChange={e => setFilter(e.target.value)} autoFocus />
 			</div>

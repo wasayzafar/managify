@@ -46,6 +46,7 @@ export interface StoreInfo {
   website: string
   tax_number: string
   logo: string
+  currency?: string
   user_id: string
 }
 

@@ -5,6 +5,7 @@ import { VirtualList } from '../components/VirtualList'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { useEffect } from 'react'
 import { loadCurrency, formatCurrency } from '../utils/currency'
+import { exportItemsToShopifyCSV } from '../utils/exportCSV'
 
 export default function InventoryPage() {
 	const [searchTerm, setSearchTerm] = useState('')
@@ -71,6 +72,21 @@ export default function InventoryPage() {
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
 				<h2 style={{ margin: '0' }}>Inventory</h2>
 				<div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+					<button
+						className="secondary"
+						onClick={() => exportItemsToShopifyCSV(
+							filteredItems.map(i => ({
+								sku: i.itemSku,
+								name: i.itemName,
+								price: i.price,
+								costPrice: i.costPrice,
+								stock: i.stock
+							})),
+							'inventory_shopify.csv'
+						)}
+					>
+						Export to CSV (Shopify)
+					</button>
 					<input
 						type="text"
 						placeholder="Search items..."
