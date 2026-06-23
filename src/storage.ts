@@ -91,6 +91,7 @@ export type Invoice = {
 	invoiceNo: string
 	customer: string
 	phone?: string
+	customerAddress?: string
 	lines: any[]
 	total: number
 	billDiscount: number
@@ -435,13 +436,14 @@ export const db = {
 		await supabaseStorage.deleteEmployee(id);
 	},
 
-	async createInvoice(data: { invoiceNo: string, customer: string, phone?: string, lines: any[], total: number, billDiscount: number }): Promise<Invoice> {
+	async createInvoice(data: { invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: any[], total: number, billDiscount: number }): Promise<Invoice> {
 		const userId = getUserId();
 		const storeInfo = await this.getStoreInfo();
 		const invoice = {
 			invoice_no: data.invoiceNo,
 			customer: data.customer,
 			phone: data.phone,
+			customer_address: data.customerAddress || null,
 			lines: data.lines,
 			total: data.total,
 			bill_discount: data.billDiscount,
@@ -449,7 +451,7 @@ export const db = {
 			created_at: new Date().toISOString(),
 		};
 		const id = await supabaseStorage.addInvoice(userId, invoice);
-		return { id, invoiceNo: data.invoiceNo, customer: data.customer, phone: data.phone, lines: data.lines, total: data.total, billDiscount: data.billDiscount, date: invoice.date, createdAt: new Date().toLocaleString(), storeInfo };
+		return { id, invoiceNo: data.invoiceNo, customer: data.customer, phone: data.phone, customerAddress: data.customerAddress, lines: data.lines, total: data.total, billDiscount: data.billDiscount, date: invoice.date, createdAt: new Date().toLocaleString(), storeInfo };
 	},
 	async listInvoices(): Promise<Invoice[]> {
 		try {

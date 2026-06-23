@@ -24,6 +24,9 @@ export default function SettingsPage() {
 	const [printOrientation, setPrintOrientation] = useState<'portrait' | 'landscape'>(() => {
 		return (localStorage.getItem('printOrientation') as 'portrait' | 'landscape') || 'portrait'
 	})
+	const [ecommerceMode, setEcommerceMode] = useState(() => {
+		return localStorage.getItem('ecommerceMode') === 'true'
+	})
 	const { logout } = useAuth()
 	const navigate = useNavigate()
 
@@ -99,18 +102,20 @@ export default function SettingsPage() {
 			try {
 				setMessage('Clearing internal storage...')
 				
-				// Preserve print settings
+				// Preserve print + mode settings
 				const printSizeSetting = localStorage.getItem('printSize')
 				const printOrientationSetting = localStorage.getItem('printOrientation')
 				const thermalPrintingSetting = localStorage.getItem('thermalPrinting')
+				const ecommerceModeSetting = localStorage.getItem('ecommerceMode')
 
 				// Clear localStorage
 				localStorage.clear()
 
-				// Restore print settings
+				// Restore settings
 				if (printSizeSetting) localStorage.setItem('printSize', printSizeSetting)
 				if (printOrientationSetting) localStorage.setItem('printOrientation', printOrientationSetting)
 				if (thermalPrintingSetting) localStorage.setItem('thermalPrinting', thermalPrintingSetting)
+				if (ecommerceModeSetting) localStorage.setItem('ecommerceMode', ecommerceModeSetting)
 				
 				// Clear sessionStorage
 				sessionStorage.clear()
@@ -525,6 +530,48 @@ export default function SettingsPage() {
 						</p>
 					</div>
 				)}
+			</div>
+
+			<div className="card">
+				<h3 style={{ margin: '0 0 16px 0' }}>E-commerce Settings</h3>
+				<div style={{ marginBottom: '8px' }}>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+						<div
+							onClick={() => {
+								const next = !ecommerceMode
+								setEcommerceMode(next)
+								localStorage.setItem('ecommerceMode', next.toString())
+								setMessage('E-commerce mode ' + (next ? 'enabled' : 'disabled') + '. Customer address field is now ' + (next ? 'visible' : 'hidden') + ' on billing.')
+								setTimeout(() => setMessage(''), 3000)
+							}}
+							style={{
+								width: '44px',
+								height: '24px',
+								borderRadius: '12px',
+								background: ecommerceMode ? '#2263ff' : '#243245',
+								position: 'relative',
+								cursor: 'pointer',
+								transition: 'background 0.2s',
+								flexShrink: 0
+							}}
+						>
+							<div style={{
+								position: 'absolute',
+								top: '3px',
+								left: ecommerceMode ? '23px' : '3px',
+								width: '18px',
+								height: '18px',
+								borderRadius: '50%',
+								background: 'white',
+								transition: 'left 0.2s'
+							}} />
+						</div>
+						<span style={{ fontWeight: 'bold' }}>Enable E-commerce Mode</span>
+					</label>
+					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
+						When enabled, a customer delivery address field appears on the Billing page and prints on the invoice.
+					</p>
+				</div>
 			</div>
 
 			<div className="card">
