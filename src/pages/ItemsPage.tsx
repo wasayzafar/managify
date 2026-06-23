@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState, useEffect } from 'react'
 import { db, Item } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import { useItems, usePurchases } from '../hooks/useDataQueries'
+import { loadCurrency, formatCurrency, getCurrency } from '../utils/currency'
 
 export default function ItemsPage() {
 	const [filter, setFilter] = useState('')
@@ -9,6 +10,11 @@ export default function ItemsPage() {
 	const [editingId, setEditingId] = useState<string | null>(null)
 	const [editForm, setEditForm] = useState<{ sku: string, name: string, price: string, costPrice: string }>({ sku: '', name: '', price: '', costPrice: '' })
 	const [scannerEnabled, setScannerEnabled] = useState(false)
+	const [currency, setCurrency] = useState('PKR')
+
+	useEffect(() => {
+		loadCurrency().then(curr => setCurrency(curr))
+	}, [])
 
 	const { data: items = [], isLoading: itemsLoading, refetch } = useItems()
 	const { data: purchases = [] } = usePurchases()
@@ -154,12 +160,12 @@ export default function ItemsPage() {
 								<td>
 									{editingId === i.id ? (
 										<input type="number" step="0.01" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} />
-									) : i.price.toFixed(2)}
+									) : formatCurrency(i.price, currency)}
 								</td>
 								<td>
 									{editingId === i.id ? (
 										<input type="number" step="0.01" value={editForm.costPrice} onChange={e => setEditForm({ ...editForm, costPrice: e.target.value })} />
-									) : (i.costPrice !== undefined ? i.costPrice.toFixed(2) : '0.00')}
+									) : (i.costPrice !== undefined ? formatCurrency(i.costPrice, currency) : formatCurrency(0, currency))}
 								</td>
 								<td>{i.createdAt ? new Date(i.createdAt).toLocaleString() : 'N/A'}</td>
 								<td style={{ textAlign: 'right', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

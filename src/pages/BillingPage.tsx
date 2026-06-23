@@ -3,8 +3,9 @@ import { BrowserMultiFormatReader, Result } from '@zxing/library'
 import { db, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { getThermalPrintStyles, isThermalPrinting } from '../utils/thermalPrintStyles'
+import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
 import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
+import { loadCurrency, formatCurrency } from '../utils/currency'
 
  type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number }
 //test
@@ -26,7 +27,8 @@ export default function BillingPage() {
 		email: '',
 		website: '',
 		taxNumber: '',
-		logo: ''
+		logo: '',
+		currency: 'PKR'
 	})
 	const subtotal = useMemo(() => cart.reduce((a, b) => {
 		const lineTotal = b.qty * b.price
@@ -44,6 +46,7 @@ export default function BillingPage() {
 			try {
 				const info = await db.getStoreInfo()
 				setStoreInfo(info)
+				await loadCurrency()
 				// Preload logo for instant printing
 				if (info.logo) {
 					preloadImageAsBase64(info.logo).catch(console.warn)
@@ -209,7 +212,7 @@ export default function BillingPage() {
 	function printInvoice() {
 		const el = document.getElementById('invoice-print')
 		if (!el) return
-		
+
 		// Use cached base64 images for instant printing
 		const images = Array.from(el.querySelectorAll('img'))
 		images.forEach(img => {
@@ -218,11 +221,12 @@ export default function BillingPage() {
 				img.src = cached
 			}
 		})
-		
-		const w = window.open('', 'PRINT', 'height=650,width=900,top=100,left=150')
+
+		const { width, height } = getPrintWindowSize()
+		const w = window.open('', 'PRINT', `height=${height},width=${width},top=100,left=150`)
 		if (!w) return
 		w.document.write('<html><head><title>Invoice</title>')
-		w.document.write('<style>body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;} table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left}</style>')
+		w.document.write(`<style>${getPrintPageCSS()} body{margin:0;padding:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;} table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid #ddd;padding:6px;text-align:left}</style>`)
 		w.document.write('</head><body>')
 		w.document.write(el.innerHTML)
 		w.document.write('</body></html>')
@@ -237,7 +241,10 @@ export default function BillingPage() {
 		if (!el) return
 		const canvas = await html2canvas(el)
 		const imgData = canvas.toDataURL('image/png')
-		const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
+		const size = getPrintSize()
+		const orientation = (size === 'A4' || size === 'A5') && getPrintOrientation() === 'landscape' ? 'l' : 'p'
+		const format = size === 'A5' ? 'a5' : 'a4'
+		const pdf = new jsPDF({ orientation, unit: 'mm', format })
 		const pageWidth = pdf.internal.pageSize.getWidth()
 		const pageHeight = pdf.internal.pageSize.getHeight()
 		const imgWidth = pageWidth
@@ -303,10 +310,10 @@ export default function BillingPage() {
 							<td><input type="number" value={l.qty} onChange={e => updateLine(l.id, { qty: Number(e.target.value || '0') })} /></td>
 							<td><input type="number" step="0.01" value={l.price} onChange={e => updateLine(l.id, { price: Number(e.target.value || '0') })} /></td>
 							<td><input type="number" min="0" max="100" value={l.discount || 0} onChange={e => updateLine(l.id, { discount: Number(e.target.value || '0') })} style={{ width: '60px' }} /></td>
-							<td>price {(() => {
+							<td>{(() => {
 								const lineTotal = l.qty * l.price
 								const discountAmount = (lineTotal * (l.discount || 0)) / 100
-								return (lineTotal - discountAmount).toFixed(2)
+								return formatCurrency(lineTotal - discountAmount, storeInfo.currency)
 							})()}</td>
 							<td style={{ textAlign: 'right' }}><button className="secondary" onClick={() => removeLine(l.id)}>Remove</button></td>
 						</tr>
@@ -315,16 +322,16 @@ export default function BillingPage() {
 				<tfoot>
 					<tr>
 						<td colSpan={5} style={{ textAlign: 'right' }}><strong>Subtotal</strong></td>
-						<td>price {subtotal.toFixed(2)}</td>
+						<td>{formatCurrency(subtotal, storeInfo.currency)}</td>
 					</tr>
 					<tr>
 						<td colSpan={4} style={{ textAlign: 'right' }}><strong>Bill Discount %</strong></td>
 						<td><input type="number" min="0" max="100" value={billDiscount} onChange={e => setBillDiscount(Number(e.target.value || '0'))} style={{ width: '60px' }} /></td>
-						<td>price {((subtotal * billDiscount) / 100).toFixed(2)}</td>
+						<td>{formatCurrency((subtotal * billDiscount) / 100, storeInfo.currency)}</td>
 					</tr>
 					<tr style={{ background: '#2263ff', color: 'white' }}>
 						<td colSpan={5} style={{ textAlign: 'right' }}><strong>Total</strong></td>
-						<td><strong>price {total.toFixed(2)}</strong></td>
+						<td><strong>{formatCurrency(total, storeInfo.currency)}</strong></td>
 					</tr>
 				</tfoot>
 			</table>
@@ -385,9 +392,9 @@ export default function BillingPage() {
 												<td style={{ padding: '1px' }}>{line.itemId ? line.itemId.slice(-6) : line.sku.slice(-6)}</td>
 												<td style={{ padding: '1px' }}>{line.name}</td>
 												<td style={{ textAlign: 'center', padding: '1px' }}>{line.qty}</td>
-												<td style={{ textAlign: 'right', padding: '1px' }}>Price {line.price.toFixed(2)}</td>
+												<td style={{ textAlign: 'right', padding: '1px' }}>{formatCurrency(line.price, storeInfo.currency)}</td>
 												<td style={{ textAlign: 'center', padding: '1px' }}>{line.discount || 0}%</td>
-												<td style={{ textAlign: 'right', padding: '1px' }}>Price {(line.qty * line.price * (1 - (line.discount || 0) / 100)).toFixed(2)}</td>
+												<td style={{ textAlign: 'right', padding: '1px' }}>{formatCurrency(line.qty * line.price * (1 - (line.discount || 0) / 100), storeInfo.currency)}</td>
 											</tr>
 										))}
 									</tbody>
@@ -395,17 +402,17 @@ export default function BillingPage() {
 								<div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>
 									<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
 										<span>SUBTOTAL</span>
-										<span>Price {(lastInvoice.total / (1 - lastInvoice.billDiscount / 100)).toFixed(2)}</span>
+										<span>{formatCurrency(lastInvoice.total / (1 - lastInvoice.billDiscount / 100), storeInfo.currency)}</span>
 									</div>
 									{lastInvoice.billDiscount > 0 && (
 										<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
 											<span>BILL DISCOUNT ({lastInvoice.billDiscount}%)</span>
-											<span>Price {((lastInvoice.total / (1 - lastInvoice.billDiscount / 100)) * lastInvoice.billDiscount / 100).toFixed(2)}</span>
+											<span>{formatCurrency((lastInvoice.total / (1 - lastInvoice.billDiscount / 100)) * lastInvoice.billDiscount / 100, storeInfo.currency)}</span>
 										</div>
 									)}
 									<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '2px', marginTop: '2px' }}>
 										<span>TOTAL AMOUNT</span>
-										<span>Price {lastInvoice.total.toFixed(2)}</span>
+										<span>{formatCurrency(lastInvoice.total, storeInfo.currency)}</span>
 									</div>
 								</div>
 								<div style={{ textAlign: 'center', marginTop: '8px', fontSize: '6px' }}>
@@ -495,12 +502,12 @@ export default function BillingPage() {
 										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{l.sku}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{l.name}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'center', fontSize: '13px' }}>{l.qty}</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>price {l.price.toFixed(2)}</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{formatCurrency(l.price, storeInfo.currency)}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{l.discount || 0}%</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>price {(() => {
+										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{(() => {
 											const lineTotal = l.qty * l.price
 											const discountAmount = (lineTotal * (l.discount || 0)) / 100
-											return (lineTotal - discountAmount).toFixed(2)
+											return formatCurrency(lineTotal - discountAmount, storeInfo.currency)
 										})()}</td>
 									</tr>
 								))}
@@ -508,17 +515,17 @@ export default function BillingPage() {
 							<tfoot>
 								<tr style={{ background: '#f9f9f9' }}>
 									<td colSpan={4} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>SUBTOTAL</td>
-									<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>price {(lastInvoice.total + ((lastInvoice.total * lastInvoice.billDiscount) / (100 - lastInvoice.billDiscount))).toFixed(2)}</td>
+									<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency(lastInvoice.total + ((lastInvoice.total * lastInvoice.billDiscount) / (100 - lastInvoice.billDiscount)), storeInfo.currency)}</td>
 								</tr>
 								{lastInvoice.billDiscount > 0 && (
 									<tr>
 										<td colSpan={4} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>BILL DISCOUNT ({lastInvoice.billDiscount}%)</td>
-										<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>price {((lastInvoice.total * lastInvoice.billDiscount) / (100 - lastInvoice.billDiscount)).toFixed(2)}</td>
+										<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency((lastInvoice.total * lastInvoice.billDiscount) / (100 - lastInvoice.billDiscount), storeInfo.currency)}</td>
 									</tr>
 								)}
 								<tr style={{ background: '#f9f9f9' }}>
 									<td colSpan={4} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL AMOUNT</td>
-									<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>price {lastInvoice.total.toFixed(2)}</td>
+									<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{formatCurrency(lastInvoice.total, storeInfo.currency)}</td>
 								</tr>
 							</tfoot>
 						</table>
@@ -551,7 +558,7 @@ export default function BillingPage() {
 								<tr key={invoice.id}>
 									<td>{invoice.invoiceNo}</td>
 									<td>{invoice.customer || 'Walk-in'}</td>
-									<td>price {invoice.total.toFixed(2)}</td>
+									<td>{formatCurrency(invoice.total, storeInfo.currency)}</td>
 									<td>{new Date(invoice.date).toLocaleDateString()}</td>
 									<td>
 										<button 

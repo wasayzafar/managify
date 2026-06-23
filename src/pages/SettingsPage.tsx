@@ -11,12 +11,18 @@ export default function SettingsPage() {
 		email: '',
 		website: '',
 		taxNumber: '',
-		logo: ''
+		logo: '',
+		currency: 'PKR'
 	})
 	const [isEditing, setIsEditing] = useState(false)
 	const [message, setMessage] = useState('')
-	const [thermalPrinting, setThermalPrinting] = useState(() => {
-		return localStorage.getItem('thermalPrinting') === 'true'
+	const [printSize, setPrintSize] = useState(() => {
+		const saved = localStorage.getItem('printSize')
+		if (saved) return saved
+		return localStorage.getItem('thermalPrinting') === 'true' ? '80mm' : 'A4'
+	})
+	const [printOrientation, setPrintOrientation] = useState<'portrait' | 'landscape'>(() => {
+		return (localStorage.getItem('printOrientation') as 'portrait' | 'landscape') || 'portrait'
 	})
 	const { logout } = useAuth()
 	const navigate = useNavigate()
@@ -93,16 +99,18 @@ export default function SettingsPage() {
 			try {
 				setMessage('Clearing internal storage...')
 				
-				// Preserve thermal printing setting
+				// Preserve print settings
+				const printSizeSetting = localStorage.getItem('printSize')
+				const printOrientationSetting = localStorage.getItem('printOrientation')
 				const thermalPrintingSetting = localStorage.getItem('thermalPrinting')
-				
+
 				// Clear localStorage
 				localStorage.clear()
-				
-				// Restore thermal printing setting
-				if (thermalPrintingSetting) {
-					localStorage.setItem('thermalPrinting', thermalPrintingSetting)
-				}
+
+				// Restore print settings
+				if (printSizeSetting) localStorage.setItem('printSize', printSizeSetting)
+				if (printOrientationSetting) localStorage.setItem('printOrientation', printOrientationSetting)
+				if (thermalPrintingSetting) localStorage.setItem('thermalPrinting', thermalPrintingSetting)
 				
 				// Clear sessionStorage
 				sessionStorage.clear()
@@ -270,6 +278,30 @@ export default function SettingsPage() {
 
 					<div>
 						<label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+							Currency
+						</label>
+						<select
+							value={storeInfo.currency || 'PKR'}
+							onChange={(e) => handleChange('currency', e.target.value)}
+							disabled={!isEditing}
+							style={{
+								background: '#0b0f14',
+								border: '1px solid #243245',
+								color: '#e8eef5',
+								padding: '8px 10px',
+								borderRadius: '8px',
+								width: '100%',
+								fontFamily: 'inherit',
+								cursor: isEditing ? 'pointer' : 'not-allowed'
+							}}
+						>
+							<option value="PKR">PKR (Pakistani Rupee)</option>
+							<option value="USD">USD (US Dollar)</option>
+						</select>
+					</div>
+
+					<div>
+						<label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
 							Logo
 						</label>
 						<input
@@ -406,24 +438,93 @@ export default function SettingsPage() {
 			<div className="card">
 				<h3 style={{ margin: '0 0 16px 0' }}>Printing Settings</h3>
 				<div style={{ marginBottom: '20px' }}>
-					<label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-						<input 
-							type="checkbox" 
-							checked={thermalPrinting} 
-							onChange={(e) => {
-								setThermalPrinting(e.target.checked)
-								localStorage.setItem('thermalPrinting', e.target.checked.toString())
-								setMessage('Thermal printing ' + (e.target.checked ? 'enabled' : 'disabled') + '. All invoices will now use ' + (e.target.checked ? 'thermal' : 'standard') + ' format.')
-								setTimeout(() => setMessage(''), 3000)
-							}}
-							style={{ width: '18px', height: '18px' }}
-						/>
-						<span style={{ fontWeight: 'bold' }}>Enable Thermal Printing</span>
+					<label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+						Bill Print Size
 					</label>
-					<p style={{ margin: '8px 0 0 30px', color: '#8b949e', fontSize: '14px' }}>
-						When enabled, all invoices will be formatted for thermal printers (58mm/80mm width)
+					<select
+						value={printSize}
+						onChange={(e) => {
+							const val = e.target.value
+							setPrintSize(val)
+							localStorage.setItem('printSize', val)
+							localStorage.setItem('thermalPrinting', (val === '58mm' || val === '80mm').toString())
+							const labels: Record<string, string> = {
+								'A4': 'A4 – Full page',
+								'A5': 'A5 – Half page',
+								'80mm': '80mm – Standard thermal receipt',
+								'58mm': '58mm – Small thermal receipt',
+							}
+							setMessage('Print size set to ' + (labels[val] || val) + '. All bills will use this format.')
+							setTimeout(() => setMessage(''), 3000)
+						}}
+						style={{
+							background: '#0b0f14',
+							border: '1px solid #243245',
+							color: '#e8eef5',
+							padding: '8px 10px',
+							borderRadius: '8px',
+							width: '100%',
+							maxWidth: '320px',
+							fontFamily: 'inherit',
+							cursor: 'pointer'
+						}}
+					>
+						<option value="A4">A4 – Full page (standard)</option>
+						<option value="A5">A5 – Half page</option>
+						<option value="80mm">80mm – Standard thermal receipt</option>
+						<option value="58mm">58mm – Small thermal receipt</option>
+					</select>
+					<p style={{ margin: '8px 0 0 0', color: '#8b949e', fontSize: '14px' }}>
+						Choose the paper size for printing bills and invoices. Thermal sizes (58mm / 80mm) use a compact single-column receipt layout.
 					</p>
 				</div>
+
+				{(printSize === 'A4' || printSize === 'A5') && (
+					<div style={{ marginBottom: '20px' }}>
+						<label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+							{printSize} Orientation
+						</label>
+						<div style={{ display: 'flex', gap: '12px' }}>
+							{(['portrait', 'landscape'] as const).map(orientation => (
+								<label
+									key={orientation}
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										gap: '8px',
+										cursor: 'pointer',
+										padding: '8px 16px',
+										border: `1px solid ${printOrientation === orientation ? '#58a6ff' : '#243245'}`,
+										borderRadius: '8px',
+										background: printOrientation === orientation ? '#0d2137' : '#0b0f14'
+									}}
+								>
+									<input
+										type="radio"
+										name="printOrientation"
+										value={orientation}
+										checked={printOrientation === orientation}
+										onChange={() => {
+											setPrintOrientation(orientation)
+											localStorage.setItem('printOrientation', orientation)
+											setMessage(`A4 orientation set to ${orientation}.`)
+											setTimeout(() => setMessage(''), 3000)
+										}}
+										style={{ accentColor: '#58a6ff' }}
+									/>
+									<span style={{ textTransform: 'capitalize', fontSize: '14px' }}>
+										{orientation === 'portrait' ? '📄 Portrait' : '🖼 Landscape'}
+									</span>
+								</label>
+							))}
+						</div>
+						<p style={{ margin: '8px 0 0 0', color: '#8b949e', fontSize: '14px' }}>
+							{printSize === 'A5'
+								? 'Portrait: 148 × 210 mm. Landscape: 210 × 148 mm.'
+								: 'Portrait: 210 × 297 mm. Landscape: 297 × 210 mm.'}
+						</p>
+					</div>
+				)}
 			</div>
 
 			<div className="card">

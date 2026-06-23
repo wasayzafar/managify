@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { db, Purchase, Item, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { getThermalPrintStyles, getPrintWindowSize, getPrintPageCSS } from '../utils/thermalPrintStyles'
 
 export default function CreditsPage() {
 	const [creditPurchases, setCreditPurchases] = useState<(Purchase & { item?: Item })[]>([])
@@ -240,6 +241,22 @@ export default function CreditsPage() {
 						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
 							<h3>Purchase Invoice</h3>
 							<div>
+								<button onClick={() => {
+									const el = document.getElementById('credit-bill-print')
+									if (!el) return
+									const { width, height } = getPrintWindowSize()
+									const w = window.open('', 'PRINT', `height=${height},width=${width},top=100,left=150`)
+									if (!w) return
+									w.document.write('<html><head><title>Purchase Invoice</title>')
+									w.document.write(`<style>${getPrintPageCSS()} body{margin:0;padding:0;font-family:Arial,sans-serif;} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ddd;padding:6px;text-align:left}</style>`)
+									w.document.write('</head><body>')
+									w.document.write(el.innerHTML)
+									w.document.write('</body></html>')
+									w.document.close()
+									w.focus()
+									w.print()
+									w.close()
+								}} style={{ marginRight: 8 }}>Print</button>
 								<button onClick={async () => {
 									const el = document.getElementById('credit-bill-print')
 									if (!el) return
@@ -251,11 +268,11 @@ export default function CreditsPage() {
 									const imgHeight = canvas.height * imgWidth / canvas.width
 									pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
 									pdf.save(`credit_purchase_${selectedPurchase?.id.slice(-6)}.pdf`)
-								}} style={{ marginRight: 8 }}>Download</button>
+								}} style={{ marginRight: 8 }}>Download PDF</button>
 								<button onClick={() => setSelectedPurchase(null)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>×</button>
 							</div>
 						</div>
-						<div id="credit-bill-print" style={{ fontFamily: 'Arial, sans-serif', padding: '20px', background: 'white', color: 'black', borderRadius: '8px' }}>
+						<div id="credit-bill-print" style={{ ...getThermalPrintStyles().container, borderRadius: '8px', padding: '20px' }}>
 							<div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
 								<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>{storeInfo.store_name.toUpperCase()}</h1>
 								{storeInfo.address && <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>{storeInfo.address}</p>}

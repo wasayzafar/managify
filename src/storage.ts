@@ -61,6 +61,7 @@ export type StoreInfo = {
 	website?: string
 	taxNumber?: string
 	logo?: string
+	currency?: string
 }
 
 export type Expense = {
@@ -343,7 +344,8 @@ export const db = {
 				email: info.email,
 				website: info.website,
 				taxNumber: info.tax_number,
-				logo: info.logo
+				logo: info.logo,
+				currency: info.currency || 'PKR'
 			};
 		} catch (error) {
 			console.error('Error getting store info:', error);
@@ -354,7 +356,8 @@ export const db = {
 				email: '',
 				website: '',
 				taxNumber: '',
-				logo: ''
+				logo: '',
+				currency: 'PKR'
 			};
 		}
 	},
@@ -367,7 +370,8 @@ export const db = {
 			email: data.email || '',
 			website: data.website || '',
 			tax_number: data.taxNumber || '',
-			logo: data.logo || ''
+			logo: data.logo || '',
+			currency: data.currency || 'PKR'
 		};
 		await supabaseStorage.updateStoreInfo(userId, mappedData);
 		return await this.getStoreInfo();

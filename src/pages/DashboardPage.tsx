@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useItems, usePurchases, useSales, useInventory } from '../hooks/useDataQueries'
 import { StatsSkeleton } from '../components/LoadingSkeleton'
 import { seedTestData } from '../utils/testDataSeeder'
+import { loadCurrency, formatCurrency } from '../utils/currency'
 
 export default function DashboardPage() {
 	const { data: items = [], isLoading: itemsLoading } = useItems()
@@ -10,6 +11,11 @@ export default function DashboardPage() {
 	const { data: sales = [], isLoading: salesLoading } = useSales()
 	const { data: inventory = [], isLoading: inventoryLoading } = useInventory()
 	const [seeding, setSeeding] = useState(false)
+	const [currency, setCurrency] = useState('PKR')
+
+	useEffect(() => {
+		loadCurrency().then(curr => setCurrency(curr))
+	}, [])
 
 	const loading = itemsLoading || purchasesLoading || salesLoading || inventoryLoading
 
@@ -143,7 +149,7 @@ export default function DashboardPage() {
 				
 				<div className="stat-card">
 					<h3>Total Revenue</h3>
-					<p className="value">Amount {stats.totalRevenue.toFixed(2)}</p>
+					<p className="value">{formatCurrency(stats.totalRevenue, currency)}</p>
 					<p className="change">All time sales</p>
 				</div>
 				
@@ -155,14 +161,14 @@ export default function DashboardPage() {
 				
 				<div className="stat-card">
 					<h3>Today's Revenue</h3>
-					<p className="value">Amount {stats.todayRevenue.toFixed(2)}</p>
+					<p className="value">{formatCurrency(stats.todayRevenue, currency)}</p>
 					<p className="change">Sales today</p>
 				</div>
 				
 				<div className="stat-card">
 					<h3>Gross Profit Excluding Expenses</h3>
 					<p className="value" style={{ color: stats.grossProfit >= 0 ? '#4caf50' : '#f44336' }}>
-						Amount {stats.grossProfit.toFixed(2)}
+						{formatCurrency(stats.grossProfit, currency)}
 					</p>
 					<p className="change">Profit margin: {stats.profitMargin.toFixed(1)}%</p>
 				</div>

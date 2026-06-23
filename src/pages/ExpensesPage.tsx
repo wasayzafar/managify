@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { db, Expense } from '../storage'
+import { loadCurrency, formatCurrency } from '../utils/currency'
 
 export default function ExpensesPage() {
 	const [expenses, setExpenses] = useState<Expense[]>([])
@@ -7,12 +8,15 @@ export default function ExpensesPage() {
 	const [editingId, setEditingId] = useState<string | null>(null)
 	const [editForm, setEditForm] = useState<typeof form>(form)
 	const [loading, setLoading] = useState(true)
+	const [currency, setCurrency] = useState('PKR')
 
 	useEffect(() => {
 		const loadExpenses = async () => {
 			try {
 				const data = await db.listExpenses()
 				setExpenses(data)
+				const curr = await loadCurrency()
+				setCurrency(curr)
 			} catch (error) {
 				console.error('Error loading expenses:', error)
 			} finally {
@@ -100,7 +104,7 @@ export default function ExpensesPage() {
 			<div className="card" style={{ background: '#fff3cd', border: '1px solid #ffeaa7', marginBottom: 16 }}>
 				<h3 style={{ color: '#856404', margin: '0 0 8px 0' }}>💰 Total Expenses</h3>
 				<p style={{ color: '#856404', margin: 0, fontSize: '18px', fontWeight: 'bold' }}>
-					price {totalExpenses.toFixed(2)}
+					{formatCurrency(totalExpenses, currency)}
 				</p>
 			</div>
 			
@@ -134,7 +138,7 @@ export default function ExpensesPage() {
 							<td>
 								{editingId === exp.id ? (
 									<input type="number" step="0.01" value={editForm.amount} onChange={e => setEditForm({ ...editForm, amount: e.target.value })} />
-								) : `price ${exp.amount.toFixed(2)}`}
+								) : formatCurrency(exp.amount, currency)}
 							</td>
 							<td>
 								{editingId === exp.id ? (

@@ -4,6 +4,8 @@ import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { auth } from '../firebase'
+import { loadCurrency, formatCurrency } from '../utils/currency'
+import { getThermalPrintStyles, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
 
 export default function PurchasesPage() {
 	const [rows, setRows] = useState<Purchase[]>([])
@@ -31,7 +33,8 @@ export default function PurchasesPage() {
 		email: '',
 		website: '',
 		taxNumber: '',
-		logo: ''
+		logo: '',
+		currency: 'PKR'
 	})
 	const [loading, setLoading] = useState(true)
 	const existing = items.find(i => i.sku === sku)
@@ -62,6 +65,7 @@ export default function PurchasesPage() {
 				setItems(itemsData)
 				setStoreInfo(storeData)
 				setSuppliers(suppliersData)
+				await loadCurrency()
 			} catch (error) {
 				console.error('Error loading data:', error)
 			} finally {
@@ -173,13 +177,34 @@ export default function PurchasesPage() {
 		}
 	}
 
+	function printInvoice(row: Purchase & { item?: Item }) {
+		const id = `purch-invoice-${row.id}`
+		const el = document.getElementById(id)
+		if (!el) return
+		const { width, height } = getPrintWindowSize()
+		const w = window.open('', 'PRINT', `height=${height},width=${width},top=100,left=150`)
+		if (!w) return
+		w.document.write('<html><head><title>Purchase Invoice</title>')
+		w.document.write(`<style>${getPrintPageCSS()} body{margin:0;padding:0;font-family:Arial,sans-serif;} table{width:100%;border-collapse:collapse} th,td{border:1px solid #ddd;padding:6px;text-align:left}</style>`)
+		w.document.write('</head><body>')
+		w.document.write(el.innerHTML)
+		w.document.write('</body></html>')
+		w.document.close()
+		w.focus()
+		w.print()
+		w.close()
+	}
+
 	async function downloadPdf(row: Purchase & { item?: Item }) {
 		const id = `purch-invoice-${row.id}`
 		const el = document.getElementById(id)
 		if (!el) return
 		const canvas = await html2canvas(el)
 		const imgData = canvas.toDataURL('image/png')
-		const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
+		const size = getPrintSize()
+		const orientation = (size === 'A4' || size === 'A5') && getPrintOrientation() === 'landscape' ? 'l' : 'p'
+		const format = size === 'A5' ? 'a5' : 'a4'
+		const pdf = new jsPDF({ orientation, unit: 'mm', format })
 		const pageWidth = pdf.internal.pageSize.getWidth()
 		const imgWidth = pageWidth
 		const imgHeight = canvas.height * imgWidth / canvas.width
@@ -336,7 +361,7 @@ export default function PurchasesPage() {
 					const item = items.find(i => i.id === r.itemId)
 					return (
 					<div key={r.id} className="card" style={{ padding: 12 }}>
-						<div id={`purch-invoice-${r.id}`} style={{ fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto', padding: '20px', background: 'white', color: 'black' }}>
+						<div id={`purch-invoice-${r.id}`} style={{ ...getThermalPrintStyles().container, padding: '20px' }}>
 							<div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
 								{storeInfo.logo && (
 									<img 
@@ -420,14 +445,14 @@ export default function PurchasesPage() {
 										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{item?.sku || 'N/A'}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{item?.name || 'Unknown'}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'center', fontSize: '13px' }}>{r.quantity || r.qty || 0}</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice ? `Amount ${r.costPrice.toFixed(2)}` : 'N/A'}</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice && (r.quantity || r.qty) ? `Amount ${(r.costPrice * (r.quantity || r.qty || 0)).toFixed(2)}` : 'N/A'}</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice ? formatCurrency(r.costPrice, storeInfo.currency) : 'N/A'}</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{r.costPrice && (r.quantity || r.qty) ? formatCurrency(r.costPrice * (r.quantity || r.qty || 0), storeInfo.currency) : 'N/A'}</td>
 									</tr>
 								</tbody>
 								<tfoot>
 									<tr style={{ background: '#f9f9f9' }}>
 										<td colSpan={4} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL COST</td>
-										<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{r.costPrice && (r.quantity || r.qty) ? `Amount ${(r.costPrice * (r.quantity || r.qty || 0)).toFixed(2)}` : 'N/A'}</td>
+										<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{r.costPrice && (r.quantity || r.qty) ? formatCurrency(r.costPrice * (r.quantity || r.qty || 0), storeInfo.currency) : 'N/A'}</td>
 									</tr>
 								</tfoot>
 							</table>
@@ -439,7 +464,8 @@ export default function PurchasesPage() {
 							</div>
 						</div>
 						<div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: 8 }}>
-							<button onClick={() => downloadPdf(r)}>Download Invoice PDF</button>
+							<button onClick={() => printInvoice(r)}>Print Invoice</button>
+							<button className="secondary" onClick={() => downloadPdf(r)}>Download PDF</button>
 						</div>
 					</div>
 						)
