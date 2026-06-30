@@ -70,6 +70,8 @@ export type Expense = {
 	amount: number
 	description?: string
 	date: string
+	expiresThisMonth?: boolean
+	expenseMonth?: string
 	createdAt?: string
 }
 
@@ -114,6 +116,16 @@ export type Supplier = {
 	name: string
 	phone: string
 	address: string
+	createdAt?: string
+}
+
+export type Asset = {
+	id: string
+	name: string
+	category: string
+	purchaseDate: string
+	purchasePrice: number
+	description?: string
 	createdAt?: string
 }
 
@@ -381,25 +393,45 @@ export const db = {
 	async listExpenses(): Promise<Expense[]> {
 		try {
 			const userId = getUserId();
-			return await supabaseStorage.listExpenses(userId);
+			const data = await supabaseStorage.listExpenses(userId);
+			return data.map(e => ({
+				id: e.id,
+				type: e.type,
+				amount: e.amount,
+				description: e.description,
+				date: e.date,
+				expiresThisMonth: e.expires_this_month ?? false,
+				expenseMonth: e.expense_month,
+			}));
 		} catch (error) {
 			console.error('Error listing expenses:', error);
 			return [];
 		}
 	},
-	async createExpense(data: { type: string, amount: number, description?: string, date?: string }): Promise<Expense> {
+	async createExpense(data: { type: string, amount: number, description?: string, date?: string, expiresThisMonth?: boolean, expenseMonth?: string }): Promise<Expense> {
 		const userId = getUserId();
 		const expense = {
 			type: data.type,
 			amount: data.amount,
 			description: data.description,
-			date: data.date || new Date().toISOString()
+			date: data.date || new Date().toISOString(),
+			expires_this_month: data.expiresThisMonth ?? false,
+			expense_month: data.expenseMonth || new Date().toISOString().slice(0, 7),
 		};
 		const id = await supabaseStorage.addExpense(userId, expense);
-		return { id, ...expense };
+		return { id, type: expense.type, amount: expense.amount, description: expense.description, date: expense.date, expiresThisMonth: data.expiresThisMonth, expenseMonth: expense.expense_month };
 	},
 	async updateExpense(id: string, data: Partial<Omit<Expense, 'id'>>): Promise<void> {
-		await supabaseStorage.updateExpense(id, data);
+		const mapped: any = { ...data }
+		if ('expiresThisMonth' in data) {
+			mapped.expires_this_month = data.expiresThisMonth
+			delete mapped.expiresThisMonth
+		}
+		if ('expenseMonth' in data) {
+			mapped.expense_month = data.expenseMonth
+			delete mapped.expenseMonth
+		}
+		await supabaseStorage.updateExpense(id, mapped);
 	},
 	async deleteExpense(id: string): Promise<void> {
 		await supabaseStorage.deleteExpense(id);
@@ -489,6 +521,48 @@ export const db = {
 	},
 	async deleteSupplier(id: string): Promise<void> {
 		await supabaseStorage.deleteSupplier(id);
+	},
+
+	async listAssets(): Promise<Asset[]> {
+		try {
+			const userId = getUserId()
+			const data = await supabaseStorage.listAssets(userId)
+			return data.map(a => ({
+				id: a.id,
+				name: a.name,
+				category: a.category,
+				purchaseDate: a.purchase_date,
+				purchasePrice: a.purchase_price,
+				description: a.description,
+				createdAt: a.created_at,
+			}))
+		} catch (error) {
+			console.error('Error listing assets:', error)
+			return []
+		}
+	},
+	async createAsset(data: { name: string; category: string; purchaseDate: string; purchasePrice: number; description?: string }): Promise<Asset> {
+		const userId = getUserId()
+		const id = await supabaseStorage.addAsset(userId, {
+			name: data.name,
+			category: data.category,
+			purchase_date: data.purchaseDate,
+			purchase_price: data.purchasePrice,
+			description: data.description,
+		})
+		return { id, ...data }
+	},
+	async updateAsset(id: string, data: Partial<Omit<Asset, 'id'>>): Promise<void> {
+		const mapped: any = {}
+		if (data.name !== undefined) mapped.name = data.name
+		if (data.category !== undefined) mapped.category = data.category
+		if (data.purchaseDate !== undefined) mapped.purchase_date = data.purchaseDate
+		if (data.purchasePrice !== undefined) mapped.purchase_price = data.purchasePrice
+		if (data.description !== undefined) mapped.description = data.description
+		await supabaseStorage.updateAsset(id, mapped)
+	},
+	async deleteAsset(id: string): Promise<void> {
+		await supabaseStorage.deleteAsset(id)
 	},
 
 	async clearAllData(): Promise<void> {

@@ -56,6 +56,8 @@ export interface Expense {
   amount: number
   description?: string
   date: string
+  expires_this_month?: boolean
+  expense_month?: string
   user_id: string
 }
 
@@ -93,6 +95,17 @@ export interface Supplier {
   address: string
   created_at?: string
   user_id: string
+}
+
+export interface Asset {
+  id: string
+  name: string
+  category: string
+  purchase_date: string
+  purchase_price: number
+  description?: string
+  user_id: string
+  created_at?: string
 }
 
 // Items
@@ -429,6 +442,43 @@ export const getInventory = async (userId: string): Promise<Array<{ itemId: stri
   })
 }
 
+// Assets
+export const listAssets = async (userId: string): Promise<Asset[]> => {
+  const { data, error } = await supabase
+    .from('assets')
+    .select('*')
+    .eq('user_id', userId)
+    .order('purchase_date', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export const addAsset = async (userId: string, asset: Omit<Asset, 'id' | 'user_id'>): Promise<string> => {
+  const { data, error } = await supabase
+    .from('assets')
+    .insert({ ...asset, user_id: userId, created_at: new Date().toISOString() })
+    .select()
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+export const updateAsset = async (id: string, asset: Partial<Omit<Asset, 'id' | 'user_id'>>): Promise<void> => {
+  const { error } = await supabase
+    .from('assets')
+    .update(asset)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const deleteAsset = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('assets')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
 // Clear all user data
 export const clearAllData = async (userId: string): Promise<void> => {
   // Child tables that reference items must be deleted first to avoid FK violations
@@ -440,6 +490,7 @@ export const clearAllData = async (userId: string): Promise<void> => {
     'expenses',
     'employees',
     'suppliers',
+    'assets',
     'store_info',
   ]
 
