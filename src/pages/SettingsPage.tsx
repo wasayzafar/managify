@@ -80,17 +80,26 @@ export default function SettingsPage() {
 	}
 
 	const handleResetSystem = async () => {
-		if (window.confirm('⚠️ WARNING: This will permanently delete ALL data including items, purchases, sales, and settings. This action cannot be undone. Are you sure?')) {
-			if (window.confirm('This is your final confirmation. All data will be lost forever. Continue?')) {
+		if (window.confirm('⚠️ WARNING: This will permanently delete ALL data including items, purchases, sales, vendors, expenses, employees, invoices, and settings. This action cannot be undone. Are you sure?')) {
+			if (window.confirm('This is your final confirmation. Every record will be wiped to zero. Continue?')) {
 				try {
 					setMessage('Resetting system...')
 					await db.clearAllData()
+					// Clear any locally cached data (UI prefs are preserved)
+					const preserved: Record<string, string | null> = {
+						printSize: localStorage.getItem('printSize'),
+						printOrientation: localStorage.getItem('printOrientation'),
+						thermalPrinting: localStorage.getItem('thermalPrinting'),
+						ecommerceMode: localStorage.getItem('ecommerceMode'),
+					}
+					localStorage.clear()
+					Object.entries(preserved).forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v) })
 					setMessage('System reset successfully! All data has been cleared.')
 					setTimeout(() => {
 						window.location.reload()
 					}, 2000)
-				} catch (error) {
-					setMessage('Error resetting system. Please try again.')
+				} catch (error: any) {
+					setMessage(`Error resetting system: ${error?.message || 'Please try again.'}`)
 					console.error('Reset failed:', error)
 				}
 			}
