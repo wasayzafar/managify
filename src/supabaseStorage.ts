@@ -431,13 +431,32 @@ export const getInventory = async (userId: string): Promise<Array<{ itemId: stri
 
 // Clear all user data
 export const clearAllData = async (userId: string): Promise<void> => {
-  const tables = ['items', 'purchases', 'sales', 'store_info', 'expenses', 'employees', 'invoices', 'suppliers']
-  
+  // Child tables that reference items must be deleted first to avoid FK violations
+  const tables = [
+    'sales',      // references items
+    'purchases',  // references items
+    'invoices',
+    'items',
+    'expenses',
+    'employees',
+    'suppliers',
+    'store_info',
+  ]
+
+  const failures: string[] = []
   for (const table of tables) {
     const { error } = await supabase
       .from(table)
       .delete()
       .eq('user_id', userId)
-    if (error) throw error
+    // 42P01 = table does not exist, 42703 = column does not exist — skip missing tables
+    if (error && error.code !== '42P01' && error.code !== '42703') {
+      console.error(`Failed to clear table "${table}":`, error)
+      failures.push(table)
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(`Failed to clear: ${failures.join(', ')}`)
   }
 }
