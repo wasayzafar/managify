@@ -41,10 +41,13 @@ export default function ProfitLossPage() {
 		grossProfit: 0,
 		totalExpenses: 0,
 		totalSalaries: 0,
+		totalAssetPurchases: 0,
 		netProfit: 0,
 		profitMargin: 0,
 		purchaseCount: 0,
-		saleCount: 0
+		saleCount: 0,
+		assetCount: 0,
+		expensesByType: [] as { type: string; amount: number; count: number }[]
 	})
 
 	useEffect(() => {
@@ -73,10 +76,11 @@ export default function ProfitLossPage() {
 		const loadPLData = async () => {
 			setLoading(true)
 			try {
-				const [purchases, sales, expenses] = await Promise.all([
+				const [purchases, sales, expenses, assets] = await Promise.all([
 					db.listPurchases(),
 					db.listSales(),
-					db.listExpenses()
+					db.listExpenses(),
+					db.listAssets()
 				])
 
 				// Get employees for salary calculation
@@ -131,6 +135,28 @@ export default function ProfitLossPage() {
 				// Calculate total expenses
 				const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
 
+				// Break expenses down by type (e.g. Rent, Utilities, Liabilities)
+				const expensesByTypeMap = filteredExpenses.reduce((map, expense) => {
+					const key = expense.type || 'Other'
+					const existing = map.get(key) || { amount: 0, count: 0 }
+					existing.amount += expense.amount
+					existing.count += 1
+					map.set(key, existing)
+					return map
+				}, new Map<string, { amount: number; count: number }>())
+				const expensesByType = Array.from(expensesByTypeMap.entries())
+					.map(([type, v]) => ({ type, amount: v.amount, count: v.count }))
+					.sort((a, b) => b.amount - a.amount)
+
+				// Filter assets by purchase date within the selected range (date & month based)
+				const filteredAssets = assets.filter(a => {
+					const purchaseDate = a.purchaseDate ? new Date(a.purchaseDate) : new Date()
+					return purchaseDate >= new Date(startDate) && purchaseDate <= new Date(endDate + 'T23:59:59')
+				})
+
+				// Calculate total asset purchases (capital expenditure)
+				const totalAssetPurchases = filteredAssets.reduce((sum, asset) => sum + asset.purchasePrice, 0)
+
 				// Calculate total salaries (exclude joining month, start from next month)
 				const totalSalaries = employees.reduce((sum: number, emp: any) => {
 					if (!emp.joinDate) return sum + (emp.salary || 0)
@@ -143,8 +169,8 @@ export default function ProfitLossPage() {
 				// Calculate Gross Profit
 				const grossProfit = totalRevenue - totalCOGS
 
-				// Calculate Net Profit (after expenses and salaries)
-				const netProfit = grossProfit - totalExpenses - totalSalaries
+				// Calculate Net Profit (after expenses, salaries, and asset purchases)
+				const netProfit = grossProfit - totalExpenses - totalSalaries - totalAssetPurchases
 
 				// Calculate profit margin
 				const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
@@ -155,10 +181,13 @@ export default function ProfitLossPage() {
 					grossProfit,
 					totalExpenses,
 					totalSalaries,
+					totalAssetPurchases,
 					netProfit,
 					profitMargin,
 					purchaseCount: filteredPurchases.length,
-					saleCount: filteredSales.length
+					saleCount: filteredSales.length,
+					assetCount: filteredAssets.length,
+					expensesByType
 				})
 			} catch (error) {
 				console.error('Error loading P&L data:', error)
@@ -352,9 +381,23 @@ export default function ProfitLossPage() {
 							<td style={{ border: '1px solid #ddd', padding: '12px', fontSize: '14px', fontWeight: 'bold' }}>OPERATING EXPENSES</td>
 							<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>price {plData.totalExpenses.toFixed(2)}</td>
 						</tr>
+						{plData.expensesByType.map(exp => (
+							<tr key={exp.type}>
+								<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px', paddingLeft: '20px' }}>{exp.type} ({exp.count} {exp.count === 1 ? 'entry' : 'entries'})</td>
+								<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>price {exp.amount.toFixed(2)}</td>
+							</tr>
+						))}
 						<tr style={{ background: '#ffe8e8' }}>
 							<td style={{ border: '1px solid #ddd', padding: '12px', fontSize: '14px', fontWeight: 'bold' }}>SALARIES</td>
 							<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>price {plData.totalSalaries.toFixed(2)}</td>
+						</tr>
+						<tr style={{ background: '#ffe8e8' }}>
+							<td style={{ border: '1px solid #ddd', padding: '12px', fontSize: '14px', fontWeight: 'bold' }}>ASSET PURCHASES</td>
+							<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>price {plData.totalAssetPurchases.toFixed(2)}</td>
+						</tr>
+						<tr>
+							<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px', paddingLeft: '20px' }}>Assets Bought ({plData.assetCount} items)</td>
+							<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>price {plData.totalAssetPurchases.toFixed(2)}</td>
 						</tr>
 						<tr style={{ background: plData.netProfit >= 0 ? '#e8f5e8' : '#ffe8e8', borderTop: '3px solid #333' }}>
 							<td style={{ border: '1px solid #ddd', padding: '15px', fontSize: '16px', fontWeight: 'bold' }}>NET PROFIT</td>
