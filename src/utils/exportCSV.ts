@@ -74,6 +74,33 @@ export type ExportItem = {
   stock?: number
 }
 
+export type InventoryExportItem = {
+  sku: string
+  name: string
+  stock: number
+  price: number
+  costPrice: number
+  totalRetail: number
+  totalCost: number
+}
+
+export function exportInventoryToExcel(items: InventoryExportItem[], filename = 'inventory.xls') {
+  const headers = ['SKU', 'Name', 'Stock', 'Selling Price', 'Cost Price', 'Total Retail', 'Total Cost']
+  const rows = items.map(i => [i.sku, i.name, i.stock, i.price.toFixed(2), i.costPrice.toFixed(2), i.totalRetail.toFixed(2), i.totalCost.toFixed(2)])
+
+  const tableRows = [
+    `<tr>${headers.map(h => `<th style="background:#f0f0f0;font-weight:bold;border:1px solid #ccc;padding:6px">${h}</th>`).join('')}</tr>`,
+    ...rows.map(r => `<tr>${r.map(c => `<td style="border:1px solid #ccc;padding:6px">${c}</td>`).join('')}</tr>`)
+  ].join('\n')
+
+  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>${tableRows}</table></body></html>`
+  const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
+
 export function exportItemsToShopifyCSV(items: ExportItem[], filename = 'products_shopify.csv') {
   const rows = items.map(item => [
     toHandle(item.name),          // Handle

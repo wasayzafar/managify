@@ -188,6 +188,14 @@ export const updatePurchase = async (id: string, purchase: Partial<Omit<Purchase
   if (error) throw error
 }
 
+export const deletePurchase = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('purchases')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
 // Sales
 export const listSales = async (userId: string): Promise<Sale[]> => {
   const { data, error } = await supabase
