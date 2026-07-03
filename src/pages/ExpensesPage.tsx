@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { db, Expense } from '../storage'
+import { db, Expense, StoreInfo } from '../storage'
 import { loadCurrency, formatCurrency } from '../utils/currency'
+import jsPDF from 'jspdf'
 
 const EXPENSE_TYPES = ['Rent', 'Utilities', 'Salaries', 'Transport', 'Maintenance', 'Liabilities', 'Other']
 
@@ -15,12 +16,14 @@ export default function ExpensesPage() {
 	const [editForm, setEditForm] = useState(emptyForm)
 	const [loading, setLoading] = useState(true)
 	const [currency, setCurrency] = useState('PKR')
+	const [storeInfo, setStoreInfo] = useState<StoreInfo>({ storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '', currency: 'PKR' })
 
 	useEffect(() => {
 		const loadExpenses = async () => {
 			try {
-				const data = await db.listExpenses()
+				const [data, store] = await Promise.all([db.listExpenses(), db.getStoreInfo()])
 				setExpenses(data)
+				setStoreInfo(store)
 				const curr = await loadCurrency()
 				setCurrency(curr)
 			} catch (error) {
@@ -94,6 +97,89 @@ export default function ExpensesPage() {
 
 	const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0)
 
+	function handleExcelExport() {
+		const headers = ['Type', 'Amount', 'Description', 'Date', 'Month', 'Expires']
+		const rows = expenses.map(e => [
+			e.type,
+			e.amount.toFixed(2),
+			e.description || '',
+			e.date ? new Date(e.date).toLocaleDateString() : '',
+			e.expenseMonth ? new Date(e.expenseMonth + '-01').toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : '',
+			e.expiresThisMonth ? 'Yes' : 'No',
+		])
+		const tableRows = [
+			`<tr>${headers.map(h => `<th style="background:#f0f0f0;font-weight:bold;border:1px solid #ccc;padding:6px">${h}</th>`).join('')}</tr>`,
+			...rows.map(r => `<tr>${r.map(c => `<td style="border:1px solid #ccc;padding:6px">${c}</td>`).join('')}</tr>`)
+		].join('\n')
+		const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>${tableRows}</table></body></html>`
+		const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel;charset=utf-8' })
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a'); a.href = url; a.download = 'expenses.xls'; a.click()
+		URL.revokeObjectURL(url)
+	}
+
+	function handlePdfExport() {
+		const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
+		const pageW = pdf.internal.pageSize.getWidth()
+		const pageH = pdf.internal.pageSize.getHeight()
+		const margin = 14; let y = margin
+
+		pdf.setFontSize(18); pdf.setFont('helvetica', 'bold')
+		pdf.text(storeInfo.storeName.toUpperCase(), pageW / 2, y, { align: 'center' }); y += 7
+		if (storeInfo.address) { pdf.setFontSize(9); pdf.setFont('helvetica', 'normal'); pdf.text(storeInfo.address, pageW / 2, y, { align: 'center' }); y += 5 }
+		if (storeInfo.phone)   { pdf.setFontSize(9); pdf.text('Phone: ' + storeInfo.phone, pageW / 2, y, { align: 'center' }); y += 5 }
+		pdf.setFontSize(13); pdf.setFont('helvetica', 'bold')
+		pdf.text('Expenses Report', pageW / 2, y + 2, { align: 'center' }); y += 7
+		pdf.setFontSize(9); pdf.setFont('helvetica', 'normal')
+		pdf.text('Generated: ' + new Date().toLocaleString(), pageW / 2, y, { align: 'center' }); y += 5
+		pdf.line(margin, y, pageW - margin, y); y += 5
+
+		const cols = [
+			{ label: 'Type', w: 28 }, { label: 'Amount', w: 28 }, { label: 'Description', w: 60 },
+			{ label: 'Date', w: 24 }, { label: 'Month', w: 30 }, { label: 'Expires', w: 16 },
+		]
+		const tableW = cols.reduce((s, c) => s + c.w, 0)
+		const startX = (pageW - tableW) / 2
+
+		const drawHeader = () => {
+			pdf.setFillColor(240, 240, 240); pdf.rect(startX, y, tableW, 7, 'F')
+			pdf.setFontSize(8); pdf.setFont('helvetica', 'bold')
+			let x = startX; cols.forEach(c => { pdf.text(c.label, x + 1, y + 5); x += c.w }); y += 7
+		}
+		drawHeader()
+
+		let total = 0
+		pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5)
+		expenses.forEach((exp, idx) => {
+			if (y > pageH - 20) { pdf.addPage(); y = margin; drawHeader(); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5) }
+			total += exp.amount
+			if (idx % 2 === 0) { pdf.setFillColor(252, 252, 252); pdf.rect(startX, y, tableW, 6, 'F') }
+			const cells = [
+				exp.type,
+				formatCurrency(exp.amount, currency),
+				exp.description || '—',
+				exp.date ? new Date(exp.date).toLocaleDateString() : '—',
+				exp.expenseMonth ? new Date(exp.expenseMonth + '-01').toLocaleDateString(undefined, { year: 'numeric', month: 'short' }) : '—',
+				exp.expiresThisMonth ? 'Yes' : 'No',
+			]
+			let x = startX
+			cols.forEach((col, ci) => { const text = pdf.splitTextToSize(cells[ci], col.w - 2)[0] || ''; pdf.text(text, x + 1, y + 4); x += col.w })
+			y += 6
+		})
+
+		y += 3; pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9)
+		pdf.text(`Total: ${expenses.length} expenses`, margin, y)
+		pdf.text(`Total Amount: ${formatCurrency(total, currency)}`, pageW - margin, y, { align: 'right' })
+
+		const totalPages = (pdf as any).internal.getNumberOfPages()
+		for (let i = 1; i <= totalPages; i++) {
+			pdf.setPage(i); pdf.setFont('helvetica', 'italic'); pdf.setFontSize(8); pdf.setTextColor(150)
+			pdf.text('Report generated by managify.online', pageW / 2, pageH - 6, { align: 'center' })
+			pdf.setTextColor(0)
+		}
+		pdf.save('expenses_report.pdf')
+	}
+
 	if (loading) {
 		return (
 			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
@@ -104,7 +190,13 @@ export default function ExpensesPage() {
 
 	return (
 		<div className="card">
-			<h2>Expenses</h2>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+				<h2 style={{ margin: 0 }}>Expenses</h2>
+				<div style={{ display: 'flex', gap: 8 }}>
+					<button className="secondary" onClick={handleExcelExport}>Export Excel</button>
+					<button className="secondary" onClick={handlePdfExport}>Export PDF</button>
+				</div>
+			</div>
 
 			<div className="card" style={{ background: '#fff3cd', border: '1px solid #ffeaa7', marginBottom: 16 }}>
 				<h3 style={{ color: '#856404', margin: '0 0 8px 0' }}>Total Expenses</h3>
