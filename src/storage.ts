@@ -238,6 +238,9 @@ export const db = {
 	async updatePurchase(id: string, data: Partial<Omit<Purchase, 'id'>>): Promise<void> {
 		await supabaseStorage.updatePurchase(id, data);
 	},
+	async deletePurchase(id: string): Promise<void> {
+		await supabaseStorage.deletePurchase(id);
+	},
 
 	async listSales(): Promise<Sale[]> {
 		try {
