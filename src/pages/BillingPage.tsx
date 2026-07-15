@@ -15,6 +15,7 @@ export default function BillingPage() {
 	const [customerAddress, setCustomerAddress] = useState('')
 	const [ecommerceMode] = useState(() => localStorage.getItem('ecommerceMode') === 'true')
 	const [invoiceNo, setInvoiceNo] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
+	const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 16))
 	const [skuInput, setSkuInput] = useState('')
 	const [qtyInput, setQtyInput] = useState('1')
 	const [priceInput, setPriceInput] = useState('')
@@ -176,9 +177,9 @@ export default function BillingPage() {
 				const finalAmount = lineSubtotal - billDiscountAmount
 				const actualUnitPrice = finalAmount / l.qty
 				
-				await db.createSale({ 
-					itemId, 
-					quantity: l.qty, 
+				await db.createSale({
+					itemId,
+					quantity: l.qty,
 					actualPrice: actualUnitPrice,
 					originalPrice: l.price,
 					itemDiscount: l.discount || 0,
@@ -186,7 +187,7 @@ export default function BillingPage() {
 					customerName: customer,
 					customerPhone: customerPhone,
 					invoiceNo: invoiceNo,
-					date: new Date().toISOString() 
+					date: new Date(billDate).toISOString()
 				})
 			}
 			// Save invoice to database
@@ -197,13 +198,15 @@ export default function BillingPage() {
 				customerAddress: customerAddress || undefined,
 				lines: cart,
 				total,
-				billDiscount
+				billDiscount,
+				date: new Date(billDate).toISOString()
 			})
 			
-			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date().toLocaleString(), storeInfo }
+			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date(billDate).toLocaleString(), storeInfo }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
+			setBillDate(new Date().toISOString().slice(0, 16))
 			await loadSavedInvoices()
 			alert('Bill created and saved successfully')
 		} catch (error) {
@@ -273,6 +276,10 @@ export default function BillingPage() {
 				<input placeholder="Invoice No" value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} />
 				<input placeholder="Customer" value={customer} onChange={e => setCustomer(e.target.value)} />
 				<input placeholder="Phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+				<div>
+					<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Bill Date</label>
+					<input type="datetime-local" value={billDate} onChange={e => setBillDate(e.target.value)} />
+				</div>
 				{ecommerceMode && (
 					<input
 						placeholder="Customer Delivery Address"
