@@ -484,7 +484,7 @@ export const db = {
 			total: data.total,
 			bill_discount: data.billDiscount,
 			date: dateStr,
-			created_at: new Date().toISOString(),
+			created_at: dateStr,
 		};
 		const id = await supabaseStorage.addInvoice(userId, invoice);
 		return { id, invoiceNo: data.invoiceNo, customer: data.customer, phone: data.phone, customerAddress: data.customerAddress, lines: data.lines, total: data.total, billDiscount: data.billDiscount, date: dateStr, createdAt: new Date(dateStr).toLocaleString(), storeInfo };

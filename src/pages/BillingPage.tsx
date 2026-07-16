@@ -212,7 +212,7 @@ export default function BillingPage() {
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
-			setBillDate(new Date().toISOString().slice(0, 16))
+			setBillDate(localNow())
 			await loadSavedInvoices()
 			alert('Bill created and saved successfully')
 		} catch (error) {
