@@ -97,6 +97,7 @@ const SettingsIcon = () => (
 export default function App() {
 	const loc = useLocation()
 	const [sidebarOpen, setSidebarOpen] = useState(false)
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 	const { prefetchPageData } = useDataPrefetch()
 
 	// Prefetch data based on current route
@@ -116,7 +117,7 @@ export default function App() {
 	}, [loc.pathname, prefetchPageData])
 
 	return (
-		<div className="app-shell">
+		<div className={`app-shell${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
 			<SEO />
 			<header className="mobile-header">
 				<button className="mobile-menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
@@ -125,9 +126,23 @@ export default function App() {
 					<span>Managify</span>
 				</div>
 			</header>
+			{sidebarCollapsed && (
+				<button
+					onClick={() => setSidebarCollapsed(false)}
+					className="sidebar-expand-btn"
+					title="Open sidebar"
+				>☰</button>
+			)}
 			<aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
 				<div className="sidebar-header">
-					<h1 className="logoBase"><img src="./logo.png" alt="" srcSet="" width="32" className="logo" />Managify</h1>
+					<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+						<h1 className="logoBase"><img src="./logo.png" alt="" srcSet="" width="32" className="logo" />Managify</h1>
+						<button
+							onClick={() => setSidebarCollapsed(true)}
+							className="sidebar-close-btn"
+							title="Close sidebar"
+						>×</button>
+					</div>
 					<p>Store Management System</p>
 				</div>
 				

@@ -81,13 +81,15 @@ export default function ItemsPage() {
 	}
 
 	async function deleteItem(id: string) {
-		if (!confirm('Delete this item? This will also delete all related purchases and sales.')) return
+		if (!confirm('Delete this item? Purchase records will be removed but sales history will be preserved.')) return
 		try {
+			const { supabase } = await import('../supabase')
 			const userId = (await import('../firebase')).auth.currentUser?.uid
 			if (!userId) throw new Error('Not authenticated')
-			
-			await (await import('../supabase')).supabase.from('purchases').delete().eq('item_id', id).eq('user_id', userId)
-			await (await import('../supabase')).supabase.from('sales').delete().eq('item_id', id).eq('user_id', userId)
+
+			// Nullify item_id on sales so history is preserved (requires FK to be ON DELETE SET NULL)
+			await supabase.from('sales').update({ item_id: null }).eq('item_id', id).eq('user_id', userId)
+			await supabase.from('purchases').delete().eq('item_id', id).eq('user_id', userId)
 			await db.deleteItem(id)
 			refetch()
 		} catch (error) {
