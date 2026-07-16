@@ -15,7 +15,8 @@ export default function BillingPage() {
 	const [customerAddress, setCustomerAddress] = useState('')
 	const [ecommerceMode] = useState(() => localStorage.getItem('ecommerceMode') === 'true')
 	const [invoiceNo, setInvoiceNo] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
-	const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 16))
+	const localNow = () => { const n = new Date(); const p = (x: number) => String(x).padStart(2, '0'); return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}` }
+	const [billDate, setBillDate] = useState(() => localNow())
 	const [useCurrentDate, setUseCurrentDate] = useState(true)
 	const [skuInput, setSkuInput] = useState('')
 	const [qtyInput, setQtyInput] = useState('1')
@@ -164,7 +165,7 @@ export default function BillingPage() {
 	async function finalize() {
 		if (!cart.length || finalizing) return
 		setFinalizing(true)
-		if (useCurrentDate) setBillDate(new Date().toISOString().slice(0, 16))
+		if (useCurrentDate) setBillDate(localNow())
 		const finalDate = useCurrentDate ? new Date().toISOString() : new Date(billDate).toISOString()
 		try {
 			// Create sales for each cart item with discounted prices
@@ -307,7 +308,7 @@ export default function BillingPage() {
 								style={{ width: 'auto', cursor: 'pointer' }}
 								onChange={e => {
 									setUseCurrentDate(e.target.checked)
-									if (e.target.checked) setBillDate(new Date().toISOString().slice(0, 16))
+									if (e.target.checked) setBillDate(localNow())
 								}}
 							/>
 							Use current date &amp; time
