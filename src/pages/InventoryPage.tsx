@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useItems, usePurchases, useInventory } from '../hooks/useDataQueries'
+import { useQueryClient } from '@tanstack/react-query'
+import { useItems, usePurchases, useInventory, queryKeys } from '../hooks/useDataQueries'
 import { usePagination } from '../hooks/usePagination'
 import { TableSkeleton } from '../components/LoadingSkeleton'
 import { loadCurrency, formatCurrency } from '../utils/currency'
@@ -11,6 +12,9 @@ export default function InventoryPage() {
 	const [searchTerm, setSearchTerm] = useState('')
 	const [currency, setCurrency] = useState('PKR')
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({ storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '' })
+	const [editingQty, setEditingQty] = useState<{ itemId: string, value: string } | null>(null)
+	const [savingQty, setSavingQty] = useState(false)
+	const queryClient = useQueryClient()
 
 	const { data: items = [], isLoading: itemsLoading } = useItems()
 	const { data: purchases = [], isLoading: purchasesLoading } = usePurchases()
@@ -27,11 +31,11 @@ export default function InventoryPage() {
 		return inventory.map(inv => {
 			const item = items.find(i => i.id === inv.itemId)
 			const price = item?.price || 0
-			const itemPurchases = purchases.filter(p => p.itemId === inv.itemId)
-			const latestPurchase = [...itemPurchases].sort((a, b) =>
-				new Date(b.date || '').getTime() - new Date(a.date || '').getTime()
-			)[0]
-			const costPrice = latestPurchase?.costPrice || 0
+			// Weighted average cost: sum(qty × cost) / sum(qty) across all purchases
+			const itemPurchases = purchases.filter(p => p.itemId === inv.itemId && (p.costPrice || 0) > 0)
+			const totalCostPaid = itemPurchases.reduce((s, p) => s + (p.qty || p.quantity || 0) * (p.costPrice || 0), 0)
+			const totalQtyPurchased = itemPurchases.reduce((s, p) => s + (p.qty || p.quantity || 0), 0)
+			const costPrice = totalQtyPurchased > 0 ? totalCostPaid / totalQtyPurchased : 0
 			return {
 				...inv,
 				price,
@@ -54,6 +58,39 @@ export default function InventoryPage() {
 	const totalCost   = useMemo(() => enrichedInventory.reduce((s, i) => s + i.totalCostValue, 0), [enrichedInventory])
 
 	const pagination = usePagination({ data: filteredItems, itemsPerPage: 20 })
+
+	async function handleQtySave(itemId: string, currentStock: number) {
+		if (!editingQty || editingQty.itemId !== itemId) return
+		const newQty = parseInt(editingQty.value, 10)
+		if (isNaN(newQty) || newQty < 0) { setEditingQty(null); return }
+		if (newQty === currentStock) { setEditingQty(null); return }
+		setSavingQty(true)
+		try {
+			const diff = newQty - currentStock
+			if (diff > 0) {
+				await db.createPurchase({
+					itemId, qty: diff, costPrice: 0,
+					supplier: 'ADJUSTMENT', supplierPhone: '',
+					paymentType: 'debit', creditDeadline: '',
+					note: 'Stock adjustment'
+				})
+			} else {
+				await db.createSale({
+					itemId, quantity: Math.abs(diff),
+					actualPrice: 0, originalPrice: 0, itemDiscount: 0, billDiscount: 0,
+					date: new Date().toISOString(), invoiceNo: 'ADJ'
+				})
+			}
+			await queryClient.invalidateQueries({ queryKey: queryKeys.inventory })
+			await queryClient.invalidateQueries({ queryKey: queryKeys.purchases })
+			await queryClient.invalidateQueries({ queryKey: queryKeys.sales })
+		} catch (err: any) {
+			alert('Error adjusting stock: ' + (err?.message || err))
+		} finally {
+			setSavingQty(false)
+			setEditingQty(null)
+		}
+	}
 
 	function handleExcelExport() {
 		exportInventoryToExcel(
@@ -222,8 +259,32 @@ export default function InventoryPage() {
 							>
 								<td style={{ padding: '10px 12px', color: '#94a3b8' }}>{item.itemSku}</td>
 								<td style={{ padding: '10px 12px', fontWeight: 500 }}>{item.itemName}</td>
-								<td style={{ padding: '10px 12px', textAlign: 'right', color: item.stock <= 5 ? '#f87171' : '#e8eef5', fontWeight: item.stock <= 5 ? 700 : 400 }}>
-									{item.stock <= 5 && <span style={{ marginRight: 4 }}>⚠</span>}{item.stock}
+								<td style={{ padding: '10px 12px', textAlign: 'right' }}>
+									{editingQty?.itemId === item.itemId ? (
+										<div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', alignItems: 'center' }}>
+											<input
+												type="number" min="0"
+												value={editingQty.value}
+												onChange={e => setEditingQty({ itemId: item.itemId, value: e.target.value })}
+												onKeyDown={e => { if (e.key === 'Enter') handleQtySave(item.itemId, item.stock); if (e.key === 'Escape') setEditingQty(null) }}
+												autoFocus
+												style={{ width: 70, padding: '3px 6px', fontSize: 13, textAlign: 'right' }}
+											/>
+											<button onClick={() => handleQtySave(item.itemId, item.stock)} disabled={savingQty}
+												style={{ padding: '3px 8px', fontSize: 12 }}>
+												{savingQty ? '…' : '✓'}
+											</button>
+											<button className="secondary" onClick={() => setEditingQty(null)}
+												style={{ padding: '3px 8px', fontSize: 12 }}>✕</button>
+										</div>
+									) : (
+										<span
+											onClick={() => setEditingQty({ itemId: item.itemId, value: String(item.stock) })}
+											title="Click to edit stock"
+											style={{ cursor: 'pointer', color: item.stock <= 5 ? '#f87171' : '#e8eef5', fontWeight: item.stock <= 5 ? 700 : 400, borderBottom: '1px dashed #4b5563', paddingBottom: 1 }}>
+											{item.stock <= 5 && <span style={{ marginRight: 4 }}>⚠</span>}{item.stock}
+										</span>
+									)}
 								</td>
 								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#86efac' }}>{formatCurrency(item.price, currency)}</td>
 								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#93c5fd' }}>{formatCurrency(item.costPrice, currency)}</td>

@@ -7,7 +7,7 @@ import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintP
 import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 
- type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number }
+ type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number, originalPrice?: number }
 //test
 export default function BillingPage() {
 	const [customer, setCustomer] = useState('')
@@ -16,6 +16,7 @@ export default function BillingPage() {
 	const [ecommerceMode] = useState(() => localStorage.getItem('ecommerceMode') === 'true')
 	const [invoiceNo, setInvoiceNo] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
 	const [billDate, setBillDate] = useState(() => new Date().toISOString().slice(0, 16))
+	const [useCurrentDate, setUseCurrentDate] = useState(true)
 	const [skuInput, setSkuInput] = useState('')
 	const [qtyInput, setQtyInput] = useState('1')
 	const [priceInput, setPriceInput] = useState('')
@@ -23,6 +24,7 @@ export default function BillingPage() {
 	const [billDiscount, setBillDiscount] = useState(0)
 	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
+	const [finalizing, setFinalizing] = useState(false)
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
 		phone: '',
@@ -123,7 +125,7 @@ export default function BillingPage() {
 					copy[idx] = { ...copy[idx], qty: copy[idx].qty + qty }
 					return copy
 				}
-				return [{ id: `line_${Math.random().toString(36).slice(2, 9)}`, sku: item.sku, name: item.name, itemId: item.id, qty, price: item.price }, ...prev]
+				return [{ id: `line_${Math.random().toString(36).slice(2, 9)}`, sku: item.sku, name: item.name, itemId: item.id, qty, price: item.price, originalPrice: item.price }, ...prev]
 			})
 		} catch (error) {
 			console.error('Error adding SKU:', error)
@@ -160,7 +162,10 @@ export default function BillingPage() {
 	function removeLine(id: string) { setCart(prev => prev.filter(l => l.id !== id)) }
 
 	async function finalize() {
-		if (!cart.length) return
+		if (!cart.length || finalizing) return
+		setFinalizing(true)
+		if (useCurrentDate) setBillDate(new Date().toISOString().slice(0, 16))
+		const finalDate = useCurrentDate ? new Date().toISOString() : new Date(billDate).toISOString()
 		try {
 			// Create sales for each cart item with discounted prices
 			for (const l of cart) {
@@ -187,7 +192,7 @@ export default function BillingPage() {
 					customerName: customer,
 					customerPhone: customerPhone,
 					invoiceNo: invoiceNo,
-					date: new Date(billDate).toISOString()
+					date: finalDate
 				})
 			}
 			// Save invoice to database
@@ -199,10 +204,10 @@ export default function BillingPage() {
 				lines: cart,
 				total,
 				billDiscount,
-				date: new Date(billDate).toISOString()
+				date: finalDate
 			})
-			
-			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date(billDate).toLocaleString(), storeInfo }
+
+			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date(finalDate).toLocaleString(), storeInfo }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
@@ -212,6 +217,8 @@ export default function BillingPage() {
 		} catch (error) {
 			console.error('Error finalizing bill:', error)
 			alert('Error creating bill')
+		} finally {
+			setFinalizing(false)
 		}
 	}
 
@@ -270,7 +277,14 @@ export default function BillingPage() {
 	}
 
 	return (
-		<div className="card">
+		<div className="card" style={{ position: 'relative', opacity: finalizing ? 0.6 : 1, pointerEvents: finalizing ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
+			{finalizing && (
+				<div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
+					<div style={{ background: '#0b0f14', border: '1px solid #243245', borderRadius: 12, padding: '20px 36px', color: '#e8eef5', fontSize: 15, fontWeight: 600, letterSpacing: 0.3 }}>
+						Finalizing bill…
+					</div>
+				</div>
+			)}
 			<h2>Billing</h2>
 			<div className="form-grid" style={{ marginBottom: 12 }}>
 				<input placeholder="Invoice No" value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} />
@@ -278,7 +292,27 @@ export default function BillingPage() {
 				<input placeholder="Phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
 				<div>
 					<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Bill Date</label>
-					<input type="datetime-local" value={billDate} onChange={e => setBillDate(e.target.value)} />
+					<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+						<input
+							type="datetime-local"
+							value={billDate}
+							disabled={useCurrentDate}
+							onChange={e => setBillDate(e.target.value)}
+							style={{ opacity: useCurrentDate ? 0.45 : 1 }}
+						/>
+						<label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#9ca3af', cursor: 'pointer', userSelect: 'none' }}>
+							<input
+								type="checkbox"
+								checked={useCurrentDate}
+								style={{ width: 'auto', cursor: 'pointer' }}
+								onChange={e => {
+									setUseCurrentDate(e.target.checked)
+									if (e.target.checked) setBillDate(new Date().toISOString().slice(0, 16))
+								}}
+							/>
+							Use current date &amp; time
+						</label>
+					</div>
 				</div>
 				{ecommerceMode && (
 					<input
@@ -326,7 +360,12 @@ export default function BillingPage() {
 							<td>{l.sku}</td>
 							<td><input value={l.name} onChange={e => updateLine(l.id, { name: e.target.value })} /></td>
 							<td><input type="number" value={l.qty} onChange={e => updateLine(l.id, { qty: Number(e.target.value || '0') })} /></td>
-							<td><input type="number" step="0.01" value={l.price} onChange={e => updateLine(l.id, { price: Number(e.target.value || '0') })} /></td>
+							<td><input type="number" step="0.01" value={l.price} onChange={e => {
+								const newPrice = Number(e.target.value || '0')
+								const orig = l.originalPrice ?? l.price
+								const disc = orig > 0 && newPrice < orig ? Math.round(((orig - newPrice) / orig) * 10000) / 100 : 0
+								updateLine(l.id, { price: newPrice, discount: disc })
+							}} /></td>
 							<td><input type="number" min="0" max="100" value={l.discount || 0} onChange={e => updateLine(l.id, { discount: Number(e.target.value || '0') })} style={{ width: '60px' }} /></td>
 							<td>{(() => {
 								const lineTotal = l.qty * l.price
@@ -355,7 +394,7 @@ export default function BillingPage() {
 			</table>
 
 			<div className="form-actions" style={{ marginTop: 12 }}>
-				<button onClick={finalize}>Finalize Bill</button>
+				<button onClick={finalize} disabled={finalizing}>{finalizing ? 'Finalizing…' : 'Finalize Bill'}</button>
 				<button className="secondary" onClick={() => setCart([])}>Clear</button>
 			</div>
 
@@ -420,22 +459,29 @@ export default function BillingPage() {
 										))}
 									</tbody>
 								</table>
-								<div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>
-									<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
-										<span>SUBTOTAL</span>
-										<span>{formatCurrency(lastInvoice.total / (1 - lastInvoice.billDiscount / 100), storeInfo.currency)}</span>
-									</div>
-									{lastInvoice.billDiscount > 0 && (
-										<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
-											<span>BILL DISCOUNT ({lastInvoice.billDiscount}%)</span>
-											<span>{formatCurrency((lastInvoice.total / (1 - lastInvoice.billDiscount / 100)) * lastInvoice.billDiscount / 100, storeInfo.currency)}</span>
+								{(() => {
+									const invSubtotal = (lastInvoice.lines || []).reduce((s: number, l: any) => { const t = (l.qty || 0) * (l.price || 0); return s + t - (t * (l.discount || 0) / 100) }, 0)
+									const bd = lastInvoice.billDiscount || 0
+									const discountAmt = (invSubtotal * bd) / 100
+									return (
+										<div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>
+											<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
+												<span>SUBTOTAL</span>
+												<span>{formatCurrency(invSubtotal, storeInfo.currency)}</span>
+											</div>
+											{bd > 0 && (
+												<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
+													<span>BILL DISCOUNT ({bd}%)</span>
+													<span>{formatCurrency(discountAmt, storeInfo.currency)}</span>
+												</div>
+											)}
+											<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '2px', marginTop: '2px' }}>
+												<span>TOTAL AMOUNT</span>
+												<span>{formatCurrency(invSubtotal - discountAmt, storeInfo.currency)}</span>
+											</div>
 										</div>
-									)}
-									<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '2px', marginTop: '2px' }}>
-										<span>TOTAL AMOUNT</span>
-										<span>{formatCurrency(lastInvoice.total, storeInfo.currency)}</span>
-									</div>
-								</div>
+									)
+								})()}
 								<div style={{ textAlign: 'center', marginTop: '8px', fontSize: '6px' }}>
 									<div>Thank you for your business!</div>
 									<div>For any queries, please contact us.</div>
@@ -537,18 +583,25 @@ export default function BillingPage() {
 								))}
 							</tbody>
 							<tfoot>
+								{(() => {
+									const invSubtotal = (lastInvoice.lines || []).reduce((s: number, l: any) => { const t = (l.qty || 0) * (l.price || 0); return s + t - (t * (l.discount || 0) / 100) }, 0)
+									const bd = lastInvoice.billDiscount || 0
+									const discountAmt = (invSubtotal * bd) / 100
+									return (<>
+										<tr style={{ background: '#f9f9f9' }}>
+											<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>SUBTOTAL</td>
+											<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency(invSubtotal, storeInfo.currency)}</td>
+										</tr>
+										{bd > 0 && (
+											<tr>
+												<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>BILL DISCOUNT ({bd}%)</td>
+												<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency(discountAmt, storeInfo.currency)}</td>
+											</tr>
+										)}
+									</>)
+								})()}
 								<tr style={{ background: '#f9f9f9' }}>
-									<td colSpan={4} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>SUBTOTAL</td>
-									<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency(lastInvoice.total + ((lastInvoice.total * lastInvoice.billDiscount) / (100 - lastInvoice.billDiscount)), storeInfo.currency)}</td>
-								</tr>
-								{lastInvoice.billDiscount > 0 && (
-									<tr>
-										<td colSpan={4} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>BILL DISCOUNT ({lastInvoice.billDiscount}%)</td>
-										<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency((lastInvoice.total * lastInvoice.billDiscount) / (100 - lastInvoice.billDiscount), storeInfo.currency)}</td>
-									</tr>
-								)}
-								<tr style={{ background: '#f9f9f9' }}>
-									<td colSpan={4} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL AMOUNT</td>
+									<td colSpan={5} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL AMOUNT</td>
 									<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{formatCurrency(lastInvoice.total, storeInfo.currency)}</td>
 								</tr>
 							</tfoot>

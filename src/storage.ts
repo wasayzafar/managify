@@ -492,7 +492,20 @@ export const db = {
 	async listInvoices(): Promise<Invoice[]> {
 		try {
 			const userId = getUserId();
-			return await supabaseStorage.listInvoices(userId);
+			const raw = await supabaseStorage.listInvoices(userId);
+			return raw.map((r: any) => ({
+				id: r.id,
+				invoiceNo: r.invoice_no ?? r.invoiceNo ?? '',
+				customer: r.customer ?? '',
+				phone: r.phone,
+				customerAddress: r.customer_address ?? r.customerAddress,
+				lines: r.lines ?? [],
+				total: r.total ?? 0,
+				billDiscount: r.bill_discount ?? r.billDiscount ?? 0,
+				date: r.date ?? r.created_at ?? '',
+				createdAt: r.created_at ? new Date(r.created_at).toLocaleString() : '',
+				storeInfo: r.storeInfo,
+			}));
 		} catch (error) {
 			console.error('Error listing invoices:', error);
 			return [];

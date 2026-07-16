@@ -3,7 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/useAuth';
 import Login from './pages/Login';
-import Register from './pages/Register';
+import LandingPage from './pages/LandingPage';
+import ContactPage from './pages/ContactPage';
+import FounderPage from './pages/FounderPage';
 import App from './ui/App';
 import DashboardPage from './pages/DashboardPage';
 import InventoryPage from './pages/InventoryPage';
@@ -25,7 +27,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   
   if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <Navigate to="/welcome" />;
   
   return <>{children}</>;
 }
@@ -34,8 +36,11 @@ export function AppRouter() {
   return (
     <AuthProvider>
       <Routes>
+        <Route path="/welcome" element={<LandingPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/founder" element={<FounderPage />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<Navigate to="/contact" />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <App />
