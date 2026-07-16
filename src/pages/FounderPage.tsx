@@ -48,7 +48,7 @@ export default function FounderPage() {
       <div style={s.page}>
         {/* Minimal nav */}
         <nav style={s.nav}>
-          <div style={s.navInner}>
+          <div style={s.navInner} className="pub-nav-inner">
             <Link to="/welcome" style={s.navBrand}>
               <img src="./logo.png" alt="Managify" width={28} style={{ borderRadius: 6 }} />
               <span style={s.navBrandName}>Managify</span>
@@ -60,7 +60,7 @@ export default function FounderPage() {
         {/* Hero */}
         <section style={s.hero}>
           <div style={s.heroBg} />
-          <div style={s.heroInner}>
+          <div style={s.heroInner} className="pub-founder-hero-inner">
             <div style={s.photoWrap}>
               <img src="./me.jpg" alt="Wasay Zafar" style={s.photo} />
               <div style={s.photoGlow} />
@@ -73,7 +73,7 @@ export default function FounderPage() {
                 Building software that helps businesses move faster — from retail management to custom digital products.
               </p>
 
-              <div style={s.socialRow}>
+              <div style={s.socialRow} className="pub-social-row">
                 <a href="https://www.linkedin.com/in/wasay-zafar-50ba48213/" target="_blank" rel="noopener noreferrer" style={s.socialBtn}>
                   <FiLinkedin size={16} />
                   LinkedIn
@@ -97,8 +97,8 @@ export default function FounderPage() {
 
         {/* About */}
         <section style={s.section}>
-          <div style={s.inner}>
-            <div style={s.twoCol}>
+          <div style={s.inner} className="pub-section-inner">
+            <div style={s.twoCol} className="pub-two-col">
               {/* Bio */}
               <div>
                 <h2 style={s.sectionTitle}>About</h2>
@@ -140,9 +140,9 @@ export default function FounderPage() {
 
         {/* Projects */}
         <section style={{ ...s.section, background: '#080d14' }}>
-          <div style={s.inner}>
+          <div style={s.inner} className="pub-section-inner">
             <h2 style={s.sectionTitle}>Projects</h2>
-            <div style={s.projectGrid}>
+            <div style={s.projectGrid} className="pub-project-grid">
               {projects.map(p => (
                 <a
                   key={p.name}
@@ -261,7 +261,6 @@ const s: Record<string, React.CSSProperties> = {
   section: { padding: '72px 0' },
   inner: { maxWidth: 1000, margin: '0 auto', padding: '0 32px' },
   twoCol: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start',
   },
   sectionTitle: {
     fontSize: 20, fontWeight: 700, color: '#e8eef5',
@@ -287,7 +286,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 12, fontWeight: 600, color: '#8b949e',
   },
 
-  projectGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20, marginTop: 8 },
+  projectGrid: { marginTop: 8 },
   projectCard: {
     display: 'block', textDecoration: 'none',
     background: '#0d1521', border: '1px solid #1a2333',

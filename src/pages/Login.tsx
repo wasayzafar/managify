@@ -44,87 +44,95 @@ const Login: React.FC = () => {
   ]
 
   return (
-    <div style={styles.shell}>
-      {/* Left panel */}
-      <div style={styles.left}>
-        <div style={styles.leftInner}>
+    <div className="lp-shell">
+
+      {/* ── Left branding panel (desktop only) ── */}
+      <div className="lp-left">
+        <div style={s.leftInner}>
           <Link to="/welcome" style={{ textDecoration: 'none' }}>
-            <div style={styles.brand}>
+            <div style={s.brand}>
               <img src="./logo.png" alt="Managify" width={38} style={{ borderRadius: 8 }} />
-              <span style={styles.brandName}>Managify</span>
+              <span style={s.brandName}>Managify</span>
             </div>
           </Link>
 
-          <div style={styles.heroText}>
-            <h1 style={styles.heroH1}>Run your store<br />smarter, faster.</h1>
-            <p style={styles.heroSub}>
+          <div style={s.heroText}>
+            <h1 style={s.heroH1}>Run your store<br />smarter, faster.</h1>
+            <p style={s.heroSub}>
               One platform for inventory, billing, sales, and profit tracking — built for modern retail.
             </p>
           </div>
 
-          <div style={styles.featureList}>
+          <div style={s.featureList}>
             {features.map(f => (
-              <div key={f.label} style={styles.featureItem}>
-                <span style={styles.featureIcon}>{f.icon}</span>
-                <span style={styles.featureLabel}>{f.label}</span>
+              <div key={f.label} style={s.featureItem}>
+                <span style={s.featureIcon}>{f.icon}</span>
+                <span style={s.featureLabel}>{f.label}</span>
               </div>
             ))}
           </div>
 
-          <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={styles.leftFooter}>
+          <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={s.leftFooter}>
             <img src="./nativeedge.png" alt="NativeEdge Studio" width={18} style={{ borderRadius: 4, verticalAlign: 'middle' }} />
             {' '}Powered by <strong style={{ color: '#e8eef5' }}>NativeEdge Studio</strong>
           </a>
         </div>
-
-        {/* Decorative glow */}
-        <div style={styles.glow1} />
-        <div style={styles.glow2} />
+        <div style={s.glow1} />
+        <div style={s.glow2} />
       </div>
 
-      {/* Right panel — form */}
-      <div style={styles.right}>
-        <div style={styles.formCard}>
-          <div style={styles.formHeader}>
-            <h2 style={styles.formTitle}>Welcome back</h2>
-            <p style={styles.formSub}>Sign in to your account</p>
+      {/* ── Right form panel ── */}
+      <div className="lp-right">
+        <div className="lp-card">
+
+          {/* Mobile-only logo (hidden on desktop where left panel shows) */}
+          <Link to="/welcome" className="lp-mobile-brand">
+            <img src="./logo.png" alt="Managify" width={32} style={{ borderRadius: 7 }} />
+            <span style={{ fontSize: 20, fontWeight: 700, color: '#e8eef5', letterSpacing: '-0.3px' }}>Managify</span>
+          </Link>
+
+          <div style={s.formHeader}>
+            <h2 style={s.formTitle}>Welcome back</h2>
+            <p style={s.formSub}>Sign in to your account</p>
           </div>
 
           {error && (
-            <div style={styles.errorBox}>
+            <div style={s.errorBox}>
               <FiAlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} style={styles.form}>
-            <div style={styles.fieldGroup}>
-              <label style={styles.label}>Email address</label>
-              <div style={styles.inputWrap}>
-                <span style={styles.inputIcon}><FiMail size={16} /></span>
+          <form onSubmit={handleLogin} style={s.form}>
+            <div style={s.fieldGroup}>
+              <label style={s.label}>Email address</label>
+              <div style={s.inputWrap}>
+                <span style={s.inputIcon}><FiMail size={16} /></span>
                 <input
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
-                  style={styles.input}
+                  style={s.input}
+                  className="lp-input"
                   autoComplete="email"
                 />
               </div>
             </div>
 
-            <div style={styles.fieldGroup}>
-              <label style={styles.label}>Password</label>
-              <div style={styles.inputWrap}>
-                <span style={styles.inputIcon}><FiLock size={16} /></span>
+            <div style={s.fieldGroup}>
+              <label style={s.label}>Password</label>
+              <div style={s.inputWrap}>
+                <span style={s.inputIcon}><FiLock size={16} /></span>
                 <input
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
-                  style={styles.input}
+                  style={s.input}
+                  className="lp-input"
                   autoComplete="current-password"
                 />
               </div>
@@ -133,15 +141,15 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              style={{ ...styles.submitBtn, opacity: loading ? 0.7 : 1 }}
+              style={{ ...s.submitBtn, opacity: loading ? 0.7 : 1 }}
             >
               {loading ? (
-                <span style={styles.spinnerWrap}>
-                  <span style={styles.spinner} />
+                <span style={s.spinnerWrap}>
+                  <span style={s.spinner} />
                   Signing in…
                 </span>
               ) : (
-                <span style={styles.btnInner}>
+                <span style={s.btnInner}>
                   <FiLogIn size={16} />
                   Sign In
                 </span>
@@ -149,39 +157,22 @@ const Login: React.FC = () => {
             </button>
           </form>
 
-          <p style={styles.registerLink}>
+          <p style={s.registerLink}>
             Don't have an account?{' '}
             <Link to="/contact" style={{ color: '#4d8fff', textDecoration: 'none', fontWeight: 600 }}>
               Contact us
             </Link>
           </p>
-        </div>
 
-        <p style={styles.rightFooter}>
-          &copy; {new Date().getFullYear()} Managify. All rights reserved.
-        </p>
+          <p className="lp-footer">&copy; {new Date().getFullYear()} Managify. All rights reserved.</p>
+        </div>
       </div>
+
     </div>
   )
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  shell: {
-    display: 'flex',
-    minHeight: '100vh',
-    background: '#060a10',
-    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
-  },
-  left: {
-    position: 'relative',
-    flex: '0 0 52%',
-    background: 'linear-gradient(135deg, #0a1220 0%, #0d1829 60%, #0f1f35 100%)',
-    borderRight: '1px solid #1f2a36',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
-    padding: '48px 56px',
-  },
+const s: Record<string, React.CSSProperties> = {
   leftInner: {
     position: 'relative',
     zIndex: 2,
@@ -240,8 +231,8 @@ const styles: Record<string, React.CSSProperties> = {
   featureIcon: {
     width: 32,
     height: 32,
-    background: 'rgba(34, 99, 255, 0.15)',
-    border: '1px solid rgba(34, 99, 255, 0.25)',
+    background: 'rgba(34,99,255,0.15)',
+    border: '1px solid rgba(34,99,255,0.25)',
     borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
@@ -283,19 +274,6 @@ const styles: Record<string, React.CSSProperties> = {
     left: -100,
     pointerEvents: 'none',
     zIndex: 1,
-  },
-  right: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '48px 32px',
-    position: 'relative',
-  },
-  formCard: {
-    width: '100%',
-    maxWidth: 400,
   },
   formHeader: {
     marginBottom: 32,
@@ -360,7 +338,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 10,
     color: '#e8eef5',
     fontSize: 15,
-    padding: '11px 14px 11px 40px',
+    padding: '12px 14px 12px 42px',
     outline: 'none',
     boxSizing: 'border-box',
     transition: 'border-color 0.2s',
@@ -371,7 +349,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'white',
     border: 'none',
     borderRadius: 10,
-    padding: '13px',
+    padding: '14px',
     fontSize: 15,
     fontWeight: 600,
     cursor: 'pointer',
@@ -405,12 +383,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     color: '#6b7280',
     marginTop: 24,
-  },
-  rightFooter: {
-    position: 'absolute' as const,
-    bottom: 24,
-    fontSize: 12,
-    color: '#374151',
+    marginBottom: 0,
   },
 }
 

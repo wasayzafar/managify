@@ -69,7 +69,7 @@ export default function ContactPage() {
     <div style={s.page}>
       {/* ── NAV ── */}
       <nav style={s.nav}>
-        <div style={s.navInner}>
+        <div style={s.navInner} className="pub-nav-inner">
           <Link to="/welcome" style={s.navBrand}>
             <img src="./logo.png" alt="Managify" width={30} style={{ borderRadius: 7 }} />
             <span style={s.navBrandName}>Managify</span>
@@ -84,7 +84,7 @@ export default function ContactPage() {
       {/* ── HERO ── */}
       <section style={s.hero}>
         <div style={s.heroBg} />
-        <div style={s.heroContent}>
+        <div style={s.heroContent} className="pub-hero-content">
           <p style={s.eyebrow}>Get in touch</p>
           <h1 style={s.heroTitle}>Contact NativeEdge Studio</h1>
           <p style={s.heroSub}>
@@ -96,7 +96,7 @@ export default function ContactPage() {
 
       {/* ── MAIN ── */}
       <section style={s.main}>
-        <div style={s.mainInner}>
+        <div style={s.mainInner} className="pub-contact-main">
 
           {/* Left — contact details */}
           <div style={s.detailsCol}>
@@ -150,7 +150,7 @@ export default function ContactPage() {
               )}
 
               <form ref={formRef} onSubmit={handleSubmit} style={s.form}>
-                <div style={s.row}>
+                <div style={s.row} className="pub-form-row">
                   <div style={s.fieldGroup}>
                     <label style={s.label}>Your Name</label>
                     <input
@@ -195,7 +195,7 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <button type="submit" disabled={status === 'sending'} style={{ ...s.submitBtn, opacity: status === 'sending' ? 0.7 : 1 }}>
+                <button type="submit" disabled={status === 'sending'} className="pub-contact-submit" style={{ ...s.submitBtn, opacity: status === 'sending' ? 0.7 : 1 }}>
                   <FiSend size={15} />
                   {status === 'sending' ? 'Sending…' : 'Send Message'}
                 </button>
@@ -206,7 +206,7 @@ export default function ContactPage() {
       </section>
 
       {/* ── MAP STRIP ── */}
-      <section style={s.mapStrip}>
+      <section style={s.mapStrip} className="pub-map-strip">
         <div style={s.mapInner}>
           <FiMapPin size={16} style={{ color: '#4d8fff', flexShrink: 0 }} />
           <span style={s.mapText}>
@@ -221,7 +221,7 @@ export default function ContactPage() {
 
       {/* ── FOOTER ── */}
       <footer style={s.footer}>
-        <div style={s.footerInner}>
+        <div style={s.footerInner} className="pub-footer-inner">
           <div style={s.footerBrand}>
             <img src="./logo.png" alt="Managify" width={24} style={{ borderRadius: 6 }} />
             <span style={s.footerBrandName}>Managify</span>
@@ -298,7 +298,6 @@ const s: Record<string, React.CSSProperties> = {
   main: { padding: '64px 0 80px' },
   mainInner: {
     maxWidth: 1100, margin: '0 auto', padding: '0 32px',
-    display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 32, alignItems: 'start',
   },
 
   detailsCol: {},
@@ -353,7 +352,7 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   form: { display: 'flex', flexDirection: 'column', gap: 20 },
-  row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
+  row: {},
   fieldGroup: { display: 'flex', flexDirection: 'column', gap: 7 },
   label: { fontSize: 13, fontWeight: 600, color: '#9ca3af', letterSpacing: '0.2px' },
   input: {
