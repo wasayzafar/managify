@@ -230,6 +230,7 @@ export default function ContactPage() {
             <img src="./nativeedge.png" alt="NativeEdge Studio" width={16} style={{ borderRadius: 3, verticalAlign: 'middle' }} />
             {' '}Powered by <strong style={{ color: '#8b949e' }}>NativeEdge Studio</strong>
           </a>
+          <Link to="/founder" style={s.founderBtn}>About the Founder</Link>
           <p style={s.footerCopy}>&copy; {new Date().getFullYear()} Managify. All rights reserved.</p>
         </div>
       </footer>
@@ -395,4 +396,9 @@ const s: Record<string, React.CSSProperties> = {
   footerBrandName: { fontSize: 15, fontWeight: 700, color: '#e8eef5' },
   footerPowered: { fontSize: 13, color: '#374151', margin: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 },
   footerCopy: { fontSize: 13, color: '#374151', margin: 0 },
+  founderBtn: {
+    fontSize: 11, color: '#374151', textDecoration: 'none',
+    border: '1px solid #1a2333', borderRadius: 6,
+    padding: '3px 9px', fontWeight: 500,
+  },
 }
