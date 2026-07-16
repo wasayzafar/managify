@@ -96,15 +96,17 @@ export default function LandingPage() {
     <div style={s.page}>
       {/* ── NAV ── */}
       <nav style={s.nav}>
-        <div style={s.navInner}>
+        <div style={s.navInner} className="pub-nav-inner">
           <Link to="/welcome" style={s.navBrand}>
             <img src="./logo.png" alt="Managify" width={30} style={{ borderRadius: 7 }} />
             <span style={s.navBrandName}>Managify</span>
           </Link>
           <div style={s.navLinks}>
-            <a href="#features" style={s.navLink}>Features</a>
-            <a href="#why" style={s.navLink}>Why Managify</a>
-            <Link to="/contact" style={s.navLink}>Contact</Link>
+            <div className="pub-nav-feature-links">
+              <a href="#features" style={s.navLink}>Features</a>
+              <a href="#why" style={s.navLink}>Why Managify</a>
+              <Link to="/contact" style={s.navLink}>Contact</Link>
+            </div>
             <Link to="/login" style={s.navLogin}>Sign In</Link>
           </div>
         </div>
@@ -113,7 +115,7 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section style={s.hero}>
         <div style={s.heroBg} />
-        <div style={s.heroContent}>
+        <div style={s.heroContent} className="pub-hero-content">
           <div style={s.badge}>
             <FiZap size={12} />
             <span>Store Management, Reimagined</span>
@@ -144,7 +146,7 @@ export default function LandingPage() {
               <span style={{ ...s.heroCardDot, background: '#22c55e' }} />
               <span style={s.heroCardTitle}>Sales Dashboard</span>
             </div>
-            <div style={s.heroCardBody}>
+            <div style={s.heroCardBody} className="pub-hero-card-body">
               {[
                 { label: 'Revenue Today', value: 'PKR 84,200', color: '#4ade80', change: '+12%' },
                 { label: 'Bills Created', value: '23', color: '#60a5fa', change: '+4' },
@@ -163,7 +165,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── STATS STRIP ── */}
-      <section style={s.statsStrip}>
+      <section style={s.statsStrip} className="pub-stats-strip">
         {stats.map(st => (
           <div key={st.label} style={s.statItem}>
             <div style={s.statValue}>
@@ -175,8 +177,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" style={s.section}>
-        <div style={s.sectionInner}>
+      <section id="features" style={s.section} className="pub-section">
+        <div style={s.sectionInner} className="pub-section-inner">
           <div style={s.sectionHead}>
             <p style={s.sectionEyebrow}>Everything you need</p>
             <h2 style={s.sectionTitle}>Nine modules. One dashboard.</h2>
@@ -184,7 +186,7 @@ export default function LandingPage() {
               Every tool a store owner needs — tightly integrated so data flows automatically between billing, inventory, and reports.
             </p>
           </div>
-          <div style={s.featureGrid}>
+          <div style={s.featureGrid} className="pub-feature-grid">
             {features.map(f => (
               <div key={f.title} style={s.featureCard}>
                 <div style={s.featureIconWrap}>{f.icon}</div>
@@ -197,13 +199,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHY ── */}
-      <section id="why" style={{ ...s.section, background: '#080d14' }}>
-        <div style={s.sectionInner}>
+      <section id="why" style={{ ...s.section, background: '#080d14' }} className="pub-section">
+        <div style={s.sectionInner} className="pub-section-inner">
           <div style={s.sectionHead}>
             <p style={s.sectionEyebrow}>Why Managify</p>
             <h2 style={s.sectionTitle}>Built for the way stores actually work</h2>
           </div>
-          <div style={s.whyGrid}>
+          <div style={s.whyGrid} className="pub-why-grid">
             {whyItems.map(w => (
               <div key={w.title} style={s.whyCard}>
                 <div style={s.whyIconWrap}>{w.icon}</div>
@@ -218,7 +220,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA BANNER ── */}
-      <section style={s.ctaBanner}>
+      <section style={s.ctaBanner} className="pub-cta-banner">
         <div style={s.ctaBannerGlow} />
         <div style={s.ctaBannerInner}>
           <h2 style={s.ctaBannerTitle}>Ready to take control of your store?</h2>
@@ -234,7 +236,7 @@ export default function LandingPage() {
 
       {/* ── FOOTER ── */}
       <footer style={s.footer}>
-        <div style={s.footerInner}>
+        <div style={s.footerInner} className="pub-footer-inner">
           <div style={s.footerBrand}>
             <img src="./logo.png" alt="Managify" width={26} style={{ borderRadius: 6 }} />
             <span style={s.footerBrandName}>Managify</span>
@@ -443,8 +445,6 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 500,
   },
   heroCardBody: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: 0,
   },
   heroStatCard: {
@@ -472,8 +472,6 @@ const s: Record<string, React.CSSProperties> = {
 
   // Stats strip
   statsStrip: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
     background: '#0a111a',
     borderTop: '1px solid #1a2333',
     borderBottom: '1px solid #1a2333',
@@ -536,9 +534,6 @@ const s: Record<string, React.CSSProperties> = {
 
   // Feature grid
   featureGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 20,
   },
   featureCard: {
     background: '#0d1521',
@@ -574,9 +569,6 @@ const s: Record<string, React.CSSProperties> = {
 
   // Why grid
   whyGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: 16,
   },
   whyCard: {
     display: 'flex',

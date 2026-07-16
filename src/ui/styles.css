@@ -286,3 +286,140 @@ button.secondary { background: #233043; }
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   Public pages: Login, Landing, Contact, Founder
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Login page ── */
+.lp-shell {
+    min-height: 100vh;
+    display: flex;
+    background: #060a10;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+.lp-left {
+    position: relative;
+    flex: 0 0 52%;
+    background: linear-gradient(135deg, #0a1220 0%, #0d1829 60%, #0f1f35 100%);
+    border-right: 1px solid #1f2a36;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 48px 56px;
+}
+.lp-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 40px;
+    position: relative;
+    min-height: 100vh;
+}
+.lp-card {
+    width: 100%;
+    max-width: 420px;
+}
+.lp-mobile-brand {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    text-decoration: none;
+}
+.lp-footer {
+    position: absolute;
+    bottom: 24px;
+    font-size: 12px;
+    color: #374151;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .lp-left  { display: none; }
+    .lp-right {
+        padding: 48px 28px 40px;
+        justify-content: flex-start;
+        align-items: stretch;
+    }
+    .lp-card  { max-width: none; }
+    .lp-mobile-brand { display: flex; }
+    .lp-footer {
+        position: static;
+        display: block;
+        text-align: center;
+        margin-top: 28px;
+    }
+    .lp-input { font-size: 16px !important; }
+}
+@media (max-width: 400px) {
+    .lp-right { padding: 36px 20px 32px; }
+}
+
+/* Nav — hide feature text-links on small screens, tighten padding */
+.pub-nav-feature-links { display: flex; align-items: center; gap: 28px; }
+@media (max-width: 640px) {
+    .pub-nav-feature-links { display: none; }
+    .pub-nav-inner { padding: 0 16px !important; }
+}
+
+/* Landing hero card — 4 cols → 2 cols */
+.pub-hero-card-body { display: grid; grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 560px) {
+    .pub-hero-card-body { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Stats strip — 4 cols → 2 cols */
+.pub-stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 560px) {
+    .pub-stats-strip { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Feature grid — 3 → 2 → 1 */
+.pub-feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 860px) { .pub-feature-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px)  { .pub-feature-grid { grid-template-columns: 1fr; } }
+
+/* Why grid — 3 → 2 → 1 */
+.pub-why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 860px) { .pub-why-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px)  { .pub-why-grid { grid-template-columns: 1fr; } }
+
+/* Contact — side-by-side layout → single column */
+.pub-contact-main { display: grid; grid-template-columns: 1fr 1.6fr; gap: 32px; align-items: start; }
+@media (max-width: 768px) { .pub-contact-main { grid-template-columns: 1fr; } }
+
+/* Contact form — name + email side-by-side → stacked */
+.pub-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 540px) { .pub-form-row { grid-template-columns: 1fr; } }
+
+/* Contact submit button — full width on mobile */
+@media (max-width: 540px) {
+    .pub-contact-submit { width: 100%; }
+}
+
+/* Founder bio/skills two-col → one */
+.pub-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+@media (max-width: 768px) { .pub-two-col { grid-template-columns: 1fr; } }
+
+/* Founder project grid 2 → 1 */
+.pub-project-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+@media (max-width: 640px) { .pub-project-grid { grid-template-columns: 1fr; } }
+
+/* Founder hero — center-align on mobile when the flex row wraps */
+@media (max-width: 640px) {
+    .pub-founder-hero-inner { justify-content: center; text-align: center; padding: 0 20px !important; }
+    .pub-social-row { justify-content: center; }
+}
+
+/* General padding reduction on small screens */
+@media (max-width: 640px) {
+    .pub-section-inner  { padding: 0 20px !important; }
+    .pub-hero-content   { padding: 0 20px !important; }
+    .pub-footer-inner   { padding: 0 20px; }
+    .pub-cta-banner     { padding: 64px 20px !important; }
+    .pub-section        { padding: 60px 0 !important; }
+    .pub-map-strip      { padding: 16px 20px !important; }
+}
