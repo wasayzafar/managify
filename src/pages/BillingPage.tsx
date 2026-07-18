@@ -14,6 +14,9 @@ export default function BillingPage() {
 	const [customerPhone, setCustomerPhone] = useState('')
 	const [customerAddress, setCustomerAddress] = useState('')
 	const [ecommerceMode] = useState(() => localStorage.getItem('ecommerceMode') === 'true')
+	const [periodBilling] = useState(() => localStorage.getItem('periodBilling') === 'true')
+	const [serviceFrom, setServiceFrom] = useState('')
+	const [serviceTo, setServiceTo] = useState('')
 	const [invoiceNo, setInvoiceNo] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
 	const localNow = () => { const n = new Date(); const p = (x: number) => String(x).padStart(2, '0'); return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}` }
 	const [billDate, setBillDate] = useState(() => localNow())
@@ -23,7 +26,7 @@ export default function BillingPage() {
 	const [priceInput, setPriceInput] = useState('')
 	const [cart, setCart] = useState<CartLine[]>([])
 	const [billDiscount, setBillDiscount] = useState(0)
-	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any } | null>(null)
+	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any, serviceFrom?: string, serviceTo?: string } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
 	const [finalizing, setFinalizing] = useState(false)
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
@@ -208,11 +211,13 @@ export default function BillingPage() {
 				date: finalDate
 			})
 
-			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date(finalDate).toLocaleString(), storeInfo }
+			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
 			setBillDate(localNow())
+			setServiceFrom('')
+			setServiceTo('')
 			await loadSavedInvoices()
 			alert('Bill created and saved successfully')
 		} catch (error) {
@@ -323,6 +328,18 @@ export default function BillingPage() {
 						style={{ gridColumn: '1 / -1' }}
 					/>
 				)}
+				{periodBilling && (
+					<div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+						<div>
+							<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Service Period From</label>
+							<input type="date" value={serviceFrom} onChange={e => setServiceFrom(e.target.value)} />
+						</div>
+						<div>
+							<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Service Period To</label>
+							<input type="date" value={serviceTo} onChange={e => setServiceTo(e.target.value)} />
+						</div>
+					</div>
+				)}
 			</div>
 
 			<div className="card">
@@ -427,6 +444,9 @@ export default function BillingPage() {
 									<div>
 										<div>Invoice #: {lastInvoice.invoiceNo}</div>
 										<div>Date: {new Date(lastInvoice.createdAt).toLocaleDateString()}</div>
+										{lastInvoice.serviceFrom && (
+											<div>Period: {lastInvoice.serviceFrom} to {lastInvoice.serviceTo}</div>
+										)}
 									</div>
 									<div style={{ textAlign: 'right' }}>
 										<div>Customer: {lastInvoice.customer || 'Walk-in'}</div>
@@ -542,6 +562,9 @@ export default function BillingPage() {
 								<div style={{ fontSize: '14px', lineHeight: '1.6' }}>
 									<div><strong>Invoice #:</strong> {lastInvoice.invoiceNo}</div>
 									<div><strong>Date:</strong> {lastInvoice.createdAt}</div>
+									{lastInvoice.serviceFrom && (
+										<div><strong>Service Period:</strong> {lastInvoice.serviceFrom} — {lastInvoice.serviceTo}</div>
+									)}
 								</div>
 							</div>
 							<div style={{ textAlign: 'right' }}>
