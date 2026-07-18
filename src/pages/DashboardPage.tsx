@@ -36,52 +36,42 @@ export default function DashboardPage() {
 		const totalPurchases = purchases.length
 		const totalSales = sales.length
 		const totalStock = inventory.reduce((sum, item) => sum + item.stock, 0)
-		
-		// Calculate revenue from sales using actual sale prices
-		const totalRevenue = sales.reduce((sum, sale) => {
-			// Use actualPrice if available (includes discounts), otherwise fallback to item price
-			if (sale.actualPrice) {
-				return sum + ((sale.quantity || 0) * sale.actualPrice)
-			}
-			const item = items.find(i => i.id === sale.itemId)
-			return sum + ((sale.quantity || 0) * (item?.price || 0))
-		}, 0)
-		
-		// Calculate cost of goods sold (COGS) - cost of items that were actually sold
-		const totalCOGS = sales.reduce((sum, sale) => {
-			const item = items.find(i => i.id === sale.itemId)
-			if (!item) return sum
-			// Find the cost price from purchases for this item
-			const itemPurchases = purchases.filter(p => p.itemId === item.id)
-			if (itemPurchases.length === 0) return sum
-			// Use average cost price if multiple purchases exist
-			const avgCostPrice = itemPurchases.reduce((total, p) => total + (p.costPrice || 0), 0) / itemPurchases.length
-			return sum + ((sale.quantity || 0) * avgCostPrice)
-		}, 0)
-		
+
+		const calcRevenue = (salesArr: typeof sales) =>
+			salesArr.reduce((sum, sale) => {
+				if (sale.actualPrice != null) return sum + (sale.quantity || 0) * sale.actualPrice
+				const item = items.find(i => i.id === sale.itemId)
+				return sum + (sale.quantity || 0) * (item?.price || 0)
+			}, 0)
+
+		const calcCOGS = (salesArr: typeof sales) =>
+			salesArr.reduce((sum, sale) => {
+				const item = items.find(i => i.id === sale.itemId)
+				if (!item) return sum
+				const itemPurchases = purchases.filter(p => p.itemId === item.id)
+				const latestPurchase = itemPurchases
+					.slice()
+					.sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())[0]
+				const costPrice = latestPurchase?.costPrice ?? item.costPrice ?? 0
+				return sum + (sale.quantity || 0) * costPrice
+			}, 0)
+
+		const totalRevenue = calcRevenue(sales)
+		const totalCOGS = calcCOGS(sales)
 		const grossProfit = totalRevenue - totalCOGS
+
 		const profitMargin = totalRevenue > 0 ? (grossProfit / totalRevenue) * 100 : 0
-		
 		const lowStockItems = inventory.filter(item => item.stock < 5).length
-		
-		// Today's calculations
+
+		// Today
 		const today = new Date().toISOString().slice(0, 10)
 		const todaySalesData = sales.filter(sale => {
 			const saleDate = sale.date ? new Date(sale.date).toISOString().slice(0, 10) : ''
 			return saleDate === today
 		})
-		
-		const todayRevenue = todaySalesData.reduce((sum, sale) => {
-			// Use actualPrice if available (includes discounts), otherwise fallback to item price
-			if (sale.actualPrice) {
-				return sum + ((sale.quantity || 0) * sale.actualPrice)
-			}
-			const item = items.find(i => i.id === sale.itemId)
-			return sum + ((sale.quantity || 0) * (item?.price || 0))
-		}, 0)
-		
+		const todayRevenue = calcRevenue(todaySalesData)
 		const todaySalesCount = todaySalesData.length
-		
+
 		return {
 			totalItems,
 			totalPurchases,
@@ -93,7 +83,7 @@ export default function DashboardPage() {
 			profitMargin,
 			lowStockItems,
 			todayRevenue,
-			todaySales: todaySalesCount
+			todaySales: todaySalesCount,
 		}
 	}, [items, purchases, sales, inventory])
 
@@ -166,7 +156,7 @@ export default function DashboardPage() {
 				</div>
 				
 				<div className="stat-card">
-					<h3>Gross Profit Excluding Expenses</h3>
+					<h3>Gross Profit (Excl. Expenses)</h3>
 					<p className="value" style={{ color: stats.grossProfit >= 0 ? '#4caf50' : '#f44336' }}>
 						{formatCurrency(stats.grossProfit, currency)}
 					</p>

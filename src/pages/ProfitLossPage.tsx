@@ -102,8 +102,7 @@ export default function ProfitLossPage() {
 
 				// Calculate Revenue from sales using actual prices (includes discounts)
 				const totalRevenue = filteredSales.reduce((sum, sale) => {
-					// Use actualPrice if available (includes discounts), otherwise fallback to item price
-					if (sale.actualPrice) {
+					if (sale.actualPrice != null) {
 						return sum + ((sale.quantity || 0) * sale.actualPrice)
 					}
 					// Fallback for older sales without actualPrice
@@ -115,14 +114,14 @@ export default function ProfitLossPage() {
 				const totalCOGS = filteredSales.reduce((sum, sale) => {
 					const item = items.find(i => i.id === sale.itemId)
 					if (!item) return sum
-					
+
 					// Find the most recent purchase for this item to get cost price
 					const itemPurchases = purchases.filter(p => p.itemId === item.id)
-					const latestPurchase = itemPurchases.sort((a, b) => 
-						new Date(b.date || '').getTime() - new Date(a.date || '').getTime()
-					)[0]
-					
-					const costPrice = latestPurchase?.costPrice || 0
+					const latestPurchase = itemPurchases
+						.slice()
+						.sort((a, b) => new Date(b.date || '').getTime() - new Date(a.date || '').getTime())[0]
+
+					const costPrice = latestPurchase?.costPrice ?? item.costPrice ?? 0
 					return sum + ((sale.quantity || 0) * costPrice)
 				}, 0)
 
