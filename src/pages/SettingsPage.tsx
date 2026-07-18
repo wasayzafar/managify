@@ -27,6 +27,9 @@ export default function SettingsPage() {
 	const [ecommerceMode, setEcommerceMode] = useState(() => {
 		return localStorage.getItem('ecommerceMode') === 'true'
 	})
+	const [periodBilling, setPeriodBilling] = useState(() => {
+		return localStorage.getItem('periodBilling') === 'true'
+	})
 	const { logout } = useAuth()
 	const navigate = useNavigate()
 
@@ -91,6 +94,7 @@ export default function SettingsPage() {
 						printOrientation: localStorage.getItem('printOrientation'),
 						thermalPrinting: localStorage.getItem('thermalPrinting'),
 						ecommerceMode: localStorage.getItem('ecommerceMode'),
+						periodBilling: localStorage.getItem('periodBilling'),
 					}
 					localStorage.clear()
 					Object.entries(preserved).forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v) })
@@ -116,6 +120,7 @@ export default function SettingsPage() {
 				const printOrientationSetting = localStorage.getItem('printOrientation')
 				const thermalPrintingSetting = localStorage.getItem('thermalPrinting')
 				const ecommerceModeSetting = localStorage.getItem('ecommerceMode')
+				const periodBillingSetting = localStorage.getItem('periodBilling')
 
 				// Clear localStorage
 				localStorage.clear()
@@ -125,6 +130,7 @@ export default function SettingsPage() {
 				if (printOrientationSetting) localStorage.setItem('printOrientation', printOrientationSetting)
 				if (thermalPrintingSetting) localStorage.setItem('thermalPrinting', thermalPrintingSetting)
 				if (ecommerceModeSetting) localStorage.setItem('ecommerceMode', ecommerceModeSetting)
+				if (periodBillingSetting) localStorage.setItem('periodBilling', periodBillingSetting)
 				
 				// Clear sessionStorage
 				sessionStorage.clear()
@@ -579,6 +585,48 @@ export default function SettingsPage() {
 					</label>
 					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
 						When enabled, a customer delivery address field appears on the Billing page and prints on the invoice.
+					</p>
+				</div>
+			</div>
+
+			<div className="card">
+				<h3 style={{ margin: '0 0 16px 0' }}>Billing Settings</h3>
+				<div style={{ marginBottom: '8px' }}>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+						<div
+							onClick={() => {
+								const next = !periodBilling
+								setPeriodBilling(next)
+								localStorage.setItem('periodBilling', next.toString())
+								setMessage('Period-based billing ' + (next ? 'enabled' : 'disabled') + '. Service period fields are now ' + (next ? 'visible' : 'hidden') + ' on billing.')
+								setTimeout(() => setMessage(''), 3000)
+							}}
+							style={{
+								width: '44px',
+								height: '24px',
+								borderRadius: '12px',
+								background: periodBilling ? '#2263ff' : '#243245',
+								position: 'relative',
+								cursor: 'pointer',
+								transition: 'background 0.2s',
+								flexShrink: 0
+							}}
+						>
+							<div style={{
+								position: 'absolute',
+								top: '3px',
+								left: periodBilling ? '23px' : '3px',
+								width: '18px',
+								height: '18px',
+								borderRadius: '50%',
+								background: 'white',
+								transition: 'left 0.2s'
+							}} />
+						</div>
+						<span style={{ fontWeight: 'bold' }}>Enable Period-Based Billing</span>
+					</label>
+					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
+						When enabled, a service period (from / to date) field appears on the Billing page and prints on the invoice. Useful for monthly service or subscription invoices.
 					</p>
 				</div>
 			</div>
