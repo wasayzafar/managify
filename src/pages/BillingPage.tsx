@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, Result } from '@zxing/library'
 import { db, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
@@ -7,7 +7,7 @@ import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintP
 import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 
- type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number, originalPrice?: number }
+ type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number, originalPrice?: number, imei1?: string, imei2?: string, warrantyTill?: string }
 //test
 export default function BillingPage() {
 	const [customer, setCustomer] = useState('')
@@ -15,6 +15,10 @@ export default function BillingPage() {
 	const [customerAddress, setCustomerAddress] = useState('')
 	const [ecommerceMode] = useState(() => localStorage.getItem('ecommerceMode') === 'true')
 	const [periodBilling] = useState(() => localStorage.getItem('periodBilling') === 'true')
+	const [mobilePOS] = useState(() => localStorage.getItem('mobilePOS') === 'true')
+	const [imeiCache, setImeiCache] = useState<Record<string, any[]>>({})
+	const [openImeiDropdown, setOpenImeiDropdown] = useState<{ lineId: string; field: 'imei1' | 'imei2' } | null>(null)
+	const [imeiSearchTerm, setImeiSearchTerm] = useState('')
 	const [serviceFrom, setServiceFrom] = useState('')
 	const [serviceTo, setServiceTo] = useState('')
 	const [invoiceNo, setInvoiceNo] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
@@ -165,6 +169,79 @@ export default function BillingPage() {
 
 	function removeLine(id: string) { setCart(prev => prev.filter(l => l.id !== id)) }
 
+	async function loadImeisForItem(itemId: string) {
+		if (imeiCache[itemId] !== undefined) return
+		try {
+			const imeis = await db.listImeisByItem(itemId)
+			setImeiCache(prev => ({ ...prev, [itemId]: imeis }))
+		} catch {}
+	}
+
+	function closeImeiDropdown() {
+		setOpenImeiDropdown(null)
+		setImeiSearchTerm('')
+	}
+
+	function renderImeiDropdown(line: CartLine) {
+		if (!line.itemId) return null
+		const allImeis = imeiCache[line.itemId]
+		const available = allImeis === undefined ? [] : allImeis
+			.filter(i => !i.is_sold)
+			.filter(i => {
+				if (!imeiSearchTerm) return true
+				const s = imeiSearchTerm.toLowerCase()
+				return i.imei1?.toLowerCase().includes(s) || i.imei2?.toLowerCase().includes(s)
+			})
+		return (
+			<div
+				data-imei-dropdown
+				tabIndex={-1}
+				style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#0b0f14', border: '1px solid #243245', borderRadius: 6, minWidth: 300, boxShadow: '0 4px 16px rgba(0,0,0,0.5)', outline: 'none' }}
+			>
+				<div style={{ padding: '8px', borderBottom: '1px solid #243245' }}>
+					<input
+						placeholder="Search IMEI..."
+						value={imeiSearchTerm}
+						onChange={e => setImeiSearchTerm(e.target.value)}
+						onBlur={e => {
+							if (!(e.relatedTarget as Element | null)?.closest('[data-imei-dropdown]')) closeImeiDropdown()
+						}}
+						style={{ width: '100%', fontSize: 12, fontFamily: 'monospace', background: '#141920', border: '1px solid #2d3748', borderRadius: 4, color: '#e8eef5', padding: '6px 8px', boxSizing: 'border-box' }}
+					/>
+				</div>
+				<div style={{ maxHeight: 200, overflowY: 'auto' }}>
+					{allImeis === undefined ? (
+						<div style={{ padding: '10px 14px', color: '#6b7280', fontSize: 12 }}>Loading…</div>
+					) : available.length === 0 ? (
+						<div style={{ padding: '10px 14px', color: '#6b7280', fontSize: 12 }}>
+							{imeiSearchTerm ? 'No matching IMEIs' : 'No available IMEIs in stock'}
+						</div>
+					) : available.map((imei: any) => (
+						<div
+							key={imei.id}
+							onMouseDown={e => e.preventDefault()}
+							onClick={() => {
+								updateLine(line.id, { imei1: imei.imei1, imei2: imei.imei2 || '', warrantyTill: imei.warranty_till || '' })
+								closeImeiDropdown()
+							}}
+							style={{ padding: '8px 14px', cursor: 'pointer', borderBottom: '1px solid #1a2030', fontSize: 12, fontFamily: 'monospace' }}
+							onMouseEnter={e => (e.currentTarget.style.background = '#141920')}
+							onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+						>
+							<div style={{ color: '#e8eef5', letterSpacing: 0.5 }}>IMEI 1: {imei.imei1}</div>
+							{imei.imei2 && <div style={{ color: '#6b7280', fontSize: 11 }}>IMEI 2: {imei.imei2}</div>}
+							{imei.warranty_till && (() => {
+								const exp = new Date(imei.warranty_till)
+								const expired = exp < new Date()
+								return <div style={{ fontSize: 11, color: expired ? '#f87171' : '#4ade80' }}>Warranty: {exp.toLocaleDateString()}{expired ? ' (expired)' : ''}</div>
+							})()}
+						</div>
+					))}
+				</div>
+			</div>
+		)
+	}
+
 	async function finalize() {
 		if (!cart.length || finalizing) return
 		setFinalizing(true)
@@ -198,6 +275,13 @@ export default function BillingPage() {
 					invoiceNo: invoiceNo,
 					date: finalDate
 				})
+			}
+			// Mark IMEIs as sold in the imeis table
+			if (mobilePOS) {
+				for (const l of cart) {
+					if (l.imei1?.trim()) { try { await db.markImeiSold(l.imei1.trim(), l.warrantyTill) } catch {} }
+					if (l.imei2?.trim()) { try { await db.markImeiSold(l.imei2.trim(), l.warrantyTill) } catch {} }
+				}
 			}
 			// Save invoice to database
 			const savedInvoice = await db.createInvoice({
@@ -369,6 +453,7 @@ export default function BillingPage() {
 						<th>Price</th>
 						<th>Discount %</th>
 						<th>Amount</th>
+						{mobilePOS && <th style={{ minWidth: 280 }}>IMEI / Warranty</th>}
 						<th></th>
 					</tr>
 				</thead>
@@ -380,16 +465,54 @@ export default function BillingPage() {
 							<td><input type="number" value={l.qty} onChange={e => updateLine(l.id, { qty: Number(e.target.value || '0') })} /></td>
 							<td><input type="number" step="0.01" value={l.price} onChange={e => {
 								const newPrice = Number(e.target.value || '0')
-								const orig = l.originalPrice ?? l.price
-								const disc = orig > 0 && newPrice < orig ? Math.round(((orig - newPrice) / orig) * 10000) / 100 : 0
-								updateLine(l.id, { price: newPrice, discount: disc })
+								updateLine(l.id, { price: newPrice, discount: 0 })
 							}} /></td>
-							<td><input type="number" min="0" max="100" value={l.discount || 0} onChange={e => updateLine(l.id, { discount: Number(e.target.value || '0') })} style={{ width: '60px' }} /></td>
+							<td><input type="number" min="0" max="100" value={l.discount || 0} onChange={e => {
+								const disc = Math.min(100, Math.max(0, Number(e.target.value || '0')))
+								updateLine(l.id, { discount: disc })
+							}} style={{ width: '60px' }} /></td>
 							<td>{(() => {
 								const lineTotal = l.qty * l.price
 								const discountAmount = (lineTotal * (l.discount || 0)) / 100
 								return formatCurrency(lineTotal - discountAmount, storeInfo.currency)
 							})()}</td>
+							{mobilePOS && (
+								<td>
+									<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+										<div style={{ display: 'flex', gap: 4 }}>
+											<div style={{ position: 'relative', flex: 1 }}>
+												<input
+													placeholder="IMEI 1"
+													value={l.imei1 || ''}
+													onChange={e => updateLine(l.id, { imei1: e.target.value })}
+													onFocus={() => { if (l.itemId) { loadImeisForItem(l.itemId); setImeiSearchTerm(''); setOpenImeiDropdown({ lineId: l.id, field: 'imei1' }) } }}
+													onBlur={e => { if (!(e.relatedTarget as Element | null)?.closest('[data-imei-dropdown]')) closeImeiDropdown() }}
+													style={{ fontFamily: 'monospace', fontSize: 12, width: '100%' }}
+												/>
+												{openImeiDropdown?.lineId === l.id && openImeiDropdown.field === 'imei1' && renderImeiDropdown(l)}
+											</div>
+											<div style={{ position: 'relative', flex: 1 }}>
+												<input
+													placeholder="IMEI 2"
+													value={l.imei2 || ''}
+													onChange={e => updateLine(l.id, { imei2: e.target.value })}
+													onFocus={() => { if (l.itemId) { loadImeisForItem(l.itemId); setImeiSearchTerm(''); setOpenImeiDropdown({ lineId: l.id, field: 'imei2' }) } }}
+													onBlur={e => { if (!(e.relatedTarget as Element | null)?.closest('[data-imei-dropdown]')) closeImeiDropdown() }}
+													style={{ fontFamily: 'monospace', fontSize: 12, width: '100%' }}
+												/>
+												{openImeiDropdown?.lineId === l.id && openImeiDropdown.field === 'imei2' && renderImeiDropdown(l)}
+											</div>
+										</div>
+										<input
+											type="date"
+											title="Warranty Till"
+											value={l.warrantyTill || ''}
+											onChange={e => updateLine(l.id, { warrantyTill: e.target.value })}
+											style={{ fontFamily: 'monospace', fontSize: 11, width: '100%' }}
+										/>
+									</div>
+								</td>
+							)}
 							<td style={{ textAlign: 'right' }}><button className="secondary" onClick={() => removeLine(l.id)}>Remove</button></td>
 						</tr>
 					))}
@@ -401,7 +524,7 @@ export default function BillingPage() {
 					</tr>
 					<tr>
 						<td colSpan={4} style={{ textAlign: 'right' }}><strong>Bill Discount %</strong></td>
-						<td><input type="number" min="0" max="100" value={billDiscount} onChange={e => setBillDiscount(Number(e.target.value || '0'))} style={{ width: '60px' }} /></td>
+						<td><input type="number" min="0" max="100" value={billDiscount} onChange={e => setBillDiscount(Math.min(100, Math.max(0, Number(e.target.value || '0'))))} style={{ width: '60px' }} /></td>
 						<td>{formatCurrency((subtotal * billDiscount) / 100, storeInfo.currency)}</td>
 					</tr>
 					<tr style={{ background: '#2263ff', color: 'white' }}>
@@ -469,14 +592,26 @@ export default function BillingPage() {
 									</thead>
 									<tbody>
 										{lastInvoice.lines.map((line: any) => (
-											<tr key={line.id}>
-												<td style={{ padding: '1px' }}>{line.itemId ? line.itemId.slice(-6) : line.sku.slice(-6)}</td>
-												<td style={{ padding: '1px' }}>{line.name}</td>
-												<td style={{ textAlign: 'center', padding: '1px' }}>{line.qty}</td>
-												<td style={{ textAlign: 'right', padding: '1px' }}>{formatCurrency(line.price, storeInfo.currency)}</td>
-												<td style={{ textAlign: 'center', padding: '1px' }}>{line.discount || 0}%</td>
-												<td style={{ textAlign: 'right', padding: '1px' }}>{formatCurrency(line.qty * line.price * (1 - (line.discount || 0) / 100), storeInfo.currency)}</td>
-											</tr>
+											<React.Fragment key={line.id}>
+												<tr>
+													<td style={{ padding: '1px' }}>{line.sku}</td>
+													<td style={{ padding: '1px' }}>{line.name}</td>
+													<td style={{ textAlign: 'center', padding: '1px' }}>{line.qty}</td>
+													<td style={{ textAlign: 'right', padding: '1px' }}>{formatCurrency(line.price, storeInfo.currency)}</td>
+													<td style={{ textAlign: 'center', padding: '1px' }}>{line.discount || 0}%</td>
+													<td style={{ textAlign: 'right', padding: '1px' }}>{formatCurrency(line.qty * line.price * (1 - (line.discount || 0) / 100), storeInfo.currency)}</td>
+												</tr>
+												{mobilePOS && (line.imei1 || line.imei2 || line.warrantyTill) && (
+													<tr>
+														<td colSpan={6} style={{ padding: '1px 1px 3px 1px', fontSize: '6px', color: '#555', fontFamily: 'monospace' }}>
+															{line.imei1 && <span>IMEI 1: {line.imei1}</span>}
+															{line.imei1 && line.imei2 && <span> &nbsp; </span>}
+															{line.imei2 && <span>IMEI 2: {line.imei2}</span>}
+															{line.warrantyTill && <span>{(line.imei1 || line.imei2) ? '   ' : ''}Warranty Till: {new Date(line.warrantyTill).toLocaleDateString()}</span>}
+														</td>
+													</tr>
+												)}
+											</React.Fragment>
 										))}
 									</tbody>
 								</table>
@@ -594,7 +729,16 @@ export default function BillingPage() {
 								{lastInvoice.lines.map(l => (
 									<tr key={l.id}>
 										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{l.sku}</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{l.name}</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>
+											{l.name}
+											{mobilePOS && ((l as any).imei1 || (l as any).imei2 || (l as any).warrantyTill) && (
+												<div style={{ fontSize: '11px', color: '#666', marginTop: 4, fontFamily: 'monospace', lineHeight: 1.6 }}>
+													{(l as any).imei1 && <div>IMEI 1: {(l as any).imei1}</div>}
+													{(l as any).imei2 && <div>IMEI 2: {(l as any).imei2}</div>}
+													{(l as any).warrantyTill && <div>Warranty Till: {new Date((l as any).warrantyTill).toLocaleDateString()}</div>}
+												</div>
+											)}
+										</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'center', fontSize: '13px' }}>{l.qty}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{formatCurrency(l.price, storeInfo.currency)}</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{l.discount || 0}%</td>
@@ -624,10 +768,16 @@ export default function BillingPage() {
 										)}
 									</>)
 								})()}
-								<tr style={{ background: '#f9f9f9' }}>
-									<td colSpan={5} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL AMOUNT</td>
-									<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{formatCurrency(lastInvoice.total, storeInfo.currency)}</td>
-								</tr>
+								{(() => {
+									const invSubtotalFinal = (lastInvoice.lines || []).reduce((s: number, l: any) => { const t = (l.qty || 0) * (l.price || 0); return s + t - (t * (l.discount || 0) / 100) }, 0)
+									const bdFinal = lastInvoice.billDiscount || 0
+									return (
+										<tr style={{ background: '#f9f9f9' }}>
+											<td colSpan={5} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL AMOUNT</td>
+											<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{formatCurrency(invSubtotalFinal * (1 - bdFinal / 100), storeInfo.currency)}</td>
+										</tr>
+									)
+								})()}
 							</tfoot>
 						</table>
 

@@ -15,6 +15,10 @@ export default function InventoryPage() {
 	const [editingQty, setEditingQty] = useState<{ itemId: string, value: string } | null>(null)
 	const [savingQty, setSavingQty] = useState(false)
 	const queryClient = useQueryClient()
+	const [mobilePOS] = useState(() => localStorage.getItem('mobilePOS') === 'true')
+	const [openImeiItemId, setOpenImeiItemId] = useState<string | null>(null)
+	const [imeiCache, setImeiCache] = useState<Record<string, any[]>>({})
+	const [loadingImeiId, setLoadingImeiId] = useState<string | null>(null)
 
 	const { data: items = [], isLoading: itemsLoading } = useItems()
 	const { data: purchases = [], isLoading: purchasesLoading } = usePurchases()
@@ -89,6 +93,21 @@ export default function InventoryPage() {
 		} finally {
 			setSavingQty(false)
 			setEditingQty(null)
+		}
+	}
+
+	async function handleToggleImeis(itemId: string) {
+		if (openImeiItemId === itemId) { setOpenImeiItemId(null); return }
+		setOpenImeiItemId(itemId)
+		setLoadingImeiId(itemId)
+		try {
+			const imeis = await db.listImeisByItem(itemId)
+			setImeiCache(prev => ({ ...prev, [itemId]: imeis }))
+		} catch (err) {
+			console.error('Error loading IMEIs:', err)
+			setImeiCache(prev => ({ ...prev, [itemId]: [] }))
+		} finally {
+			setLoadingImeiId(null)
 		}
 	}
 
@@ -246,13 +265,14 @@ export default function InventoryPage() {
 				<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
 					<thead>
 						<tr style={{ background: '#141920', position: 'sticky', top: 0 }}>
-							{['SKU', 'Name', 'Stock', 'Selling Price', 'Cost Price', 'Total Retail', 'Total Cost'].map(h => (
-								<th key={h} style={{ padding: '10px 12px', textAlign: h === 'SKU' || h === 'Name' ? 'left' : 'right', borderBottom: '2px solid #243245', color: '#8899aa', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+							{['SKU', 'Name', 'Stock', 'Selling Price', 'Cost Price', 'Total Retail', 'Total Cost', ...(mobilePOS ? ['IMEIs'] : [])].map(h => (
+								<th key={h} style={{ padding: '10px 12px', textAlign: h === 'SKU' || h === 'Name' || h === 'IMEIs' ? 'left' : 'right', borderBottom: '2px solid #243245', color: '#8899aa', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
 							))}
 						</tr>
 					</thead>
 					<tbody>
 						{pagination.currentData.map(item => (
+							<>
 							<tr key={item.itemId} style={{ borderBottom: '1px solid #1a2030', background: item.stock <= 5 ? '#2d1b1b' : 'transparent' }}
 								onMouseEnter={e => (e.currentTarget.style.background = item.stock <= 5 ? '#3a1f1f' : '#141920')}
 								onMouseLeave={e => (e.currentTarget.style.background = item.stock <= 5 ? '#2d1b1b' : 'transparent')}
@@ -290,10 +310,66 @@ export default function InventoryPage() {
 								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#93c5fd' }}>{formatCurrency(item.costPrice, currency)}</td>
 								<td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(item.totalValue, currency)}</td>
 								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#94a3b8' }}>{formatCurrency(item.totalCostValue, currency)}</td>
+								{mobilePOS && (
+									<td style={{ padding: '10px 12px' }}>
+										<button
+											className="secondary"
+											onClick={() => handleToggleImeis(item.itemId)}
+											style={{ padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap' }}
+										>
+											{loadingImeiId === item.itemId ? '…' : openImeiItemId === item.itemId ? '▲ Hide' : '▼ IMEIs'}
+										</button>
+									</td>
+								)}
 							</tr>
+							{mobilePOS && openImeiItemId === item.itemId && (
+								<tr key={`imei-${item.itemId}`} style={{ background: '#0d1521' }}>
+									<td colSpan={8} style={{ padding: '0 12px 12px 12px' }}>
+										{(() => {
+											const imeis = imeiCache[item.itemId]
+											if (!imeis) return <div style={{ padding: '10px 0', color: '#6b7280', fontSize: 13 }}>Loading…</div>
+											const availableImeis = imeis.filter((i: any) => !i.is_sold)
+											if (availableImeis.length === 0) return <div style={{ padding: '10px 0', color: '#6b7280', fontSize: 13 }}>{imeis.length > 0 ? 'All units sold.' : 'No IMEIs recorded for this item.'}</div>
+											return (
+												<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 4 }}>
+													<thead>
+														<tr style={{ background: '#141920' }}>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600, width: 40 }}>#</th>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>IMEI 1</th>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>IMEI 2</th>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Warranty Till</th>
+														</tr>
+													</thead>
+													<tbody>
+														{availableImeis.map((imei: any, idx: number) => {
+															const warrantyDate = imei.warranty_till ? new Date(imei.warranty_till) : null
+															const warrantyExpired = warrantyDate && warrantyDate < new Date()
+															return (
+															<tr key={imei.id} style={{ borderBottom: '1px solid #1a2030' }}>
+																<td style={{ padding: '6px 10px', color: '#4b5563' }}>{idx + 1}</td>
+																<td style={{ padding: '6px 10px', fontFamily: 'monospace', color: '#93c5fd' }}>{imei.imei1}</td>
+																<td style={{ padding: '6px 10px', fontFamily: 'monospace', color: imei.imei2 ? '#93c5fd' : '#374151' }}>{imei.imei2 || '—'}</td>
+																<td style={{ padding: '6px 10px', fontSize: 12 }}>
+																	{warrantyDate ? (
+																		<span style={{ color: warrantyExpired ? '#f87171' : '#4ade80' }}>
+																			{warrantyDate.toLocaleDateString()}{warrantyExpired ? ' (expired)' : ''}
+																		</span>
+																	) : <span style={{ color: '#374151' }}>—</span>}
+																</td>
+															</tr>
+															)
+														})}
+													</tbody>
+												</table>
+											)
+										})()}
+									</td>
+								</tr>
+							)}
+							</>
 						))}
 						{pagination.currentData.length === 0 && (
-							<tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: '#4a5568' }}>No items found</td></tr>
+							<tr><td colSpan={mobilePOS ? 8 : 7} style={{ padding: 32, textAlign: 'center', color: '#4a5568' }}>No items found</td></tr>
 						)}
 					</tbody>
 				</table>
