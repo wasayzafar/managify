@@ -30,6 +30,9 @@ export default function SettingsPage() {
 	const [periodBilling, setPeriodBilling] = useState(() => {
 		return localStorage.getItem('periodBilling') === 'true'
 	})
+	const [mobilePOS, setMobilePOS] = useState(() => {
+		return localStorage.getItem('mobilePOS') === 'true'
+	})
 	const { logout } = useAuth()
 	const navigate = useNavigate()
 
@@ -95,6 +98,7 @@ export default function SettingsPage() {
 						thermalPrinting: localStorage.getItem('thermalPrinting'),
 						ecommerceMode: localStorage.getItem('ecommerceMode'),
 						periodBilling: localStorage.getItem('periodBilling'),
+						mobilePOS: localStorage.getItem('mobilePOS'),
 					}
 					localStorage.clear()
 					Object.entries(preserved).forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v) })
@@ -131,6 +135,8 @@ export default function SettingsPage() {
 				if (thermalPrintingSetting) localStorage.setItem('thermalPrinting', thermalPrintingSetting)
 				if (ecommerceModeSetting) localStorage.setItem('ecommerceMode', ecommerceModeSetting)
 				if (periodBillingSetting) localStorage.setItem('periodBilling', periodBillingSetting)
+				const mobilePOSSetting = localStorage.getItem('mobilePOS')
+				if (mobilePOSSetting) localStorage.setItem('mobilePOS', mobilePOSSetting)
 				
 				// Clear sessionStorage
 				sessionStorage.clear()
@@ -627,6 +633,48 @@ export default function SettingsPage() {
 					</label>
 					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
 						When enabled, a service period (from / to date) field appears on the Billing page and prints on the invoice. Useful for monthly service or subscription invoices.
+					</p>
+				</div>
+			</div>
+
+			<div className="card">
+				<h3 style={{ margin: '0 0 16px 0' }}>Mobile Phone POS</h3>
+				<div style={{ marginBottom: '8px' }}>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+						<div
+							onClick={() => {
+								const next = !mobilePOS
+								setMobilePOS(next)
+								localStorage.setItem('mobilePOS', next.toString())
+								setMessage('Mobile Phone POS ' + (next ? 'enabled' : 'disabled') + '. IMEI tracking is now ' + (next ? 'active' : 'inactive') + ' on purchases.')
+								setTimeout(() => setMessage(''), 3000)
+							}}
+							style={{
+								width: '44px',
+								height: '24px',
+								borderRadius: '12px',
+								background: mobilePOS ? '#2263ff' : '#243245',
+								position: 'relative',
+								cursor: 'pointer',
+								transition: 'background 0.2s',
+								flexShrink: 0
+							}}
+						>
+							<div style={{
+								position: 'absolute',
+								top: '3px',
+								left: mobilePOS ? '23px' : '3px',
+								width: '18px',
+								height: '18px',
+								borderRadius: '50%',
+								background: 'white',
+								transition: 'left 0.2s'
+							}} />
+						</div>
+						<span style={{ fontWeight: 'bold' }}>Enable Mobile Phone POS Mode</span>
+					</label>
+					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
+						When enabled, a "Mobile Phone Purchase" checkbox appears on the Purchases page. Checking it reveals IMEI number fields (2 per unit) that are saved to the database for inventory tracking.
 					</p>
 				</div>
 			</div>

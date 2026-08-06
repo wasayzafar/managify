@@ -198,7 +198,9 @@ export const db = {
 				costPrice: purchase.cost_price,
 				supplier: purchase.supplier,
 				supplierPhone: purchase.supplier_phone,
-				note: purchase.note
+				note: purchase.note,
+				paymentType: purchase.payment_type as 'debit' | 'credit' | undefined,
+				creditDeadline: purchase.credit_deadline
 			}));
 		} catch (error) {
 			console.error('Error listing purchases:', error);
@@ -217,21 +219,29 @@ export const db = {
 			cost_price: data.costPrice,
 			supplier: data.supplier,
 			supplier_phone: data.supplierPhone,
-			note: data.note
+			note: data.note,
+			payment_type: data.paymentType || 'debit',
+			credit_deadline: data.paymentType === 'credit' ? (data.creditDeadline || null) : null
 		};
-		
+
 		const id = await supabaseStorage.addPurchase(userId, purchase);
-		return { 
-			id, 
-			itemId: data.itemId, 
-			qty: data.qty, 
-			quantity: data.qty, 
-			costPrice: data.costPrice, 
-			supplier: data.supplier, 
-			supplierPhone: data.supplierPhone, 
-			note: data.note, 
+
+		// Keep item's cost_price in sync with the latest purchase cost
+		if (data.costPrice != null && data.costPrice > 0) {
+			await supabaseStorage.updateItem(data.itemId, { cost_price: data.costPrice });
+		}
+
+		return {
+			id,
+			itemId: data.itemId,
+			qty: data.qty,
+			quantity: data.qty,
+			costPrice: data.costPrice,
+			supplier: data.supplier,
+			supplierPhone: data.supplierPhone,
+			note: data.note,
 			date: purchase.date,
-			paymentType: data.paymentType,
+			paymentType: data.paymentType || 'debit',
 			creditDeadline: data.creditDeadline
 		};
 	},
@@ -240,6 +250,28 @@ export const db = {
 	},
 	async deletePurchase(id: string): Promise<void> {
 		await supabaseStorage.deletePurchase(id);
+	},
+	async addImeis(imeis: { purchaseId: string; itemId: string; imei1: string; imei2?: string; warrantyTill?: string }[]): Promise<void> {
+		const userId = getUserId()
+		await supabaseStorage.addImeis(userId, imeis.map(i => ({
+			purchase_id: i.purchaseId,
+			item_id: i.itemId,
+			imei1: i.imei1,
+			imei2: i.imei2 || '',
+			warranty_till: i.warrantyTill || undefined
+		})))
+	},
+	async listImeisByPurchase(purchaseId: string): Promise<any[]> {
+		const userId = getUserId()
+		return supabaseStorage.listImeisByPurchase(userId, purchaseId)
+	},
+	async listImeisByItem(itemId: string): Promise<any[]> {
+		const userId = getUserId()
+		return supabaseStorage.listImeisByItem(userId, itemId)
+	},
+	async markImeiSold(imei: string, warrantyTill?: string): Promise<void> {
+		const userId = getUserId()
+		await supabaseStorage.markImeiSold(userId, imei, warrantyTill)
 	},
 
 	async listSales(): Promise<Sale[]> {

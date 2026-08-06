@@ -20,6 +20,8 @@ export interface Purchase {
   supplier?: string
   supplier_phone?: string
   note?: string
+  payment_type?: string
+  credit_deadline?: string
 }
 
 export interface Sale {
@@ -194,6 +196,57 @@ export const deletePurchase = async (id: string): Promise<void> => {
     .delete()
     .eq('id', id)
   if (error) throw error
+}
+
+// IMEIs
+export interface ImeiRecord {
+  id?: string
+  user_id?: string
+  purchase_id: string
+  item_id: string
+  imei1: string
+  imei2?: string
+  is_sold?: boolean
+  warranty_till?: string
+  created_at?: string
+}
+
+export const addImeis = async (userId: string, imeis: Omit<ImeiRecord, 'id' | 'user_id' | 'created_at'>[]): Promise<void> => {
+  if (!imeis.length) return
+  const { error } = await supabase
+    .from('imeis')
+    .insert(imeis.map(i => ({ ...i, user_id: userId })))
+  if (error) throw error
+}
+
+export const listImeisByPurchase = async (userId: string, purchaseId: string): Promise<ImeiRecord[]> => {
+  const { data, error } = await supabase
+    .from('imeis')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('purchase_id', purchaseId)
+  if (error) throw error
+  return data || []
+}
+
+export const listImeisByItem = async (userId: string, itemId: string): Promise<ImeiRecord[]> => {
+  const { data, error } = await supabase
+    .from('imeis')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('item_id', itemId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data || []
+}
+
+export const markImeiSold = async (userId: string, imei: string, warrantyTill?: string): Promise<void> => {
+  await supabase
+    .from('imeis')
+    .update({ is_sold: true, ...(warrantyTill ? { warranty_till: warrantyTill } : {}) })
+    .eq('user_id', userId)
+    .or(`imei1.eq.${imei},imei2.eq.${imei}`)
+  // silently ignore if IMEI not found in DB (manual entry on invoice)
 }
 
 // Sales

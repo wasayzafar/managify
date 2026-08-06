@@ -125,10 +125,12 @@ export default function ProfitLossPage() {
 					return sum + ((sale.quantity || 0) * costPrice)
 				}, 0)
 
-				// Filter expenses by date range
+				// Filter expenses by their expenseMonth field (YYYY-MM), falling within startDate–endDate
+				const startMonth = startDate.slice(0, 7)
+				const endMonth = endDate.slice(0, 7)
 				const filteredExpenses = expenses.filter(e => {
-					const expenseDate = e.date ? new Date(e.date) : new Date()
-					return expenseDate >= new Date(startDate) && expenseDate <= new Date(endDate + 'T23:59:59')
+					const m = e.expenseMonth || e.date?.slice(0, 7) || ''
+					return m >= startMonth && m <= endMonth
 				})
 
 				// Calculate total expenses

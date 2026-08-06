@@ -31,6 +31,10 @@ export default function PurchasesPage() {
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({ storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '', currency: 'PKR' })
 	const [loading, setLoading] = useState(true)
 	const [submitting, setSubmitting] = useState(false)
+	const [mobilePOS] = useState(() => localStorage.getItem('mobilePOS') === 'true')
+	const [isMobilePhone, setIsMobilePhone] = useState(false)
+	type ImeiPair = { imei1: string; imei2: string; warrantyTill: string }
+	const [imeiPairs, setImeiPairs] = useState<ImeiPair[]>([])
 
 	const existing = items.find(i => i.sku === sku)
 
@@ -68,6 +72,23 @@ export default function PurchasesPage() {
 		return () => document.removeEventListener('keydown', handler)
 	}, [sku, qty, costPrice, supplier, supplierPhone, purchasedAt, note, paymentType, creditDeadline, newName, newPrice])
 
+	// Sync IMEI pair count with qty when mobile phone mode is active
+	useEffect(() => {
+		if (!isMobilePhone) return
+		const n = Math.max(0, Number(qty) || 0)
+		setImeiPairs(prev => {
+			if (prev.length === n) return prev
+			const arr = [...prev]
+			while (arr.length < n) arr.push({ imei1: '', imei2: '', warrantyTill: '' })
+			arr.length = n
+			return arr
+		})
+	}, [qty, isMobilePhone])
+
+	function updateImeiPair(index: number, field: 'imei1' | 'imei2' | 'warrantyTill', value: string) {
+		setImeiPairs(prev => prev.map((p, i) => i === index ? { ...p, [field]: value } : p))
+	}
+
 	const [scanEnabled, setScanEnabled] = useState(false)
 	const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 	const { videoRef, isScanning, error: scanError } = useBarcodeScanner(code => setSku(code), scanEnabled && isMobile)
@@ -91,7 +112,7 @@ export default function PurchasesPage() {
 				await db.createSupplier({ name: supplier, phone: supplierPhone || '', address: '' })
 				setSuppliers(await db.listSuppliers())
 			}
-			await db.createPurchase({
+			const newPurchase = await db.createPurchase({
 				itemId: found.id, qty: qtyNum,
 				costPrice: Number(costPrice || '0'),
 				supplier: supplier || 'Unknown',
@@ -101,12 +122,26 @@ export default function PurchasesPage() {
 				paymentType,
 				creditDeadline: paymentType === 'credit' ? creditDeadline : ''
 			})
+			// Save IMEIs if mobile phone purchase
+			if (isMobilePhone && imeiPairs.length > 0) {
+				const validPairs = imeiPairs.filter(p => p.imei1.trim())
+				if (validPairs.length > 0) {
+					await db.addImeis(validPairs.map(p => ({
+						purchaseId: newPurchase.id,
+						itemId: found.id,
+						imei1: p.imei1.trim(),
+						imei2: p.imei2.trim(),
+						warrantyTill: p.warrantyTill || undefined
+					})))
+				}
+			}
 			await new Promise(r => setTimeout(r, 400))
 			const [updatedPurchases, updatedItems] = await Promise.all([db.listPurchases(), db.listItems()])
 			setRows(updatedPurchases); setItems(updatedItems)
 			setSku(''); setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone('')
 			setNote(''); setNewName(''); setNewPrice(''); setShowSupplierDropdown(false)
 			setPurchasedAt(new Date().toISOString().slice(0, 16))
+			setIsMobilePhone(false); setImeiPairs([])
 			alert('Purchase added successfully!')
 		} catch (err: any) {
 			console.error('Error creating purchase:', err)
@@ -333,6 +368,70 @@ export default function PurchasesPage() {
 							<input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Item Name" />
 						</div>
 					)}
+					{mobilePOS && (
+						<div style={{ gridColumn: '1 / -1' }}>
+							<label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+								<input
+									type="checkbox"
+									checked={isMobilePhone}
+									style={{ width: 'auto', cursor: 'pointer', accentColor: '#2263ff' }}
+									onChange={e => {
+										const checked = e.target.checked
+										setIsMobilePhone(checked)
+										if (!checked) {
+											setImeiPairs([])
+										} else {
+											const n = Math.max(0, Number(qty) || 0)
+											setImeiPairs(Array.from({ length: n }, () => ({ imei1: '', imei2: '', warrantyTill: '' })))
+										}
+									}}
+								/>
+								<span style={{ fontWeight: 600, fontSize: 14 }}>Mobile Phone Purchase</span>
+								{isMobilePhone && <span style={{ fontSize: 12, color: '#9ca3af' }}>— enter 2 IMEIs per unit</span>}
+							</label>
+						</div>
+					)}
+					{mobilePOS && isMobilePhone && imeiPairs.length > 0 && (
+						<div style={{ gridColumn: '1 / -1' }}>
+							<label style={{ display: 'block', marginBottom: 10, fontSize: 13, color: '#9ca3af' }}>
+								IMEI Numbers ({imeiPairs.length} {imeiPairs.length === 1 ? 'unit' : 'units'})
+							</label>
+							<div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+								{imeiPairs.map((pair, i) => (
+									<div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 1fr 150px', gap: 8, alignItems: 'end' }}>
+										<span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500, paddingBottom: 8 }}>Unit {i + 1}</span>
+										<div>
+											<label style={{ display: 'block', fontSize: 11, color: '#6b7280', marginBottom: 2 }}>IMEI 1</label>
+											<input
+												placeholder="IMEI 1"
+												value={pair.imei1}
+												onChange={e => updateImeiPair(i, 'imei1', e.target.value)}
+												style={{ fontFamily: 'monospace', width: '100%' }}
+											/>
+										</div>
+										<div>
+											<label style={{ display: 'block', fontSize: 11, color: '#6b7280', marginBottom: 2 }}>IMEI 2</label>
+											<input
+												placeholder="IMEI 2"
+												value={pair.imei2}
+												onChange={e => updateImeiPair(i, 'imei2', e.target.value)}
+												style={{ fontFamily: 'monospace', width: '100%' }}
+											/>
+										</div>
+										<div>
+											<label style={{ display: 'block', fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Warranty Till</label>
+											<input
+												type="date"
+												value={pair.warrantyTill}
+												onChange={e => updateImeiPair(i, 'warrantyTill', e.target.value)}
+												style={{ width: '100%' }}
+											/>
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
 					<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
 						<button onClick={onSubmit} disabled={submitting} style={{ opacity: submitting ? 0.6 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}>
 						{submitting ? 'Adding…' : 'Add Purchase'}
@@ -413,8 +512,8 @@ export default function PurchasesPage() {
 											<td style={{ padding: '10px 12px', color: '#94a3b8' }}>{item?.sku || '—'}</td>
 											<td style={{ padding: '10px 12px', fontWeight: 500 }}>{item?.name || 'Unknown'}</td>
 											<td style={{ padding: '10px 12px', textAlign: 'right' }}>{q}</td>
-											<td style={{ padding: '10px 12px', textAlign: 'right' }}>{r.costPrice ? formatCurrency(r.costPrice, storeInfo.currency) : '—'}</td>
-											<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{total ? formatCurrency(total, storeInfo.currency) : '—'}</td>
+											<td style={{ padding: '10px 12px', textAlign: 'right' }}>{r.costPrice != null ? formatCurrency(r.costPrice, storeInfo.currency) : '—'}</td>
+											<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{total != null ? formatCurrency(total, storeInfo.currency) : '—'}</td>
 											<td style={{ padding: '10px 12px', color: '#94a3b8' }}>{r.supplier || '—'}</td>
 											<td style={{ padding: '10px 12px' }}>
 												<span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: r.paymentType === 'credit' ? '#451a03' : '#052e16', color: r.paymentType === 'credit' ? '#fb923c' : '#4ade80' }}>
