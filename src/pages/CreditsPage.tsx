@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { db, Purchase, Sale, Item, StoreInfo } from '../storage'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { getPrintWindowSize, getPrintPageCSS } from '../utils/thermalPrintStyles'
+import { InvoiceHeader, InvoiceFooter, preloadBrandingLogos } from '../utils/invoiceHeader'
 
 type Tab = 'purchase' | 'sale'
 
@@ -47,6 +48,7 @@ export default function CreditsPage() {
 			])
 			setStoreInfo(store)
 			setCurrency(await loadCurrency())
+			preloadBrandingLogos().catch(console.warn)
 
 			setCreditPurchases(
 				purchases
@@ -139,7 +141,7 @@ export default function CreditsPage() {
 				</select>
 			</div>
 
-			{/* ── PURCHASE CREDITS ── */}
+			{/* â”€â”€ PURCHASE CREDITS â”€â”€ */}
 			{tab === 'purchase' && (
 				<>
 					{filteredPurchases.length === 0 ? (
@@ -167,12 +169,12 @@ export default function CreditsPage() {
 									return (
 										<tr key={p.id}>
 											<td style={{ fontFamily: 'monospace', fontSize: 12 }}>{p.id.slice(-6)}</td>
-											<td>{p.supplier || '—'}</td>
-											<td>{p.supplierPhone || '—'}</td>
-											<td>{p.item?.name || '—'}</td>
+											<td>{p.supplier || 'â€”'}</td>
+											<td>{p.supplierPhone || 'â€”'}</td>
+											<td>{p.item?.name || 'â€”'}</td>
 											<td>{formatCurrency(amount, currency)}</td>
-											<td>{p.date ? new Date(p.date).toLocaleDateString() : '—'}</td>
-											<td>{p.creditDeadline ? new Date(p.creditDeadline).toLocaleDateString() : '—'}</td>
+											<td>{p.date ? new Date(p.date).toLocaleDateString() : 'â€”'}</td>
+											<td>{p.creditDeadline ? new Date(p.creditDeadline).toLocaleDateString() : 'â€”'}</td>
 											<td><span style={{ padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: badge.bg, color: badge.color }}>{badge.label}</span></td>
 											<td style={{ display: 'flex', gap: 4 }}>
 												<button style={{ fontSize: 12, padding: '3px 10px' }} onClick={() => setSelectedPurchase(p)}>View</button>
@@ -195,7 +197,7 @@ export default function CreditsPage() {
 				</>
 			)}
 
-			{/* ── SALES CREDITS ── */}
+			{/* â”€â”€ SALES CREDITS â”€â”€ */}
 			{tab === 'sale' && (
 				<>
 					{filteredSales.length === 0 ? (
@@ -222,11 +224,11 @@ export default function CreditsPage() {
 									return (
 										<tr key={s.id}>
 											<td style={{ fontFamily: 'monospace', fontSize: 12 }}>{s.invoiceNo || s.id.slice(-6)}</td>
-											<td>{s.customerName || '—'}</td>
-											<td>{s.customerPhone || '—'}</td>
+											<td>{s.customerName || 'â€”'}</td>
+											<td>{s.customerPhone || 'â€”'}</td>
 											<td>{formatCurrency(amount, currency)}</td>
-											<td>{s.date ? new Date(s.date).toLocaleDateString() : '—'}</td>
-											<td>{s.creditDeadline ? new Date(s.creditDeadline).toLocaleDateString() : '—'}</td>
+											<td>{s.date ? new Date(s.date).toLocaleDateString() : 'â€”'}</td>
+											<td>{s.creditDeadline ? new Date(s.creditDeadline).toLocaleDateString() : 'â€”'}</td>
 											<td><span style={{ padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: badge.bg, color: badge.color }}>{badge.label}</span></td>
 											<td>
 												{!s.isPaid && (
@@ -281,23 +283,19 @@ export default function CreditsPage() {
 							</div>
 						</div>
 						<div id="credit-bill-print" style={{ background: 'white', color: 'black', padding: 24, borderRadius: 8, fontFamily: 'Arial, sans-serif' }}>
-							<div style={{ textAlign: 'center', marginBottom: 24, borderBottom: '2px solid #333', paddingBottom: 16 }}>
-								<h1 style={{ margin: 0, fontSize: 26 }}>{storeInfo.storeName.toUpperCase()}</h1>
-								{storeInfo.address && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>{storeInfo.address}</p>}
-								{storeInfo.phone && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Phone: {storeInfo.phone}</p>}
-								<p style={{ margin: '8px 0 0', fontSize: 13, color: '#444', fontWeight: 600 }}>PURCHASE CREDIT INVOICE</p>
-							</div>
+							<InvoiceHeader storeInfo={storeInfo} width={600} />
+							<p style={{ margin: '-16px 0 20px', textAlign: 'center', fontSize: 13, color: '#444', fontWeight: 600 }}>PURCHASE CREDIT INVOICE</p>
 							<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
 								<div style={{ fontSize: 13, lineHeight: 1.7 }}>
 									<div><strong>PO #:</strong> {selectedPurchase.id.slice(-6)}</div>
-									<div><strong>Date:</strong> {selectedPurchase.date ? new Date(selectedPurchase.date).toLocaleDateString() : '—'}</div>
+									<div><strong>Date:</strong> {selectedPurchase.date ? new Date(selectedPurchase.date).toLocaleDateString() : 'â€”'}</div>
 									<div><strong>Payment:</strong> Credit</div>
 									{selectedPurchase.creditDeadline && <div><strong>Due Date:</strong> {new Date(selectedPurchase.creditDeadline).toLocaleDateString()}</div>}
 									<div><strong>Status:</strong> {selectedPurchase.isPaid ? 'PAID' : 'UNPAID'}</div>
 								</div>
 								<div style={{ fontSize: 13, lineHeight: 1.7, textAlign: 'right' }}>
 									<div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>SUPPLIER</div>
-									<div><strong>{selectedPurchase.supplier || '—'}</strong></div>
+									<div><strong>{selectedPurchase.supplier || 'â€”'}</strong></div>
 									{selectedPurchase.supplierPhone && <div>Phone: {selectedPurchase.supplierPhone}</div>}
 									{selectedPurchase.supplierAddress && <div>Address: {selectedPurchase.supplierAddress}</div>}
 								</div>
@@ -314,8 +312,8 @@ export default function CreditsPage() {
 								</thead>
 								<tbody>
 									<tr>
-										<td style={{ border: '1px solid #ddd', padding: 10 }}>{selectedPurchase.item?.sku || '—'}</td>
-										<td style={{ border: '1px solid #ddd', padding: 10 }}>{selectedPurchase.item?.name || '—'}</td>
+										<td style={{ border: '1px solid #ddd', padding: 10 }}>{selectedPurchase.item?.sku || 'â€”'}</td>
+										<td style={{ border: '1px solid #ddd', padding: 10 }}>{selectedPurchase.item?.name || 'â€”'}</td>
 										<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'center' }}>{selectedPurchase.quantity || selectedPurchase.qty || 0}</td>
 										<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right' }}>{formatCurrency(selectedPurchase.costPrice || 0, currency)}</td>
 										<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right' }}>{formatCurrency((selectedPurchase.quantity || selectedPurchase.qty || 0) * (selectedPurchase.costPrice || 0), currency)}</td>
@@ -328,6 +326,7 @@ export default function CreditsPage() {
 									</tr>
 								</tfoot>
 							</table>
+							<InvoiceFooter storeInfo={storeInfo} />
 						</div>
 					</div>
 				</div>

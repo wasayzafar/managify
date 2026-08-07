@@ -66,6 +66,7 @@ export type StoreInfo = {
 	taxNumber?: string
 	logo?: string
 	currency?: string
+	headerLayout?: string
 }
 
 export type Expense = {
@@ -423,7 +424,8 @@ export const db = {
 				website: info.website,
 				taxNumber: info.tax_number,
 				logo: info.logo,
-				currency: info.currency || 'PKR'
+				currency: info.currency || 'PKR',
+				headerLayout: info.header_layout || undefined,
 			};
 		} catch (error) {
 			console.error('Error getting store info:', error);
@@ -441,7 +443,7 @@ export const db = {
 	},
 	async updateStoreInfo(data: Partial<StoreInfo>): Promise<StoreInfo> {
 		const userId = getUserId();
-		const mappedData = {
+		const mappedData: any = {
 			store_name: data.storeName || 'Managify',
 			phone: data.phone || '',
 			address: data.address || '',
@@ -451,8 +453,15 @@ export const db = {
 			logo: data.logo || '',
 			currency: data.currency || 'PKR'
 		};
+		if (data.headerLayout !== undefined) mappedData.header_layout = data.headerLayout
 		await supabaseStorage.updateStoreInfo(userId, mappedData);
 		return await this.getStoreInfo();
+	},
+
+	async updateHeaderLayout(layoutJson: string): Promise<void> {
+		const userId = getUserId();
+		await supabaseStorage.updateHeaderLayout(userId, layoutJson);
+		localStorage.setItem('invoiceHeaderLayout', layoutJson);
 	},
 
 	async listExpenses(): Promise<Expense[]> {

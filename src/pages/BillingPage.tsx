@@ -6,6 +6,7 @@ import jsPDF from 'jspdf'
 import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
 import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
 import { loadCurrency, formatCurrency } from '../utils/currency'
+import { InvoiceHeader, ThermalHeader, InvoiceFooter, preloadBrandingLogos } from '../utils/invoiceHeader'
 
  type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number, originalPrice?: number, imei1?: string, imei2?: string, warrantyTill?: string }
 //test
@@ -66,6 +67,7 @@ export default function BillingPage() {
 				if (info.logo) {
 					preloadImageAsBase64(info.logo).catch(console.warn)
 				}
+				preloadBrandingLogos().catch(console.warn)
 			} catch (error) {
 				console.error('Error loading store info:', error)
 			}
@@ -572,16 +574,7 @@ export default function BillingPage() {
 					<div id="invoice-print" style={getThermalPrintStyles().container}>
 						{isThermalPrinting() ? (
 							<div style={{ fontFamily: 'Arial, sans-serif', fontSize: '8px', lineHeight: '1.1', padding: '5px' }}>
-								<div style={{ textAlign: 'center', marginBottom: '8px' }}>
-									{(lastInvoice.storeInfo?.logo || storeInfo.logo) && (
-										<img src={lastInvoice.storeInfo?.logo || storeInfo.logo} alt="Logo" style={{ maxHeight: '20px', marginBottom: '3px' }} />
-									)}
-									<div style={{ fontWeight: 'bold', fontSize: '10px' }}>{((lastInvoice.storeInfo?.storeName || storeInfo.storeName) || 'MANAGIFY').toUpperCase()}</div>
-									{(lastInvoice.storeInfo?.phone || storeInfo.phone) && <div>Phone: {lastInvoice.storeInfo?.phone || storeInfo.phone}</div>}
-									{(lastInvoice.storeInfo?.email || storeInfo.email) && <div>Email: {lastInvoice.storeInfo?.email || storeInfo.email}</div>}
-									{(lastInvoice.storeInfo?.address || storeInfo.address) && <div>{lastInvoice.storeInfo?.address || storeInfo.address}</div>}
-									{(lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber) && <div>Tax#: {lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber}</div>}
-								</div>
+								<ThermalHeader storeInfo={{ ...storeInfo, ...lastInvoice.storeInfo }} />
 								<hr style={{ border: 'none', borderTop: '1px solid #000', margin: '5px 0' }} />
 								<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
 									<div><strong>INVOICE</strong></div>
@@ -662,58 +655,11 @@ export default function BillingPage() {
 										</div>
 									)
 								})()}
-								<div style={{ textAlign: 'center', marginTop: '8px', fontSize: '6px' }}>
-									<div>Thank you for your business!</div>
-									<div>For any queries, please contact us.</div>
-								</div>
+								<InvoiceFooter storeInfo={{ ...storeInfo, ...lastInvoice.storeInfo }} thermal />
 							</div>
 						) : (
 						<>
-						<div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
-							{(lastInvoice.storeInfo?.logo || storeInfo.logo) && (
-								<img 
-									src={lastInvoice.storeInfo?.logo || storeInfo.logo} 
-									alt="Store Logo" 
-									style={{ 
-										maxHeight: '60px', 
-										maxWidth: '120px', 
-										objectFit: 'contain',
-										marginBottom: '10px'
-									}}
-									onError={(e) => {
-										e.currentTarget.style.display = 'none'
-									}}
-								/>
-							)}
-							<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>
-								{((lastInvoice.storeInfo?.storeName || storeInfo.storeName) || 'MANAGIFY').toUpperCase()}
-							</h1>
-							{(lastInvoice.storeInfo?.address || storeInfo.address) && (
-								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									{lastInvoice.storeInfo?.address || storeInfo.address}
-								</p>
-							)}
-							{(lastInvoice.storeInfo?.phone || storeInfo.phone) && (
-								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Phone: {lastInvoice.storeInfo?.phone || storeInfo.phone}
-								</p>
-							)}
-							{(lastInvoice.storeInfo?.email || storeInfo.email) && (
-								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Email: {lastInvoice.storeInfo?.email || storeInfo.email}
-								</p>
-							)}
-							{(lastInvoice.storeInfo?.website || storeInfo.website) && (
-								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Website: {lastInvoice.storeInfo?.website || storeInfo.website}
-								</p>
-							)}
-							{(lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber) && (
-								<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-									Tax #: {lastInvoice.storeInfo?.taxNumber || storeInfo.taxNumber}
-								</p>
-							)}
-						</div>
+						<InvoiceHeader storeInfo={{ ...storeInfo, ...lastInvoice.storeInfo }} width={640} />
 						
 						<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
 							<div>
@@ -805,10 +751,7 @@ export default function BillingPage() {
 							</tfoot>
 						</table>
 
-						<div style={{ marginTop: '30px', textAlign: 'center', fontSize: '12px', color: '#666' }}>
-							<p>Thank you for your business!</p>
-							<p>For any queries, please contact us.</p>
-						</div>
+						<InvoiceFooter storeInfo={{ ...storeInfo, ...lastInvoice.storeInfo }} />
 						</>
 						)}
 					</div>

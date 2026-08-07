@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/useAuth';
+import { supabase } from './supabase';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
 import ContactPage from './pages/ContactPage';
@@ -22,13 +23,32 @@ import ExpensesPage from './pages/ExpensesPage';
 import SuppliersPage from './pages/SuppliersPage';
 import SettingsPage from './pages/SettingsPage'
 import AssetsPage from './pages/AssetsPage';
+import AdminPage from './pages/AdminPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  
-  if (loading) return <div>Loading...</div>;
+  const { user, loading, logout } = useAuth();
+  const [suspended, setSuspended] = useState(false)
+  const [checking, setChecking] = useState(true)
+
+  useEffect(() => {
+    if (!user) { setChecking(false); return }
+    supabase.from('user_registry').select('is_suspended').eq('uid', user.uid).single()
+      .then(({ data }) => { setSuspended(!!data?.is_suspended) })
+      .finally(() => setChecking(false))
+  }, [user])
+
+  if (loading || checking) return <div style={{ display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'#6b7280',fontFamily:'system-ui',background:'#060a10' }}>Loading…</div>;
   if (!user) return <Navigate to="/welcome" />;
-  
+  if (suspended) return (
+    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',background:'#060a10',color:'#e2e8f0',fontFamily:'system-ui',gap:16,textAlign:'center',padding:32 }}>
+      <div style={{ fontSize:48 }}>🚫</div>
+      <h2 style={{ margin:0,fontSize:24,fontWeight:700 }}>Account Suspended</h2>
+      <p style={{ color:'#6b7280',margin:0 }}>Your account has been suspended. Contact support to appeal.</p>
+      <a href="mailto:nativeedge.studio@gmail.com" style={{ color:'#4d8fff',fontSize:14 }}>nativeedge.studio@gmail.com</a>
+      <button onClick={() => logout()} style={{ marginTop:8,padding:'8px 20px',background:'#1a2940',border:'1px solid #243245',borderRadius:8,color:'#e2e8f0',cursor:'pointer',fontFamily:'inherit' }}>Sign Out</button>
+    </div>
+  );
+
   return <>{children}</>;
 }
 
@@ -40,6 +60,7 @@ export function AppRouter() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/founder" element={<FounderPage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="/register" element={<Navigate to="/contact" />} />
         <Route path="/*" element={
           <ProtectedRoute>

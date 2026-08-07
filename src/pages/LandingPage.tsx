@@ -4,7 +4,8 @@ import {
   FiPackage, FiFileText, FiTrendingUp, FiBarChart2,
   FiDollarSign, FiUsers, FiCreditCard, FiShoppingCart,
   FiCheckCircle, FiArrowRight, FiZap, FiShield, FiGlobe,
-  FiPieChart, FiLayers, FiActivity
+  FiPieChart, FiLayers, FiActivity, FiSmartphone, FiTool,
+  FiGrid, FiBox, FiMail, FiMessageSquare, FiSettings
 } from 'react-icons/fi'
 
 // ── Animated counter ──────────────────────────────────────────────────────────
@@ -90,6 +91,84 @@ const stats = [
   { value: 1, suffix: ' click', label: 'Invoice printing' },
 ]
 
+const industries = [
+  {
+    icon: <FiSmartphone size={24} />,
+    name: 'Mobile Phone Shops',
+    desc: 'IMEI tracking, warranty dates, per-unit serial numbers, and credit sale management built right in.',
+    tags: ['IMEI Tracking', 'Warranty', 'Credit Sales'],
+    color: '#3b82f6',
+  },
+  {
+    icon: '👔',
+    name: 'Garment & Apparel',
+    desc: 'Manage clothing stock by size and variant, track seasonal inventory, and generate supplier purchase orders.',
+    tags: ['Variants', 'Seasonal Stock', 'PO Management'],
+    color: '#8b5cf6',
+  },
+  {
+    icon: <FiSettings size={24} />,
+    name: 'Electronics & Computers',
+    desc: 'Component-level inventory, SKU-based billing, supplier credit tracking, and detailed profit reports.',
+    tags: ['SKU Billing', 'Supplier Credits', 'Profit Reports'],
+    color: '#06b6d4',
+  },
+  {
+    icon: <FiGrid size={24} />,
+    name: 'Supermarkets & Grocery',
+    desc: 'High-volume billing, barcode scanning, category-based expense tracking, and bulk purchase imports.',
+    tags: ['Barcode Scan', 'Bulk Billing', 'Categories'],
+    color: '#22c55e',
+  },
+  {
+    icon: <FiTool size={24} />,
+    name: 'Auto Parts & Hardware',
+    desc: 'Part number catalogues, multi-supplier purchases, restock alerts, and customer credit ledgers.',
+    tags: ['Part Catalogue', 'Multi-supplier', 'Ledger'],
+    color: '#f59e0b',
+  },
+  {
+    icon: <FiBox size={24} />,
+    name: 'General Retail',
+    desc: 'Any product, any category. Managify adapts to your workflow — thermal or A4 printing, in any currency.',
+    tags: ['Any Category', 'Multi-currency', 'Flexible'],
+    color: '#ec4899',
+  },
+]
+
+const customItems = [
+  {
+    icon: <FiLayers size={20} />,
+    title: 'Custom Modules',
+    desc: 'Need a repair job tracker, delivery module, or franchise dashboard? We build it for you.',
+  },
+  {
+    icon: <FiFileText size={20} />,
+    title: 'Custom Invoice Formats',
+    desc: 'Branded invoice templates, multi-language support, custom fields — designed to your exact spec.',
+  },
+  {
+    icon: <FiBarChart2 size={20} />,
+    title: 'Custom Reports',
+    desc: 'Sales by salesperson, region-wise breakdown, custom date groupings — any report you can describe.',
+  },
+  {
+    icon: <FiShield size={20} />,
+    title: 'White-label & Branding',
+    desc: 'Your logo, your colors, your domain. We deploy a fully white-labeled version under your brand.',
+  },
+  {
+    icon: <FiGlobe size={20} />,
+    title: 'Integrations',
+    desc: 'Connect with your existing POS hardware, accounting software, or e-commerce platform via API.',
+  },
+  {
+    icon: <FiUsers size={20} />,
+    title: 'Multi-branch Support',
+    desc: 'Separate dashboards for each branch with a consolidated owner view across all locations.',
+  },
+]
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   return (
@@ -104,6 +183,8 @@ export default function LandingPage() {
           <div style={s.navLinks}>
             <div className="pub-nav-feature-links">
               <a href="#features" style={s.navLink}>Features</a>
+              <a href="#industries" style={s.navLink}>Industries</a>
+              <a href="#custom" style={s.navLink}>Custom Solutions</a>
               <a href="#why" style={s.navLink}>Why Managify</a>
               <Link to="/contact" style={s.navLink}>Contact</Link>
             </div>
@@ -194,6 +275,80 @@ export default function LandingPage() {
                 <p style={s.featureDesc}>{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── INDUSTRIES ── */}
+      <section id="industries" style={{ ...s.section, background: '#07111a' }} className="pub-section">
+        <div style={s.sectionInner} className="pub-section-inner">
+          <div style={s.sectionHead}>
+            <p style={s.sectionEyebrow}>Who we serve</p>
+            <h2 style={s.sectionTitle}>Built for every type of business</h2>
+            <p style={s.sectionDesc}>
+              Managify adapts to the specific needs of your industry — not the other way around.
+            </p>
+          </div>
+          <div style={s.industryGrid} className="pub-industry-grid">
+            {industries.map(ind => (
+              <div key={ind.name} style={s.industryCard}>
+                <div style={{ ...s.industryIcon, color: ind.color, background: `${ind.color}18`, border: `1px solid ${ind.color}30` }}>
+                  {typeof ind.icon === 'string'
+                    ? <span style={{ fontSize: 22 }}>{ind.icon}</span>
+                    : ind.icon}
+                </div>
+                <h3 style={s.industryName}>{ind.name}</h3>
+                <p style={s.industryDesc}>{ind.desc}</p>
+                <div style={s.tagRow}>
+                  {ind.tags.map(t => (
+                    <span key={t} style={{ ...s.tag, color: ind.color, borderColor: `${ind.color}40`, background: `${ind.color}10` }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CUSTOM SOLUTIONS ── */}
+      <section id="custom" style={{ ...s.section, background: '#060a10' }} className="pub-section">
+        <div style={s.sectionInner} className="pub-section-inner">
+          <div style={{ display: 'flex', gap: 80, alignItems: 'center', flexWrap: 'wrap' as const }} className="pub-custom-wrap">
+            {/* Left column */}
+            <div style={{ flex: '1 1 340px', minWidth: 280 }}>
+              <p style={s.sectionEyebrow}>Tailored for you</p>
+              <h2 style={{ ...s.sectionTitle, textAlign: 'left', margin: '0 0 20px' }}>
+                We customize the system<br />
+                <span style={s.heroAccent}>as per your requirements</span>
+              </h2>
+              <p style={{ ...s.sectionDesc, textAlign: 'left', margin: '0 0 32px', fontSize: 16 }}>
+                Every business is different. If the standard system doesn't perfectly match your workflow,
+                our team builds exactly what you need — custom modules, reports, integrations, and branding.
+              </p>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
+                <a href="mailto:nativeedge.studio@gmail.com" style={s.ctaPrimary}>
+                  <FiMail size={15} />
+                  Email Us
+                </a>
+                <a href="https://wa.me/923134805858" target="_blank" rel="noopener noreferrer" style={s.ctaSecondary}>
+                  <FiMessageSquare size={15} />
+                  WhatsApp
+                </a>
+              </div>
+              <p style={{ marginTop: 20, fontSize: 13, color: '#4a5568' }}>
+                Usually respond within 24 hours · Free consultation
+              </p>
+            </div>
+            {/* Right grid */}
+            <div style={{ flex: '1 1 380px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="pub-custom-grid">
+              {customItems.map(item => (
+                <div key={item.title} style={s.customCard}>
+                  <div style={s.customIcon}>{item.icon}</div>
+                  <div style={s.customTitle}>{item.title}</div>
+                  <div style={s.customDesc}>{item.desc}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -565,6 +720,86 @@ const s: Record<string, React.CSSProperties> = {
     color: '#8b949e',
     lineHeight: 1.65,
     margin: 0,
+  },
+
+  // Industries
+  industryGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+    gap: 20,
+  },
+  industryCard: {
+    background: '#0d1521',
+    border: '1px solid #1a2333',
+    borderRadius: 16,
+    padding: '28px 24px',
+    transition: 'border-color 0.2s, transform 0.2s',
+  },
+  industryIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+    flexShrink: 0,
+  },
+  industryName: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: '#e8eef5',
+    margin: '0 0 10px',
+  },
+  industryDesc: {
+    fontSize: 14,
+    color: '#8b949e',
+    lineHeight: 1.65,
+    margin: '0 0 16px',
+  },
+  tagRow: {
+    display: 'flex',
+    gap: 7,
+    flexWrap: 'wrap' as const,
+  },
+  tag: {
+    fontSize: 11,
+    fontWeight: 600,
+    padding: '3px 10px',
+    borderRadius: 99,
+    border: '1px solid',
+    letterSpacing: '0.3px',
+  },
+
+  // Custom solutions
+  customCard: {
+    background: '#0d1521',
+    border: '1px solid #1a2333',
+    borderRadius: 12,
+    padding: '18px 18px',
+  },
+  customIcon: {
+    width: 36,
+    height: 36,
+    background: 'rgba(34,99,255,0.1)',
+    border: '1px solid rgba(34,99,255,0.2)',
+    borderRadius: 9,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#4d8fff',
+    marginBottom: 12,
+  },
+  customTitle: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: '#e8eef5',
+    marginBottom: 6,
+  },
+  customDesc: {
+    fontSize: 13,
+    color: '#6b7280',
+    lineHeight: 1.55,
   },
 
   // Why grid
