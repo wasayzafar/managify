@@ -72,6 +72,20 @@ export default function DashboardPage() {
 		const todayRevenue = calcRevenue(todaySalesData)
 		const todaySalesCount = todaySalesData.length
 
+		// Credit alerts
+		const now = new Date()
+		const unpaidPurchaseCredits = purchases.filter(p => p.paymentType === 'credit' && !p.isPaid)
+		const unpaidSaleCredits = sales.filter(s => s.paymentType === 'credit' && !s.isPaid)
+
+		const purchaseCreditTotal = unpaidPurchaseCredits.reduce((sum, p) => sum + (p.costPrice || 0) * (p.quantity || p.qty || 0), 0)
+		const saleCreditTotal = unpaidSaleCredits.reduce((sum, s) => sum + (s.actualPrice || 0) * (s.quantity || 0), 0)
+
+		const getDays = (d: string) => Math.ceil((new Date(d).getTime() - now.getTime()) / 86400000)
+		const purchaseCreditOverdue = unpaidPurchaseCredits.filter(p => p.creditDeadline && getDays(p.creditDeadline) < 0).length
+		const purchaseCreditDueSoon = unpaidPurchaseCredits.filter(p => p.creditDeadline && getDays(p.creditDeadline) >= 0 && getDays(p.creditDeadline) <= 7).length
+		const saleCreditOverdue = unpaidSaleCredits.filter(s => s.creditDeadline && getDays(s.creditDeadline) < 0).length
+		const saleCreditDueSoon = unpaidSaleCredits.filter(s => s.creditDeadline && getDays(s.creditDeadline) >= 0 && getDays(s.creditDeadline) <= 7).length
+
 		return {
 			totalItems,
 			totalPurchases,
@@ -84,6 +98,14 @@ export default function DashboardPage() {
 			lowStockItems,
 			todayRevenue,
 			todaySales: todaySalesCount,
+			unpaidPurchaseCredits: unpaidPurchaseCredits.length,
+			purchaseCreditTotal,
+			purchaseCreditOverdue,
+			purchaseCreditDueSoon,
+			unpaidSaleCredits: unpaidSaleCredits.length,
+			saleCreditTotal,
+			saleCreditOverdue,
+			saleCreditDueSoon,
 		}
 	}, [items, purchases, sales, inventory])
 
@@ -171,6 +193,44 @@ export default function DashboardPage() {
 					<p className="change">Items need restocking</p>
 				</div>
 			</div>
+
+			{/* Credit Alerts */}
+			{(stats.unpaidPurchaseCredits > 0 || stats.unpaidSaleCredits > 0) && (
+				<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
+					{stats.unpaidPurchaseCredits > 0 && (
+						<Link to="/credits" style={{ textDecoration: 'none' }}>
+							<div style={{ background: '#1c0a00', border: `1px solid ${stats.purchaseCreditOverdue > 0 ? '#f87171' : '#fb923c'}`, borderRadius: 10, padding: '16px 20px', cursor: 'pointer' }}>
+								<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+									<span style={{ color: '#fb923c', fontWeight: 700, fontSize: 14 }}>Purchase Credits</span>
+									<span style={{ background: '#fb923c', color: '#1c0a00', borderRadius: 12, padding: '2px 10px', fontSize: 12, fontWeight: 700 }}>{stats.unpaidPurchaseCredits} unpaid</span>
+								</div>
+								<div style={{ color: '#e8eef5', fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{formatCurrency(stats.purchaseCreditTotal, currency)}</div>
+								<div style={{ display: 'flex', gap: 12, fontSize: 12 }}>
+									{stats.purchaseCreditOverdue > 0 && <span style={{ color: '#f87171' }}>{stats.purchaseCreditOverdue} overdue</span>}
+									{stats.purchaseCreditDueSoon > 0 && <span style={{ color: '#fb923c' }}>{stats.purchaseCreditDueSoon} due within 7 days</span>}
+									{stats.purchaseCreditOverdue === 0 && stats.purchaseCreditDueSoon === 0 && <span style={{ color: '#6b7280' }}>No urgent deadlines</span>}
+								</div>
+							</div>
+						</Link>
+					)}
+					{stats.unpaidSaleCredits > 0 && (
+						<Link to="/credits" style={{ textDecoration: 'none' }}>
+							<div style={{ background: '#052e16', border: `1px solid ${stats.saleCreditOverdue > 0 ? '#f87171' : '#4ade80'}`, borderRadius: 10, padding: '16px 20px', cursor: 'pointer' }}>
+								<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+									<span style={{ color: '#4ade80', fontWeight: 700, fontSize: 14 }}>Sales Credits</span>
+									<span style={{ background: '#4ade80', color: '#052e16', borderRadius: 12, padding: '2px 10px', fontSize: 12, fontWeight: 700 }}>{stats.unpaidSaleCredits} unpaid</span>
+								</div>
+								<div style={{ color: '#e8eef5', fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{formatCurrency(stats.saleCreditTotal, currency)}</div>
+								<div style={{ display: 'flex', gap: 12, fontSize: 12 }}>
+									{stats.saleCreditOverdue > 0 && <span style={{ color: '#f87171' }}>{stats.saleCreditOverdue} overdue</span>}
+									{stats.saleCreditDueSoon > 0 && <span style={{ color: '#fb923c' }}>{stats.saleCreditDueSoon} due within 7 days</span>}
+									{stats.saleCreditOverdue === 0 && stats.saleCreditDueSoon === 0 && <span style={{ color: '#6b7280' }}>No urgent deadlines</span>}
+								</div>
+							</div>
+						</Link>
+					)}
+				</div>
+			)}
 
 			<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
 				<div className="card">
