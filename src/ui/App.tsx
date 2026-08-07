@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useDataPrefetch } from '../hooks/useDataPrefetch'
 import { SEO } from '../components/SEO'
+import { useAuth } from '../auth/useAuth'
+
+const ADMIN_EMAILS = ['nativeedgestudio.space@gmail.com', 'nativeedge.studio@gmail.com']
 
 // Simple SVG icons
 const DashboardIcon = () => (
@@ -99,6 +102,8 @@ export default function App() {
 	const [sidebarOpen, setSidebarOpen] = useState(false)
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 	const { prefetchPageData } = useDataPrefetch()
+	const { user } = useAuth()
+	const isAdmin = ADMIN_EMAILS.includes(user?.email ?? '')
 
 	// Prefetch data based on current route
 	React.useEffect(() => {
@@ -204,6 +209,15 @@ export default function App() {
 						<SettingsIcon />
 						<span>Settings</span>
 					</Link>
+					{isAdmin && (
+						<Link className={loc.pathname.startsWith('/admin') ? 'active' : ''} to="/admin"
+							style={{ marginTop: 8, background: 'rgba(34,99,255,0.08)', borderRadius: 10, border: '1px solid rgba(34,99,255,0.2)' }}>
+							<svg viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1ZM12 7C13.1 7 14 7.9 14 9C14 10.1 13.1 11 12 11C10.9 11 10 10.1 10 9C10 7.9 10.9 7 12 7ZM17 17H7V16C7 14.33 10.33 13.5 12 13.5C13.67 13.5 17 14.33 17 16V17Z"/>
+							</svg>
+							<span>Admin Portal</span>
+						</Link>
+					)}
 				</nav>
 				
 			

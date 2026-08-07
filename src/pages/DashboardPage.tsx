@@ -4,6 +4,7 @@ import { useItems, usePurchases, useSales, useInventory } from '../hooks/useData
 import { StatsSkeleton } from '../components/LoadingSkeleton'
 import { seedTestData } from '../utils/testDataSeeder'
 import { loadCurrency, formatCurrency } from '../utils/currency'
+import AdPopup from '../components/AdPopup'
 
 export default function DashboardPage() {
 	const { data: items = [], isLoading: itemsLoading } = useItems()
@@ -115,6 +116,7 @@ export default function DashboardPage() {
 
 	return (
 		<div>
+			<AdPopup />
 			<div className="card" style={{ marginBottom: '24px' }}>
 				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 					<div>

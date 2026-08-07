@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import emailjs, { init } from '@emailjs/browser'
 import {
   FiMapPin, FiPhone, FiMail, FiArrowRight,
-  FiSend, FiCheckCircle, FiAlertCircle
+  FiSend, FiCheckCircle, FiAlertCircle, FiMessageSquare
 } from 'react-icons/fi'
 
 const EJS_SERVICE  = import.meta.env.VITE_EMAILJS_SERVICE_ID  as string
@@ -24,6 +24,12 @@ const contactDetails = [
     label: 'Phone',
     lines: ['+92 339 0149510'],
     href: 'tel:+923390149510',
+  },
+  {
+    icon: <FiMessageSquare size={20} />,
+    label: 'WhatsApp',
+    lines: ['+92 339 0149510'],
+    href: 'https://wa.me/923390149510',
   },
   {
     icon: <FiMail size={20} />,
@@ -115,9 +121,17 @@ export default function ContactPage() {
 
               <div style={s.contactList}>
                 {contactDetails.map(d => (
-                  <a key={d.label} href={d.href} target={d.label === 'Address' ? '_blank' : undefined}
+                  <a key={d.label} href={d.href}
+                    target={d.label === 'Address' || d.label === 'WhatsApp' ? '_blank' : undefined}
                     rel="noopener noreferrer" style={s.contactItem}>
-                    <div style={s.contactIcon}>{d.icon}</div>
+                    <div style={{
+                      ...s.contactIcon,
+                      ...(d.label === 'WhatsApp' ? {
+                        background: 'rgba(37,211,102,0.12)',
+                        border: '1px solid rgba(37,211,102,0.25)',
+                        color: '#25d366',
+                      } : {}),
+                    }}>{d.icon}</div>
                     <div>
                       <div style={s.contactLabel}>{d.label}</div>
                       {d.lines.map(line => (

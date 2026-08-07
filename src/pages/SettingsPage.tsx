@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db, StoreInfo } from '../storage'
 import { useAuth } from '../auth/useAuth'
+import InvoiceHeaderDesigner from '../components/InvoiceHeaderDesigner'
 
 export default function SettingsPage() {
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
@@ -394,71 +395,23 @@ export default function SettingsPage() {
 			</div>
 
 			<div className="card">
-				<h3 style={{ margin: '0 0 16px 0' }}>Invoice Preview</h3>
-				<p style={{ margin: '0 0 16px 0', color: '#8b949e' }}>
-					This is how your store information will appear on invoices and reports.
-				</p>
-				
-				<div style={{ 
-					fontFamily: 'Arial, sans-serif', 
-					maxWidth: '600px', 
-					margin: '0 auto', 
-					padding: '20px', 
-					background: 'white', 
-					color: 'black',
-					border: '1px solid #ddd',
-					borderRadius: '8px'
-				}}>
-					<div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #333', paddingBottom: '20px' }}>
-						{storeInfo.logo && (
-							<img 
-								src={storeInfo.logo} 
-								alt="Store Logo" 
-								style={{ 
-									maxHeight: '60px', 
-									maxWidth: '120px', 
-									objectFit: 'contain',
-									marginBottom: '10px'
-								}}
-								onError={(e) => {
-									e.currentTarget.style.display = 'none'
-								}}
-							/>
-						)}
-						<h1 style={{ margin: '0', fontSize: '28px', color: '#333' }}>
-							{(storeInfo.storeName || 'MANAGIFY').toUpperCase()}
-						</h1>
-						{storeInfo.address && (
-							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-								{storeInfo.address}
-							</p>
-						)}
-						{storeInfo.phone && (
-							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-								Phone: {storeInfo.phone}
-							</p>
-						)}
-						{storeInfo.email && (
-							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-								Email: {storeInfo.email}
-							</p>
-						)}
-						{storeInfo.website && (
-							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-								Website: {storeInfo.website}
-							</p>
-						)}
-						{storeInfo.taxNumber && (
-							<p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-								Tax #: {storeInfo.taxNumber}
-							</p>
-						)}
-					</div>
-					
-					<div style={{ textAlign: 'center', color: '#666', fontSize: '14px' }}>
-						<p>Sample Invoice Header</p>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+					<div>
+						<h3 style={{ margin: '0 0 4px 0' }}>Invoice Header Designer</h3>
+						<p style={{ margin: 0, color: '#8b949e', fontSize: 13 }}>
+							Drag, resize and arrange your logo and store info. Click <strong>Save Layout</strong> to apply it to all printed invoices.
+						</p>
 					</div>
 				</div>
+				<InvoiceHeaderDesigner
+					storeInfo={storeInfo}
+					headerLayout={storeInfo.headerLayout}
+					onSave={async (json) => {
+						await db.updateHeaderLayout(json)
+						setMessage('Header layout saved to database!')
+						setTimeout(() => setMessage(''), 3000)
+					}}
+				/>
 			</div>
 
 			<div className="card">

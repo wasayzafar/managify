@@ -54,6 +54,7 @@ export interface StoreInfo {
   tax_number: string
   logo: string
   currency?: string
+  header_layout?: string
   user_id: string
 }
 
@@ -360,6 +361,11 @@ export const updateStoreInfo = async (userId: string, info: Omit<StoreInfo, 'use
     
     if (insertError) throw insertError
   }
+}
+
+export const updateHeaderLayout = async (userId: string, layout: string): Promise<void> => {
+  const { error } = await supabase.from('store_info').update({ header_layout: layout }).eq('user_id', userId)
+  if (error) throw error
 }
 
 // Expenses

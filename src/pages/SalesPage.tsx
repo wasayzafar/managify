@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { InvoiceHeader, ThermalHeader, InvoiceFooter, preloadBrandingLogos } from '../utils/invoiceHeader'
 import { db, Sale, Item, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -34,6 +35,7 @@ export default function SalesPage() {
 			setStoreInfo(store)
 			await loadCurrency()
 			if (store.logo) preloadImageAsBase64(store.logo).catch(console.warn)
+		preloadBrandingLogos().catch(console.warn)
 		} catch (err) {
 			console.error('Error loading sales data:', err)
 		} finally {
@@ -591,12 +593,7 @@ export default function SalesPage() {
 									{isThermalPrinting() ? (
 										/* ── THERMAL ── */
 										<div style={{ fontFamily: 'Arial', fontSize: 8, lineHeight: 1.2, padding: 5 }}>
-											<div style={{ textAlign: 'center', marginBottom: 8 }}>
-												{storeInfo.logo && <img src={storeInfo.logo} alt="" style={{ maxHeight: 20, marginBottom: 3 }} onError={e => { e.currentTarget.style.display = 'none' }} />}
-												<div style={{ fontWeight: 'bold', fontSize: 10 }}>{storeInfo.storeName.toUpperCase()}</div>
-												{storeInfo.phone && <div>Phone: {storeInfo.phone}</div>}
-												{storeInfo.address && <div>{storeInfo.address}</div>}
-											</div>
+												<ThermalHeader storeInfo={storeInfo} />
 											<hr style={{ borderTop: '1px solid #000', margin: '4px 0' }} />
 											<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 4 }}>
 												<div>
@@ -647,21 +644,13 @@ export default function SalesPage() {
 												{bd > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Discount ({bd}%)</span><span>-{formatCurrency(da, storeInfo.currency)}</span></div>}
 												<div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid #000', marginTop: 2, paddingTop: 2 }}><span>TOTAL</span><span>{formatCurrency(grandTotal, storeInfo.currency)}</span></div>
 											</div>
-											<div style={{ textAlign: 'center', marginTop: 8, fontSize: 6 }}>Thank you for your business!</div>
+											<InvoiceFooter storeInfo={storeInfo} thermal />
 										</div>
 									) : (
 										/* ── A4 ── */
 										<div style={{ fontFamily: 'Arial, sans-serif' }}>
 											{/* Store header */}
-											<div style={{ textAlign: 'center', borderBottom: '2px solid #333', paddingBottom: 16, marginBottom: 24 }}>
-												{storeInfo.logo && <img src={storeInfo.logo} alt="" style={{ maxHeight: 60, maxWidth: 120, objectFit: 'contain', marginBottom: 8 }} onError={e => { e.currentTarget.style.display = 'none' }} />}
-												<h1 style={{ margin: 0, fontSize: 26, color: '#333' }}>{storeInfo.storeName.toUpperCase()}</h1>
-												{storeInfo.address   && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>{storeInfo.address}</p>}
-												{storeInfo.phone     && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Phone: {storeInfo.phone}</p>}
-												{storeInfo.email     && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Email: {storeInfo.email}</p>}
-												{storeInfo.website   && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>{storeInfo.website}</p>}
-												{storeInfo.taxNumber && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Tax #: {storeInfo.taxNumber}</p>}
-											</div>
+											<InvoiceHeader storeInfo={storeInfo} width={600} />
 
 											{/* Invoice meta */}
 											<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -737,9 +726,7 @@ export default function SalesPage() {
 												</tfoot>
 											</table>
 
-											<div style={{ textAlign: 'center', fontSize: 12, color: '#999', marginTop: 20, borderTop: '1px solid #eee', paddingTop: 16 }}>
-												Thank you for your business!
-											</div>
+											<InvoiceFooter storeInfo={storeInfo} />
 										</div>
 									)}
 								</div>
