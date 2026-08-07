@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-import { FiX, FiExternalLink, FiMessageSquare, FiMegaphone } from 'react-icons/fi'
+import { FiX, FiExternalLink, FiMessageSquare, FiBell } from 'react-icons/fi'
 
 type Ad = {
   id: string
@@ -95,7 +95,7 @@ export default function AdPopup() {
             color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600,
             letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
-            <FiMegaphone size={12} />
+            <FiBell size={12} />
             Sponsored
           </div>
 
