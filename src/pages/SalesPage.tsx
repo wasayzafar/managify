@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { db, Sale, Item, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -577,117 +577,175 @@ export default function SalesPage() {
 						</div>
 
 						{/* Hidden printable invoice */}
-						<div style={{ position: 'fixed', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
-							<div id={`inv-print-${selectedInvoice.id}`} style={{ ...getThermalPrintStyles().container, padding: 20, width: 640, background: 'white', color: 'black' }}>
-								{isThermalPrinting() ? (
-									<div style={{ fontFamily: 'Arial', fontSize: 8, lineHeight: 1.2, padding: 5 }}>
-										<div style={{ textAlign: 'center', marginBottom: 8 }}>
-											{storeInfo.logo && <img src={storeInfo.logo} alt="" style={{ maxHeight: 20, marginBottom: 3 }} onError={e => { e.currentTarget.style.display = 'none' }} />}
-											<div style={{ fontWeight: 'bold', fontSize: 10 }}>{storeInfo.storeName.toUpperCase()}</div>
-											{storeInfo.phone && <div>Phone: {storeInfo.phone}</div>}
-											{storeInfo.address && <div>{storeInfo.address}</div>}
-										</div>
-										<hr style={{ borderTop: '1px solid #000', margin: '4px 0' }} />
-										<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 6 }}>
-											<div><div>Invoice #: {selectedInvoice.invoiceNo}</div><div>Date: {selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleDateString() : '—'}</div></div>
-											<div style={{ textAlign: 'right' }}><div>{selectedInvoice.customer || 'Walk-in'}</div><div>{selectedInvoice.phone || ''}</div></div>
-										</div>
-										<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 7, marginBottom: 5 }}>
-											<thead><tr style={{ borderBottom: '1px solid #000' }}>
-												{['SKU', 'Item', 'Qty', 'Price', 'Disc', 'Amt'].map(h => <th key={h} style={{ padding: '1px 2px', textAlign: 'left' }}>{h}</th>)}
-											</tr></thead>
-											<tbody>
-												{(selectedInvoice.lines || []).map((l: any) => {
-													const t = (l.qty || 0) * (l.price || 0)
-													const a = t - t * (l.discount || 0) / 100
-													return (
-														<tr key={l.id}><td style={{ padding: '1px 2px' }}>{l.sku}</td><td style={{ padding: '1px 2px' }}>{l.name}</td><td style={{ padding: '1px 2px', textAlign: 'right' }}>{l.qty}</td><td style={{ padding: '1px 2px', textAlign: 'right' }}>{(l.price || 0).toFixed(2)}</td><td style={{ padding: '1px 2px', textAlign: 'right' }}>{l.discount || 0}%</td><td style={{ padding: '1px 2px', textAlign: 'right' }}>{a.toFixed(2)}</td></tr>
-													)
-												})}
-											</tbody>
-										</table>
-										{(() => {
-											const sub = invSubtotal(selectedInvoice); const bd = selectedInvoice.billDiscount || 0; const da = (sub * bd) / 100
-											return (<div style={{ borderTop: '1px solid #000', paddingTop: 3 }}>
-												<div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal</span><span>{sub.toFixed(2)}</span></div>
-												{bd > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Discount ({bd}%)</span><span>{da.toFixed(2)}</span></div>}
-												<div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid #000', marginTop: 2, paddingTop: 2 }}><span>TOTAL</span><span>{(selectedInvoice.total || (sub - da)).toFixed(2)}</span></div>
-											</div>)
-										})()}
-										<div style={{ textAlign: 'center', marginTop: 8, fontSize: 6 }}>Thank you for your business!</div>
-									</div>
-								) : (
-									<div style={{ fontFamily: 'Arial, sans-serif' }}>
-										<div style={{ textAlign: 'center', borderBottom: '2px solid #333', paddingBottom: 16, marginBottom: 24 }}>
-											{storeInfo.logo && <img src={storeInfo.logo} alt="" style={{ maxHeight: 60, maxWidth: 120, objectFit: 'contain', marginBottom: 8 }} onError={e => { e.currentTarget.style.display = 'none' }} />}
-											<h1 style={{ margin: 0, fontSize: 24, color: '#333' }}>{storeInfo.storeName.toUpperCase()}</h1>
-											{storeInfo.address  && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>{storeInfo.address}</p>}
-											{storeInfo.phone    && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Phone: {storeInfo.phone}</p>}
-											{storeInfo.email    && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Email: {storeInfo.email}</p>}
-											{storeInfo.taxNumber && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Tax #: {storeInfo.taxNumber}</p>}
-										</div>
-										<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-											<div style={{ fontSize: 13, lineHeight: 1.7 }}>
-												<strong>Invoice #:</strong> {selectedInvoice.invoiceNo}<br />
-												<strong>Date:</strong> {selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleString() : '—'}
+						{(() => {
+							const invSales = allSales.filter(s => s.invoiceNo === selectedInvoice.invoiceNo)
+							const paymentType = invSales[0]?.paymentType || 'debit'
+							const creditDeadline = invSales[0]?.creditDeadline
+							const sub = invSubtotal(selectedInvoice)
+							const bd = selectedInvoice.billDiscount || 0
+							const da = (sub * bd) / 100
+							const grandTotal = selectedInvoice.total || (sub - da)
+							return (
+							<div style={{ position: 'fixed', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
+								<div id={`inv-print-${selectedInvoice.id}`} style={{ ...getThermalPrintStyles().container, padding: 20, width: 640, background: 'white', color: 'black' }}>
+									{isThermalPrinting() ? (
+										/* ── THERMAL ── */
+										<div style={{ fontFamily: 'Arial', fontSize: 8, lineHeight: 1.2, padding: 5 }}>
+											<div style={{ textAlign: 'center', marginBottom: 8 }}>
+												{storeInfo.logo && <img src={storeInfo.logo} alt="" style={{ maxHeight: 20, marginBottom: 3 }} onError={e => { e.currentTarget.style.display = 'none' }} />}
+												<div style={{ fontWeight: 'bold', fontSize: 10 }}>{storeInfo.storeName.toUpperCase()}</div>
+												{storeInfo.phone && <div>Phone: {storeInfo.phone}</div>}
+												{storeInfo.address && <div>{storeInfo.address}</div>}
 											</div>
-											<div style={{ textAlign: 'right', fontSize: 13, lineHeight: 1.7 }}>
-												<strong>Customer:</strong> {selectedInvoice.customer || 'Walk-in'}<br />
-												{selectedInvoice.phone && <><strong>Phone:</strong> {selectedInvoice.phone}<br /></>}
-												{selectedInvoice.customerAddress && <><strong>Address:</strong> {selectedInvoice.customerAddress}</>}
+											<hr style={{ borderTop: '1px solid #000', margin: '4px 0' }} />
+											<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 4 }}>
+												<div>
+													<div>Invoice #: {selectedInvoice.invoiceNo}</div>
+													<div>Date: {selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleDateString() : '—'}</div>
+													<div>Payment: {paymentType === 'credit' ? 'Credit' : 'Cash'}</div>
+													{paymentType === 'credit' && creditDeadline && <div>Due: {new Date(creditDeadline).toLocaleDateString()}</div>}
+												</div>
+												<div style={{ textAlign: 'right' }}>
+													<div>{selectedInvoice.customer || 'Walk-in'}</div>
+													<div>{selectedInvoice.phone || ''}</div>
+												</div>
 											</div>
+											<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 7, marginBottom: 5 }}>
+												<thead><tr style={{ borderBottom: '1px solid #000' }}>
+													{['SKU', 'Item', 'Qty', 'Price', 'Disc', 'Amt'].map(h => <th key={h} style={{ padding: '1px 2px', textAlign: 'left' }}>{h}</th>)}
+												</tr></thead>
+												<tbody>
+													{(selectedInvoice.lines || []).map((l: any) => {
+														const t = (l.qty || 0) * (l.price || 0)
+														const a = t - t * (l.discount || 0) / 100
+														return (
+															<React.Fragment key={l.id}>
+																<tr>
+																	<td style={{ padding: '1px 2px' }}>{l.sku}</td>
+																	<td style={{ padding: '1px 2px' }}>{l.name}</td>
+																	<td style={{ padding: '1px 2px', textAlign: 'right' }}>{l.qty}</td>
+																	<td style={{ padding: '1px 2px', textAlign: 'right' }}>{(l.price || 0).toFixed(2)}</td>
+																	<td style={{ padding: '1px 2px', textAlign: 'right' }}>{l.discount || 0}%</td>
+																	<td style={{ padding: '1px 2px', textAlign: 'right' }}>{a.toFixed(2)}</td>
+																</tr>
+																{(l.imei1 || l.imei2 || l.warrantyTill) && (
+																	<tr>
+																		<td colSpan={6} style={{ padding: '1px 2px', fontSize: 6, color: '#555', fontFamily: 'monospace' }}>
+																			{l.imei1 && <span>IMEI 1: {l.imei1}</span>}
+																			{l.imei2 && <span>  IMEI 2: {l.imei2}</span>}
+																			{l.warrantyTill && <span>  Warranty: {new Date(l.warrantyTill).toLocaleDateString()}</span>}
+																		</td>
+																	</tr>
+																)}
+															</React.Fragment>
+														)
+													})}
+												</tbody>
+											</table>
+											<div style={{ borderTop: '1px solid #000', paddingTop: 3 }}>
+												<div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal</span><span>{formatCurrency(sub, storeInfo.currency)}</span></div>
+												{bd > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Discount ({bd}%)</span><span>-{formatCurrency(da, storeInfo.currency)}</span></div>}
+												<div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid #000', marginTop: 2, paddingTop: 2 }}><span>TOTAL</span><span>{formatCurrency(grandTotal, storeInfo.currency)}</span></div>
+											</div>
+											<div style={{ textAlign: 'center', marginTop: 8, fontSize: 6 }}>Thank you for your business!</div>
 										</div>
-										<table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 16 }}>
-											<thead>
-												<tr style={{ background: '#f5f5f5' }}>
-													{['SKU', 'Description', 'Qty', 'Unit Price', 'Discount', 'Amount'].map(h => (
-														<th key={h} style={{ border: '1px solid #ddd', padding: 10, textAlign: h === 'Qty' || h === 'Unit Price' || h === 'Amount' ? 'right' : 'left', fontSize: 13 }}>{h}</th>
-													))}
-												</tr>
-											</thead>
-											<tbody>
-												{(selectedInvoice.lines || []).map((l: any) => {
-													const t = (l.qty || 0) * (l.price || 0)
-													const a = t - t * (l.discount || 0) / 100
-													return (
-														<tr key={l.id}>
-															<td style={{ border: '1px solid #ddd', padding: 10, fontSize: 13 }}>{l.sku}</td>
-															<td style={{ border: '1px solid #ddd', padding: 10, fontSize: 13 }}>{l.name}</td>
-															<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontSize: 13 }}>{l.qty}</td>
-															<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontSize: 13 }}>{formatCurrency(l.price || 0, storeInfo.currency)}</td>
-															<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontSize: 13 }}>{l.discount || 0}%</td>
-															<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontSize: 13 }}>{formatCurrency(a, storeInfo.currency)}</td>
-														</tr>
-													)
-												})}
-											</tbody>
-											<tfoot>
-												{(() => {
-													const sub = invSubtotal(selectedInvoice); const bd = selectedInvoice.billDiscount || 0; const da = (sub * bd) / 100
-													return (<>
-														<tr style={{ background: '#f9f9f9' }}>
-															<td colSpan={5} style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontWeight: 'bold', fontSize: 13 }}>SUBTOTAL</td>
-															<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontSize: 13 }}>{formatCurrency(sub, storeInfo.currency)}</td>
-														</tr>
-														{bd > 0 && <tr>
-															<td colSpan={5} style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontWeight: 'bold', fontSize: 13 }}>BILL DISCOUNT ({bd}%)</td>
-															<td style={{ border: '1px solid #ddd', padding: 10, textAlign: 'right', fontSize: 13 }}>−{formatCurrency(da, storeInfo.currency)}</td>
-														</tr>}
+									) : (
+										/* ── A4 ── */
+										<div style={{ fontFamily: 'Arial, sans-serif' }}>
+											{/* Store header */}
+											<div style={{ textAlign: 'center', borderBottom: '2px solid #333', paddingBottom: 16, marginBottom: 24 }}>
+												{storeInfo.logo && <img src={storeInfo.logo} alt="" style={{ maxHeight: 60, maxWidth: 120, objectFit: 'contain', marginBottom: 8 }} onError={e => { e.currentTarget.style.display = 'none' }} />}
+												<h1 style={{ margin: 0, fontSize: 26, color: '#333' }}>{storeInfo.storeName.toUpperCase()}</h1>
+												{storeInfo.address   && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>{storeInfo.address}</p>}
+												{storeInfo.phone     && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Phone: {storeInfo.phone}</p>}
+												{storeInfo.email     && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Email: {storeInfo.email}</p>}
+												{storeInfo.website   && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>{storeInfo.website}</p>}
+												{storeInfo.taxNumber && <p style={{ margin: '4px 0', fontSize: 13, color: '#666' }}>Tax #: {storeInfo.taxNumber}</p>}
+											</div>
+
+											{/* Invoice meta */}
+											<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+												<div style={{ fontSize: 13, lineHeight: 1.8 }}>
+													<div><strong>Invoice #:</strong> {selectedInvoice.invoiceNo}</div>
+													<div><strong>Date:</strong> {selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleString() : '—'}</div>
+													<div style={{ marginTop: 4 }}>
+														<span style={{ display: 'inline-block', padding: '2px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: paymentType === 'credit' ? '#fff3cd' : '#d4edda', color: paymentType === 'credit' ? '#856404' : '#155724' }}>
+															{paymentType === 'credit' ? 'Credit Sale' : 'Cash Sale'}
+														</span>
+													</div>
+													{paymentType === 'credit' && creditDeadline && (
+														<div style={{ marginTop: 4, fontSize: 12, color: '#856404' }}><strong>Due Date:</strong> {new Date(creditDeadline).toLocaleDateString()}</div>
+													)}
+												</div>
+												<div style={{ textAlign: 'right', fontSize: 13, lineHeight: 1.8 }}>
+													<div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>BILL TO</div>
+													<div><strong>{selectedInvoice.customer || 'Walk-in'}</strong></div>
+													{selectedInvoice.phone && <div>{selectedInvoice.phone}</div>}
+													{selectedInvoice.customerAddress && <div style={{ color: '#666' }}>{selectedInvoice.customerAddress}</div>}
+												</div>
+											</div>
+
+											{/* Line items */}
+											<table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 16 }}>
+												<thead>
+													<tr style={{ background: '#f5f5f5' }}>
+														{['SKU', 'Description', 'Qty', 'Unit Price', 'Discount', 'Amount'].map(h => (
+															<th key={h} style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: h === 'Qty' || h === 'Unit Price' || h === 'Amount' ? 'right' : 'left', fontSize: 13, fontWeight: 700 }}>{h}</th>
+														))}
+													</tr>
+												</thead>
+												<tbody>
+													{(selectedInvoice.lines || []).map((l: any) => {
+														const t = (l.qty || 0) * (l.price || 0)
+														const a = t - t * (l.discount || 0) / 100
+														return (
+															<tr key={l.id} style={{ borderBottom: '1px solid #eee' }}>
+																<td style={{ border: '1px solid #ddd', padding: '10px 12px', fontSize: 13, color: '#555' }}>{l.sku}</td>
+																<td style={{ border: '1px solid #ddd', padding: '10px 12px', fontSize: 13 }}>
+																	<div>{l.name}</div>
+																	{(l.imei1 || l.imei2 || l.warrantyTill) && (
+																		<div style={{ fontSize: 11, color: '#666', marginTop: 4, fontFamily: 'monospace', lineHeight: 1.6 }}>
+																			{l.imei1 && <div>IMEI 1: {l.imei1}</div>}
+																			{l.imei2 && <div>IMEI 2: {l.imei2}</div>}
+																			{l.warrantyTill && <div>Warranty Till: {new Date(l.warrantyTill).toLocaleDateString()}</div>}
+																		</div>
+																	)}
+																</td>
+																<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{l.qty}</td>
+																<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{formatCurrency(l.price || 0, storeInfo.currency)}</td>
+																<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{l.discount || 0}%</td>
+																<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13, fontWeight: 600 }}>{formatCurrency(a, storeInfo.currency)}</td>
+															</tr>
+														)
+													})}
+												</tbody>
+												<tfoot>
+													<tr style={{ background: '#f9f9f9' }}>
+														<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 13 }}>SUBTOTAL</td>
+														<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{formatCurrency(sub, storeInfo.currency)}</td>
+													</tr>
+													{bd > 0 && (
 														<tr>
-															<td colSpan={5} style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 15 }}>TOTAL AMOUNT</td>
-															<td style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 15 }}>{formatCurrency(selectedInvoice.total || (sub - da), storeInfo.currency)}</td>
+															<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 13 }}>BILL DISCOUNT ({bd}%)</td>
+															<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>−{formatCurrency(da, storeInfo.currency)}</td>
 														</tr>
-													</>)
-												})()}
-											</tfoot>
-										</table>
-										<div style={{ textAlign: 'center', fontSize: 12, color: '#999', marginTop: 16 }}>
-											Thank you for your business! · Report generated by managify.online
+													)}
+													<tr style={{ background: '#2263ff' }}>
+														<td colSpan={5} style={{ border: '1px solid #1a4fd6', padding: '12px', textAlign: 'right', fontWeight: 700, fontSize: 15, color: 'white' }}>TOTAL AMOUNT</td>
+														<td style={{ border: '1px solid #1a4fd6', padding: '12px', textAlign: 'right', fontWeight: 700, fontSize: 15, color: 'white' }}>{formatCurrency(grandTotal, storeInfo.currency)}</td>
+													</tr>
+												</tfoot>
+											</table>
+
+											<div style={{ textAlign: 'center', fontSize: 12, color: '#999', marginTop: 20, borderTop: '1px solid #eee', paddingTop: 16 }}>
+												Thank you for your business!
+											</div>
 										</div>
-									</div>
-								)}
+									)}
+								</div>
 							</div>
-						</div>
+							)
+						})()}
 					</div>
 				</div>
 			)}

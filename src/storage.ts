@@ -19,6 +19,7 @@ export type Purchase = {
 	costPrice?: number
 	supplier?: string
 	supplierPhone?: string
+	supplierAddress?: string
 	note?: string
 	purchasedAt?: string
 	createdAt?: string
@@ -42,6 +43,9 @@ export type Sale = {
 	billDiscount?: number
 	customerName?: string
 	customerPhone?: string
+	paymentType?: 'debit' | 'credit'
+	creditDeadline?: string
+	isPaid?: boolean
 	storeInfo?: {
 		storeName: string
 		phone: string
@@ -199,8 +203,10 @@ export const db = {
 				supplier: purchase.supplier,
 				supplierPhone: purchase.supplier_phone,
 				note: purchase.note,
-				paymentType: purchase.payment_type as 'debit' | 'credit' | undefined,
-				creditDeadline: purchase.credit_deadline
+				paymentType: (purchase.payment_type || 'debit') as 'debit' | 'credit',
+				creditDeadline: purchase.credit_deadline,
+				isPaid: purchase.is_paid || false,
+				supplierAddress: (purchase as any).supplier_address,
 			}));
 		} catch (error) {
 			console.error('Error listing purchases:', error);
@@ -246,20 +252,25 @@ export const db = {
 		};
 	},
 	async updatePurchase(id: string, data: Partial<Omit<Purchase, 'id'>>): Promise<void> {
-		await supabaseStorage.updatePurchase(id, data);
+		const mapped: any = { ...data }
+		if ('isPaid' in mapped) { mapped.is_paid = mapped.isPaid; delete mapped.isPaid }
+		if ('itemId' in mapped) { mapped.item_id = mapped.itemId; delete mapped.itemId }
+		if ('costPrice' in mapped) { mapped.cost_price = mapped.costPrice; delete mapped.costPrice }
+		if ('supplierPhone' in mapped) { mapped.supplier_phone = mapped.supplierPhone; delete mapped.supplierPhone }
+		if ('paymentType' in mapped) { mapped.payment_type = mapped.paymentType; delete mapped.paymentType }
+		if ('creditDeadline' in mapped) { mapped.credit_deadline = mapped.creditDeadline; delete mapped.creditDeadline }
+		await supabaseStorage.updatePurchase(id, mapped);
 	},
 	async deletePurchase(id: string): Promise<void> {
 		await supabaseStorage.deletePurchase(id);
 	},
 	async addImeis(imeis: { purchaseId: string; itemId: string; imei1: string; imei2?: string; warrantyTill?: string }[]): Promise<void> {
 		const userId = getUserId()
-		await supabaseStorage.addImeis(userId, imeis.map(i => ({
-			purchase_id: i.purchaseId,
-			item_id: i.itemId,
-			imei1: i.imei1,
-			imei2: i.imei2 || '',
-			warranty_till: i.warrantyTill || undefined
-		})))
+		await supabaseStorage.addImeis(userId, imeis.map(i => {
+			const rec: any = { purchase_id: i.purchaseId, item_id: i.itemId, imei1: i.imei1, imei2: i.imei2 || '' }
+			if (i.warrantyTill) rec.warranty_till = i.warrantyTill
+			return rec
+		}))
 	},
 	async listImeisByPurchase(purchaseId: string): Promise<any[]> {
 		const userId = getUserId()
@@ -289,7 +300,10 @@ export const db = {
 				billDiscount: sale.bill_discount,
 				customerName: sale.customer_name,
 				customerPhone: sale.customer_phone,
-				invoiceNo: sale.invoice_no
+				invoiceNo: sale.invoice_no,
+				paymentType: (sale.payment_type || 'debit') as 'debit' | 'credit',
+				creditDeadline: sale.credit_deadline,
+				isPaid: sale.is_paid || false,
 			}));
 		} catch (error) {
 			console.error('Error listing sales:', error);
@@ -314,7 +328,10 @@ export const db = {
 				billDiscount: sale.bill_discount,
 				customerName: sale.customer_name,
 				customerPhone: sale.customer_phone,
-				invoiceNo: sale.invoice_no
+				invoiceNo: sale.invoice_no,
+				paymentType: (sale.payment_type || 'debit') as 'debit' | 'credit',
+				creditDeadline: sale.credit_deadline,
+				isPaid: sale.is_paid || false,
 			}));
 		} catch (error) {
 			console.error('Error listing sales by date range:', error);
@@ -339,7 +356,10 @@ export const db = {
 				billDiscount: sale.bill_discount,
 				customerName: sale.customer_name,
 				customerPhone: sale.customer_phone,
-				invoiceNo: sale.invoice_no
+				invoiceNo: sale.invoice_no,
+				paymentType: (sale.payment_type || 'debit') as 'debit' | 'credit',
+				creditDeadline: sale.credit_deadline,
+				isPaid: sale.is_paid || false,
 			}));
 		} catch (error) {
 			console.error('Error listing sales by date:', error);
@@ -349,7 +369,7 @@ export const db = {
 			return [];
 		}
 	},
-	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string }): Promise<Sale> {
+	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string }): Promise<Sale> {
 		const userId = getUserId();
 		const storeInfo = await this.getStoreInfo();
 		const sale = {
@@ -363,9 +383,19 @@ export const db = {
 			customer_name: data.customerName,
 			customer_phone: data.customerPhone,
 			invoice_no: data.invoiceNo,
+			payment_type: data.paymentType || 'debit',
+			credit_deadline: data.paymentType === 'credit' ? (data.creditDeadline || null) : null,
+			is_paid: false,
 		};
 		const id = await supabaseStorage.addSale(userId, sale);
-		return { id, itemId: data.itemId, quantity: data.quantity, date: sale.date, actualPrice: data.actualPrice, originalPrice: data.originalPrice, itemDiscount: data.itemDiscount, billDiscount: data.billDiscount, customerName: data.customerName, customerPhone: data.customerPhone, invoiceNo: data.invoiceNo, storeInfo };
+		return { id, itemId: data.itemId, quantity: data.quantity, date: sale.date, actualPrice: data.actualPrice, originalPrice: data.originalPrice, itemDiscount: data.itemDiscount, billDiscount: data.billDiscount, customerName: data.customerName, customerPhone: data.customerPhone, invoiceNo: data.invoiceNo, paymentType: data.paymentType || 'debit', creditDeadline: data.creditDeadline, isPaid: false, storeInfo };
+	},
+	async updateSale(id: string, data: Partial<Omit<Sale, 'id'>>): Promise<void> {
+		const mapped: any = {}
+		if ('isPaid' in data) mapped.is_paid = data.isPaid
+		if ('paymentType' in data) mapped.payment_type = data.paymentType
+		if ('creditDeadline' in data) mapped.credit_deadline = data.creditDeadline
+		await supabaseStorage.updateSale(id, mapped)
 	},
 	async deleteSale(id: string): Promise<void> {
 		await supabaseStorage.deleteSale(id);

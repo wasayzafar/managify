@@ -19,9 +19,11 @@ export interface Purchase {
   cost_price?: number
   supplier?: string
   supplier_phone?: string
+  supplier_address?: string
   note?: string
   payment_type?: string
   credit_deadline?: string
+  is_paid?: boolean
 }
 
 export interface Sale {
@@ -37,6 +39,9 @@ export interface Sale {
   customer_name?: string
   customer_phone?: string
   invoice_no?: string
+  payment_type?: string
+  credit_deadline?: string
+  is_paid?: boolean
 }
 
 export interface StoreInfo {
@@ -241,9 +246,11 @@ export const listImeisByItem = async (userId: string, itemId: string): Promise<I
 }
 
 export const markImeiSold = async (userId: string, imei: string, warrantyTill?: string): Promise<void> => {
+  const updateData: any = { is_sold: true }
+  if (warrantyTill) updateData.warranty_till = warrantyTill
   await supabase
     .from('imeis')
-    .update({ is_sold: true, ...(warrantyTill ? { warranty_till: warrantyTill } : {}) })
+    .update(updateData)
     .eq('user_id', userId)
     .or(`imei1.eq.${imei},imei2.eq.${imei}`)
   // silently ignore if IMEI not found in DB (manual entry on invoice)
@@ -292,6 +299,14 @@ export const deleteSale = async (id: string): Promise<void> => {
   const { error } = await supabase
     .from('sales')
     .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const updateSale = async (id: string, sale: Partial<Omit<Sale, 'id' | 'user_id'>>): Promise<void> => {
+  const { error } = await supabase
+    .from('sales')
+    .update(sale)
     .eq('id', id)
   if (error) throw error
 }

@@ -30,6 +30,8 @@ export default function BillingPage() {
 	const [priceInput, setPriceInput] = useState('')
 	const [cart, setCart] = useState<CartLine[]>([])
 	const [billDiscount, setBillDiscount] = useState(0)
+	const [paymentType, setPaymentType] = useState<'debit' | 'credit'>('debit')
+	const [creditDeadline, setCreditDeadline] = useState('')
 	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any, serviceFrom?: string, serviceTo?: string } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
 	const [finalizing, setFinalizing] = useState(false)
@@ -273,7 +275,9 @@ export default function BillingPage() {
 					customerName: customer,
 					customerPhone: customerPhone,
 					invoiceNo: invoiceNo,
-					date: finalDate
+					date: finalDate,
+					paymentType,
+					creditDeadline: paymentType === 'credit' ? creditDeadline : undefined,
 				})
 			}
 			// Mark IMEIs as sold in the imeis table
@@ -295,13 +299,15 @@ export default function BillingPage() {
 				date: finalDate
 			})
 
-			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined }
+			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, paymentType, creditDeadline: paymentType === 'credit' ? creditDeadline : undefined, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
 			setBillDate(localNow())
 			setServiceFrom('')
 			setServiceTo('')
+			setPaymentType('debit')
+			setCreditDeadline('')
 			await loadSavedInvoices()
 			alert('Bill created and saved successfully')
 		} catch (error) {
@@ -534,7 +540,25 @@ export default function BillingPage() {
 				</tfoot>
 			</table>
 
-			<div className="form-actions" style={{ marginTop: 12 }}>
+			<div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+				<span style={{ color: '#8899aa', fontSize: 13 }}>Payment:</span>
+				<button
+					onClick={() => setPaymentType('debit')}
+					style={{ padding: '5px 16px', borderRadius: 6, border: '1px solid', fontSize: 13, background: paymentType === 'debit' ? '#4ade80' : 'transparent', color: paymentType === 'debit' ? '#052e16' : '#4ade80', borderColor: '#4ade80', cursor: 'pointer', fontWeight: paymentType === 'debit' ? 700 : 400 }}
+				>Cash / Debit</button>
+				<button
+					onClick={() => setPaymentType('credit')}
+					style={{ padding: '5px 16px', borderRadius: 6, border: '1px solid', fontSize: 13, background: paymentType === 'credit' ? '#fb923c' : 'transparent', color: paymentType === 'credit' ? '#1c0a00' : '#fb923c', borderColor: '#fb923c', cursor: 'pointer', fontWeight: paymentType === 'credit' ? 700 : 400 }}
+				>Credit</button>
+				{paymentType === 'credit' && (
+					<>
+						<span style={{ color: '#8899aa', fontSize: 13 }}>Due Date:</span>
+						<input type="date" value={creditDeadline} onChange={e => setCreditDeadline(e.target.value)} style={{ fontSize: 13 }} />
+					</>
+				)}
+			</div>
+
+			<div className="form-actions" style={{ marginTop: 10 }}>
 				<button onClick={finalize} disabled={finalizing}>{finalizing ? 'Finalizing…' : 'Finalize Bill'}</button>
 				<button className="secondary" onClick={() => setCart([])}>Clear</button>
 			</div>
