@@ -42,6 +42,8 @@ export interface Sale {
   payment_type?: string
   credit_deadline?: string
   is_paid?: boolean
+  credit_amount?: number
+  paid_amount?: number
 }
 
 export interface StoreInfo {

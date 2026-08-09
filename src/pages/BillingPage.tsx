@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, Result } from '@zxing/library'
 import { db, StoreInfo } from '../storage'
 import html2canvas from 'html2canvas'
@@ -33,6 +33,7 @@ export default function BillingPage() {
 	const [billDiscount, setBillDiscount] = useState(0)
 	const [paymentType, setPaymentType] = useState<'debit' | 'credit'>('debit')
 	const [creditDeadline, setCreditDeadline] = useState('')
+	const [downPayment, setDownPayment] = useState(0)
 	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any, serviceFrom?: string, serviceTo?: string } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
 	const [finalizing, setFinalizing] = useState(false)
@@ -215,7 +216,7 @@ export default function BillingPage() {
 				</div>
 				<div style={{ maxHeight: 200, overflowY: 'auto' }}>
 					{allImeis === undefined ? (
-						<div style={{ padding: '10px 14px', color: '#6b7280', fontSize: 12 }}>Loading…</div>
+						<div style={{ padding: '10px 14px', color: '#6b7280', fontSize: 12 }}>Loadingâ€¦</div>
 					) : available.length === 0 ? (
 						<div style={{ padding: '10px 14px', color: '#6b7280', fontSize: 12 }}>
 							{imeiSearchTerm ? 'No matching IMEIs' : 'No available IMEIs in stock'}
@@ -248,6 +249,10 @@ export default function BillingPage() {
 
 	async function finalize() {
 		if (!cart.length || finalizing) return
+		if (paymentType === 'credit' && !customer.trim()) {
+			alert('Customer name is required for credit sales.')
+			return
+		}
 		setFinalizing(true)
 		if (useCurrentDate) setBillDate(localNow())
 		const finalDate = useCurrentDate ? new Date().toISOString() : new Date(billDate).toISOString()
@@ -280,6 +285,7 @@ export default function BillingPage() {
 					date: finalDate,
 					paymentType,
 					creditDeadline: paymentType === 'credit' ? creditDeadline : undefined,
+					paidAmount: paymentType === 'credit' ? downPayment : 0,
 				})
 			}
 			// Mark IMEIs as sold in the imeis table
@@ -301,7 +307,7 @@ export default function BillingPage() {
 				date: finalDate
 			})
 
-			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, paymentType, creditDeadline: paymentType === 'credit' ? creditDeadline : undefined, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined }
+			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, paymentType, creditDeadline: paymentType === 'credit' ? creditDeadline : undefined, downPayment: paymentType === 'credit' ? downPayment : 0, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
@@ -310,6 +316,7 @@ export default function BillingPage() {
 			setServiceTo('')
 			setPaymentType('debit')
 			setCreditDeadline('')
+			setDownPayment(0)
 			await loadSavedInvoices()
 			alert('Bill created and saved successfully')
 		} catch (error) {
@@ -379,14 +386,19 @@ export default function BillingPage() {
 			{finalizing && (
 				<div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
 					<div style={{ background: '#0b0f14', border: '1px solid #243245', borderRadius: 12, padding: '20px 36px', color: '#e8eef5', fontSize: 15, fontWeight: 600, letterSpacing: 0.3 }}>
-						Finalizing bill…
+						Finalizing billâ€¦
 					</div>
 				</div>
 			)}
 			<h2>Billing</h2>
 			<div className="form-grid" style={{ marginBottom: 12 }}>
 				<input placeholder="Invoice No" value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} />
-				<input placeholder="Customer" value={customer} onChange={e => setCustomer(e.target.value)} />
+				<input
+				placeholder={paymentType === 'credit' ? 'Customer Name (required for credit)' : 'Customer'}
+				value={customer}
+				onChange={e => setCustomer(e.target.value)}
+				style={paymentType === 'credit' && !customer.trim() ? { borderColor: '#fb923c', boxShadow: '0 0 0 2px #fb923c33' } : {}}
+			/>
 				<input placeholder="Phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
 				<div>
 					<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Bill Date</label>
@@ -556,12 +568,21 @@ export default function BillingPage() {
 					<>
 						<span style={{ color: '#8899aa', fontSize: 13 }}>Due Date:</span>
 						<input type="date" value={creditDeadline} onChange={e => setCreditDeadline(e.target.value)} style={{ fontSize: 13 }} />
+						<span style={{ color: '#8899aa', fontSize: 13 }}>Down Payment:</span>
+						<input
+							type="number"
+							min="0"
+							value={downPayment || ''}
+							onChange={e => setDownPayment(Number(e.target.value) || 0)}
+							placeholder="0"
+							style={{ fontSize: 13, width: 90 }}
+						/>
 					</>
 				)}
 			</div>
 
 			<div className="form-actions" style={{ marginTop: 10 }}>
-				<button onClick={finalize} disabled={finalizing}>{finalizing ? 'Finalizing…' : 'Finalize Bill'}</button>
+				<button onClick={finalize} disabled={finalizing}>{finalizing ? 'Finalizingâ€¦' : 'Finalize Bill'}</button>
 				<button className="secondary" onClick={() => setCart([])}>Clear</button>
 			</div>
 
@@ -624,7 +645,7 @@ export default function BillingPage() {
 															{line.imei1 && <span>IMEI 1: {line.imei1}</span>}
 															{line.imei1 && line.imei2 && <span> &nbsp; </span>}
 															{line.imei2 && <span>IMEI 2: {line.imei2}</span>}
-															{line.warrantyTill && <span>{(line.imei1 || line.imei2) ? '   ' : ''}Warranty Till: {new Date(line.warrantyTill).toLocaleDateString()}</span>}
+															{line.warrantyTill && <span>{(line.imei1 || line.imei2) ? ' Â  ' : ''}Warranty Till: {new Date(line.warrantyTill).toLocaleDateString()}</span>}
 														</td>
 													</tr>
 												)}
@@ -652,6 +673,17 @@ export default function BillingPage() {
 												<span>TOTAL AMOUNT</span>
 												<span>{formatCurrency(invSubtotal - discountAmt, storeInfo.currency)}</span>
 											</div>
+											<div style={{ borderTop: '1px dashed #000', marginTop: '3px', paddingTop: '3px' }}>
+												{(lastInvoice as any).paymentType === 'credit' ? (<>
+													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span style={{ fontWeight: 'bold' }}>PAYMENT TYPE</span><span>CREDIT</span></div>
+							<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span>AMOUNT PAID</span><span>{formatCurrency((lastInvoice as any).downPayment || 0, storeInfo.currency)}</span></div>
+							<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>BALANCE DUE</span><span>{formatCurrency((invSubtotal - discountAmt) - ((lastInvoice as any).downPayment || 0), storeInfo.currency)}</span></div>
+													{(lastInvoice as any).creditDeadline && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span>DUE DATE</span><span>{new Date((lastInvoice as any).creditDeadline).toLocaleDateString()}</span></div>}
+												</>) : (<>
+													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span style={{ fontWeight: 'bold' }}>PAYMENT TYPE</span><span>CASH</span></div>
+													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>AMOUNT PAID</span><span>{formatCurrency(invSubtotal - discountAmt, storeInfo.currency)}</span></div>
+												</>)}
+											</div>
 										</div>
 									)
 								})()}
@@ -668,7 +700,7 @@ export default function BillingPage() {
 									<div><strong>Invoice #:</strong> {lastInvoice.invoiceNo}</div>
 									<div><strong>Date:</strong> {lastInvoice.createdAt}</div>
 									{lastInvoice.serviceFrom && (
-										<div><strong>Service Period:</strong> {lastInvoice.serviceFrom} — {lastInvoice.serviceTo}</div>
+										<div><strong>Service Period:</strong> {lastInvoice.serviceFrom} â€” {lastInvoice.serviceTo}</div>
 									)}
 								</div>
 							</div>
@@ -748,6 +780,25 @@ export default function BillingPage() {
 										</tr>
 									)
 								})()}
+								{(lastInvoice as any).paymentType === 'credit' ? (<>
+									<tr style={{ background: '#fffbf0' }}>
+										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#92400e' }}>PAYMENT TYPE</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#92400e' }}>CREDIT SALE</td>
+									</tr>
+									<tr style={{ background: '#fffbf0' }}>
+										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px' }}>AMOUNT PAID</td>
+									<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px' }}>{formatCurrency((lastInvoice as any).downPayment || 0, storeInfo.currency)}</td>
+									</tr>
+									<tr style={{ background: '#fef2f2' }}>
+										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>BALANCE DUE{(lastInvoice as any).creditDeadline ? ` (by ${new Date((lastInvoice as any).creditDeadline).toLocaleDateString()})` : ''}</td>
+									<td style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>{(() => { const t = (lastInvoice.lines||[]).reduce((s:number,l:any)=>{const x=(l.qty||0)*(l.price||0);return s+x-(x*(l.discount||0)/100)},0); const tot = t*(1-(lastInvoice.billDiscount||0)/100); return formatCurrency(tot - ((lastInvoice as any).downPayment || 0), storeInfo.currency) })()}</td>
+									</tr>
+								</>) : (
+									<tr style={{ background: '#f0fdf4' }}>
+										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>PAYMENT TYPE</td>
+										<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>CASH - PAID IN FULL</td>
+									</tr>
+								)}
 							</tfoot>
 						</table>
 
