@@ -46,6 +46,8 @@ export type Sale = {
 	paymentType?: 'debit' | 'credit'
 	creditDeadline?: string
 	isPaid?: boolean
+	creditAmount?: number
+	paidAmount?: number
 	storeInfo?: {
 		storeName: string
 		phone: string
@@ -305,6 +307,8 @@ export const db = {
 				paymentType: (sale.payment_type || 'debit') as 'debit' | 'credit',
 				creditDeadline: sale.credit_deadline,
 				isPaid: sale.is_paid || false,
+				creditAmount: sale.credit_amount ?? undefined,
+			paidAmount: (sale as any).paid_amount ?? 0,
 			}));
 		} catch (error) {
 			console.error('Error listing sales:', error);
@@ -370,10 +374,10 @@ export const db = {
 			return [];
 		}
 	},
-	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string }): Promise<Sale> {
+	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string, paidAmount?: number }): Promise<Sale> {
 		const userId = getUserId();
 		const storeInfo = await this.getStoreInfo();
-		const sale = {
+		const sale: any = {
 			item_id: data.itemId,
 			quantity: data.quantity,
 			date: data.date || new Date().toISOString(),
@@ -386,16 +390,19 @@ export const db = {
 			invoice_no: data.invoiceNo,
 			payment_type: data.paymentType || 'debit',
 			credit_deadline: data.paymentType === 'credit' ? (data.creditDeadline || null) : null,
+			paid_amount: data.paidAmount || 0,
 			is_paid: false,
 		};
 		const id = await supabaseStorage.addSale(userId, sale);
-		return { id, itemId: data.itemId, quantity: data.quantity, date: sale.date, actualPrice: data.actualPrice, originalPrice: data.originalPrice, itemDiscount: data.itemDiscount, billDiscount: data.billDiscount, customerName: data.customerName, customerPhone: data.customerPhone, invoiceNo: data.invoiceNo, paymentType: data.paymentType || 'debit', creditDeadline: data.creditDeadline, isPaid: false, storeInfo };
+		return { id, itemId: data.itemId, quantity: data.quantity, date: sale.date, actualPrice: data.actualPrice, originalPrice: data.originalPrice, itemDiscount: data.itemDiscount, billDiscount: data.billDiscount, customerName: data.customerName, customerPhone: data.customerPhone, invoiceNo: data.invoiceNo, paymentType: data.paymentType || 'debit', creditDeadline: data.creditDeadline, paidAmount: data.paidAmount || 0, isPaid: false, storeInfo };
 	},
 	async updateSale(id: string, data: Partial<Omit<Sale, 'id'>>): Promise<void> {
 		const mapped: any = {}
 		if ('isPaid' in data) mapped.is_paid = data.isPaid
 		if ('paymentType' in data) mapped.payment_type = data.paymentType
 		if ('creditDeadline' in data) mapped.credit_deadline = data.creditDeadline
+		if ('creditAmount' in data) mapped.credit_amount = data.creditAmount
+		if ('paidAmount' in data) mapped.paid_amount = data.paidAmount
 		await supabaseStorage.updateSale(id, mapped)
 	},
 	async deleteSale(id: string): Promise<void> {
