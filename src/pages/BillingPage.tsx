@@ -17,6 +17,7 @@ export default function BillingPage() {
 	const [ecommerceMode] = useState(() => localStorage.getItem('ecommerceMode') === 'true')
 	const [periodBilling] = useState(() => localStorage.getItem('periodBilling') === 'true')
 	const [mobilePOS] = useState(() => localStorage.getItem('mobilePOS') === 'true')
+	const [showCashPaidLabel] = useState(() => localStorage.getItem('showCashPaidLabel') !== 'false')
 	const [imeiCache, setImeiCache] = useState<Record<string, any[]>>({})
 	const [openImeiDropdown, setOpenImeiDropdown] = useState<{ lineId: string; field: 'imei1' | 'imei2' } | null>(null)
 	const [imeiSearchTerm, setImeiSearchTerm] = useState('')
@@ -679,10 +680,10 @@ export default function BillingPage() {
 							<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span>AMOUNT PAID</span><span>{formatCurrency((lastInvoice as any).downPayment || 0, storeInfo.currency)}</span></div>
 							<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>BALANCE DUE</span><span>{formatCurrency((invSubtotal - discountAmt) - ((lastInvoice as any).downPayment || 0), storeInfo.currency)}</span></div>
 													{(lastInvoice as any).creditDeadline && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span>DUE DATE</span><span>{new Date((lastInvoice as any).creditDeadline).toLocaleDateString()}</span></div>}
-												</>) : (<>
+												</>) : showCashPaidLabel ? (<>
 													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span style={{ fontWeight: 'bold' }}>PAYMENT TYPE</span><span>CASH</span></div>
 													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>AMOUNT PAID</span><span>{formatCurrency(invSubtotal - discountAmt, storeInfo.currency)}</span></div>
-												</>)}
+												</>) : null}
 											</div>
 										</div>
 									)
@@ -793,12 +794,12 @@ export default function BillingPage() {
 										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>BALANCE DUE{(lastInvoice as any).creditDeadline ? ` (by ${new Date((lastInvoice as any).creditDeadline).toLocaleDateString()})` : ''}</td>
 									<td style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>{(() => { const t = (lastInvoice.lines||[]).reduce((s:number,l:any)=>{const x=(l.qty||0)*(l.price||0);return s+x-(x*(l.discount||0)/100)},0); const tot = t*(1-(lastInvoice.billDiscount||0)/100); return formatCurrency(tot - ((lastInvoice as any).downPayment || 0), storeInfo.currency) })()}</td>
 									</tr>
-								</>) : (
+								</>) : showCashPaidLabel ? (
 									<tr style={{ background: '#f0fdf4' }}>
 										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>PAYMENT TYPE</td>
 										<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>CASH - PAID IN FULL</td>
 									</tr>
-								)}
+								) : null}
 							</tfoot>
 						</table>
 

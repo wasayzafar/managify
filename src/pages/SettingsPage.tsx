@@ -34,6 +34,9 @@ export default function SettingsPage() {
 	const [mobilePOS, setMobilePOS] = useState(() => {
 		return localStorage.getItem('mobilePOS') === 'true'
 	})
+	const [showCashPaidLabel, setShowCashPaidLabel] = useState(() => {
+		return localStorage.getItem('showCashPaidLabel') !== 'false'
+	})
 	const { logout } = useAuth()
 	const navigate = useNavigate()
 
@@ -100,6 +103,7 @@ export default function SettingsPage() {
 						ecommerceMode: localStorage.getItem('ecommerceMode'),
 						periodBilling: localStorage.getItem('periodBilling'),
 						mobilePOS: localStorage.getItem('mobilePOS'),
+						showCashPaidLabel: localStorage.getItem('showCashPaidLabel'),
 					}
 					localStorage.clear()
 					Object.entries(preserved).forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v) })
@@ -138,6 +142,8 @@ export default function SettingsPage() {
 				if (periodBillingSetting) localStorage.setItem('periodBilling', periodBillingSetting)
 				const mobilePOSSetting = localStorage.getItem('mobilePOS')
 				if (mobilePOSSetting) localStorage.setItem('mobilePOS', mobilePOSSetting)
+				const showCashPaidLabelSetting = localStorage.getItem('showCashPaidLabel')
+				if (showCashPaidLabelSetting) localStorage.setItem('showCashPaidLabel', showCashPaidLabelSetting)
 				
 				// Clear sessionStorage
 				sessionStorage.clear()
@@ -586,6 +592,44 @@ export default function SettingsPage() {
 					</label>
 					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
 						When enabled, a service period (from / to date) field appears on the Billing page and prints on the invoice. Useful for monthly service or subscription invoices.
+					</p>
+				</div>
+				<div style={{ marginBottom: '8px' }}>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+						<div
+							onClick={() => {
+								const next = !showCashPaidLabel
+								setShowCashPaidLabel(next)
+								localStorage.setItem('showCashPaidLabel', next.toString())
+								setMessage('"Cash - Paid in Full" label ' + (next ? 'enabled' : 'disabled') + ' on invoices.')
+								setTimeout(() => setMessage(''), 3000)
+							}}
+							style={{
+								width: '44px',
+								height: '24px',
+								borderRadius: '12px',
+								background: showCashPaidLabel ? '#2263ff' : '#243245',
+								position: 'relative',
+								cursor: 'pointer',
+								transition: 'background 0.2s',
+								flexShrink: 0
+							}}
+						>
+							<div style={{
+								position: 'absolute',
+								top: '3px',
+								left: showCashPaidLabel ? '23px' : '3px',
+								width: '18px',
+								height: '18px',
+								borderRadius: '50%',
+								background: 'white',
+								transition: 'left 0.2s'
+							}} />
+						</div>
+						<span style={{ fontWeight: 'bold' }}>Show "Cash - Paid in Full" on Invoices</span>
+					</label>
+					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
+						When enabled, cash sale invoices show a "Cash - Paid in Full" / amount-paid section. When disabled, cash invoices print without that section for a simpler layout.
 					</p>
 				</div>
 			</div>
