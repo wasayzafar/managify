@@ -135,6 +135,7 @@ export function InvoiceFooter({ storeInfo, thermal = false }: { storeInfo: Store
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const managifyLogo  = getCachedImage(`${origin}/logo.png`)       || `${origin}/logo.png`
   const nativeedgeLogo = getCachedImage(`${origin}/nativeedge.png`) || `${origin}/nativeedge.png`
+  const showPromoFooter = localStorage.getItem('showPromoFooter') !== 'false'
 
   if (thermal) {
     return (
@@ -142,15 +143,17 @@ export function InvoiceFooter({ storeInfo, thermal = false }: { storeInfo: Store
         <div style={{ fontWeight: 'bold' }}>Thank you for your business!</div>
         {storeInfo.phone && <div>Ph: {storeInfo.phone}</div>}
         {storeInfo.website && <div>{storeInfo.website}</div>}
-        <div style={{ marginTop: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
-          <img src={managifyLogo} alt="" style={{ height: 8, objectFit: 'contain', verticalAlign: 'middle' }}
-            onError={e => { e.currentTarget.style.display = 'none' }} />
-          <span style={{ fontWeight: 600 }}>managify.online</span>
-        </div>
-        <div style={{ fontSize: 5, color: '#666', marginTop: 1 }}>NativeEdge Studio · nativeedgestudio.space</div>
-        <div style={{ fontSize: 5, color: '#888', marginTop: 2, borderTop: '1px dashed #ccc', paddingTop: 2 }}>
-          Want this POS system for your business? Contact: nativeedge.studio@gmail.com | wa.me/923390149510
-        </div>
+        {showPromoFooter && (<>
+          <div style={{ marginTop: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+            <img src={managifyLogo} alt="" style={{ height: 8, objectFit: 'contain', verticalAlign: 'middle' }}
+              onError={e => { e.currentTarget.style.display = 'none' }} />
+            <span style={{ fontWeight: 600 }}>managify.online</span>
+          </div>
+          <div style={{ fontSize: 5, color: '#666', marginTop: 1 }}>NativeEdge Studio · nativeedgestudio.space</div>
+          <div style={{ fontSize: 5, color: '#888', marginTop: 2, borderTop: '1px dashed #ccc', paddingTop: 2 }}>
+            Want this POS system for your business? Contact: nativeedge.studio@gmail.com | wa.me/923390149510
+          </div>
+        </>)}
       </div>
     )
   }
@@ -166,28 +169,30 @@ export function InvoiceFooter({ storeInfo, thermal = false }: { storeInfo: Store
           </div>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed #ddd', paddingTop: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src={managifyLogo} alt="Managify" style={{ height: 24, width: 24, objectFit: 'contain', borderRadius: 5 }}
-            onError={e => { e.currentTarget.style.display = 'none' }} />
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#333', lineHeight: 1.3 }}>Managify</div>
-            <div style={{ fontSize: 10, color: '#aaa' }}>managify.online</div>
+      {showPromoFooter && (<>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed #ddd', paddingTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src={managifyLogo} alt="Managify" style={{ height: 24, width: 24, objectFit: 'contain', borderRadius: 5 }}
+              onError={e => { e.currentTarget.style.display = 'none' }} />
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#333', lineHeight: 1.3 }}>Managify</div>
+              <div style={{ fontSize: 10, color: '#aaa' }}>managify.online</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src={nativeedgeLogo} alt="NativeEdge" style={{ height: 20, width: 20, objectFit: 'contain', borderRadius: 4 }}
+              onError={e => { e.currentTarget.style.display = 'none' }} />
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#666', lineHeight: 1.3 }}>NativeEdge Studio</div>
+              <div style={{ fontSize: 10, color: '#aaa' }}>nativeedgestudio.space</div>
+            </div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src={nativeedgeLogo} alt="NativeEdge" style={{ height: 20, width: 20, objectFit: 'contain', borderRadius: 4 }}
-            onError={e => { e.currentTarget.style.display = 'none' }} />
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#666', lineHeight: 1.3 }}>NativeEdge Studio</div>
-            <div style={{ fontSize: 10, color: '#aaa' }}>nativeedgestudio.space</div>
-          </div>
+        <div style={{ marginTop: 10, textAlign: 'center', fontSize: 10, color: '#bbb', borderTop: '1px dashed #eee', paddingTop: 10 }}>
+          Want this POS system for your business?&nbsp;
+          <span style={{ color: '#888', fontWeight: 600 }}>Contact: nativeedge.studio@gmail.com &nbsp;|&nbsp; wa.me/923390149510</span>
         </div>
-      </div>
-      <div style={{ marginTop: 10, textAlign: 'center', fontSize: 10, color: '#bbb', borderTop: '1px dashed #eee', paddingTop: 10 }}>
-        Want this POS system for your business?&nbsp;
-        <span style={{ color: '#888', fontWeight: 600 }}>Contact: nativeedge.studio@gmail.com &nbsp;|&nbsp; wa.me/923390149510</span>
-      </div>
+      </>)}
     </div>
   )
 }
