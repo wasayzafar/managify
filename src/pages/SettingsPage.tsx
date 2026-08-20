@@ -37,6 +37,9 @@ export default function SettingsPage() {
 	const [showCashPaidLabel, setShowCashPaidLabel] = useState(() => {
 		return localStorage.getItem('showCashPaidLabel') !== 'false'
 	})
+	const [showPromoFooter, setShowPromoFooter] = useState(() => {
+		return localStorage.getItem('showPromoFooter') !== 'false'
+	})
 	const { logout } = useAuth()
 	const navigate = useNavigate()
 
@@ -104,6 +107,7 @@ export default function SettingsPage() {
 						periodBilling: localStorage.getItem('periodBilling'),
 						mobilePOS: localStorage.getItem('mobilePOS'),
 						showCashPaidLabel: localStorage.getItem('showCashPaidLabel'),
+						showPromoFooter: localStorage.getItem('showPromoFooter'),
 					}
 					localStorage.clear()
 					Object.entries(preserved).forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v) })
@@ -144,6 +148,8 @@ export default function SettingsPage() {
 				if (mobilePOSSetting) localStorage.setItem('mobilePOS', mobilePOSSetting)
 				const showCashPaidLabelSetting = localStorage.getItem('showCashPaidLabel')
 				if (showCashPaidLabelSetting) localStorage.setItem('showCashPaidLabel', showCashPaidLabelSetting)
+				const showPromoFooterSetting = localStorage.getItem('showPromoFooter')
+				if (showPromoFooterSetting) localStorage.setItem('showPromoFooter', showPromoFooterSetting)
 				
 				// Clear sessionStorage
 				sessionStorage.clear()
@@ -630,6 +636,44 @@ export default function SettingsPage() {
 					</label>
 					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
 						When enabled, cash sale invoices show a "Cash - Paid in Full" / amount-paid section. When disabled, cash invoices print without that section for a simpler layout.
+					</p>
+				</div>
+				<div style={{ marginBottom: '8px' }}>
+					<label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+						<div
+							onClick={() => {
+								const next = !showPromoFooter
+								setShowPromoFooter(next)
+								localStorage.setItem('showPromoFooter', next.toString())
+								setMessage('Promotional footer ' + (next ? 'enabled' : 'disabled') + ' on invoices.')
+								setTimeout(() => setMessage(''), 3000)
+							}}
+							style={{
+								width: '44px',
+								height: '24px',
+								borderRadius: '12px',
+								background: showPromoFooter ? '#2263ff' : '#243245',
+								position: 'relative',
+								cursor: 'pointer',
+								transition: 'background 0.2s',
+								flexShrink: 0
+							}}
+						>
+							<div style={{
+								position: 'absolute',
+								top: '3px',
+								left: showPromoFooter ? '23px' : '3px',
+								width: '18px',
+								height: '18px',
+								borderRadius: '50%',
+								background: 'white',
+								transition: 'left 0.2s'
+							}} />
+						</div>
+						<span style={{ fontWeight: 'bold' }}>Show Promotional Footer on Invoices</span>
+					</label>
+					<p style={{ margin: '8px 0 0 56px', color: '#8b949e', fontSize: '14px' }}>
+						When enabled, invoices show the Managify and NativeEdge Studio logos plus a "Want this POS system?" contact line at the bottom. When disabled, that branding and promotional content is removed — only "Thank you for your business" and your store's own contact info remain.
 					</p>
 				</div>
 			</div>
