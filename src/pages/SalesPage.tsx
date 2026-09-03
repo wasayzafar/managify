@@ -302,7 +302,7 @@ export default function SalesPage() {
 	}
 
 	if (loading) {
-		return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>Loading sales...</div>
+		return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: 'var(--text)' }}>Loading sales...</div>
 	}
 
 	return (
@@ -315,8 +315,8 @@ export default function SalesPage() {
 			{/* ── Filters ── */}
 			<div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 12 }}>
 				<div>
-					<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Period</label>
-					<select value={filterType} onChange={e => setFilterType(e.target.value as any)} style={{ padding: '8px 12px', border: '1px solid #243245', borderRadius: 6, background: '#0b0f14', color: '#e8eef5' }}>
+					<label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Period</label>
+					<select value={filterType} onChange={e => setFilterType(e.target.value as any)} style={{ padding: '8px 12px', border: '1px solid var(--border-strong)', borderRadius: 6, background: 'var(--bg-sunken)', color: 'var(--text)' }}>
 						<option value="all">All Time</option>
 						<option value="date">Single Day</option>
 						<option value="range">Date Range</option>
@@ -324,37 +324,37 @@ export default function SalesPage() {
 				</div>
 				{filterType === 'date' && (
 					<div>
-						<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Date</label>
+						<label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Date</label>
 						<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
 					</div>
 				)}
 				{filterType === 'range' && (<>
 					<div>
-						<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>From</label>
+						<label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>From</label>
 						<input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
 					</div>
 					<div>
-						<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>To</label>
+						<label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>To</label>
 						<input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
 					</div>
 				</>)}
 				<div>
-					<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Search</label>
+					<label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Search</label>
 					<input placeholder="Invoice # or customer…" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ minWidth: 200 }} />
 				</div>
 				{/* Item search */}
 				<div style={{ position: 'relative' }}>
-					<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Search by Item</label>
+					<label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Search by Item</label>
 					<div style={{ display: 'flex' }}>
 						{/* Mode toggle */}
-						<div style={{ display: 'flex', borderRadius: '8px 0 0 8px', overflow: 'hidden', border: '1px solid #243245', borderRight: 'none' }}>
+						<div style={{ display: 'flex', borderRadius: '8px 0 0 8px', overflow: 'hidden', border: '1px solid var(--border-strong)', borderRight: 'none' }}>
 							{(['name', 'sku'] as const).map(mode => (
 								<button key={mode} onClick={() => { setItemSearchMode(mode); setItemSearch('') }}
 									style={{
 										padding: '8px 12px', fontSize: 12, fontWeight: 600,
-										background: itemSearchMode === mode ? '#2263ff' : '#233043',
-										color: 'white', border: 'none', cursor: 'pointer',
-										borderRight: mode === 'name' ? '1px solid #243245' : 'none',
+										background: itemSearchMode === mode ? 'var(--accent)' : 'var(--secondary-btn-bg)',
+										color: itemSearchMode === mode ? 'var(--accent-contrast)' : 'var(--secondary-btn-text)', border: 'none', cursor: 'pointer',
+										borderRight: mode === 'name' ? '1px solid var(--border-strong)' : 'none',
 										borderRadius: 0,
 									}}>
 									{mode === 'name' ? 'Name' : 'SKU'}
@@ -378,11 +378,11 @@ export default function SalesPage() {
 						)}
 					</div>
 					{showItemSuggestions && itemSuggestions.length > 0 && (
-						<div style={{ position: 'absolute', top: '100%', left: 0, minWidth: 220, background: '#111827', border: '1px solid #243245', borderRadius: 8, zIndex: 100, maxHeight: 200, overflowY: 'auto', marginTop: 4, boxShadow: '0 4px 16px rgba(0,0,0,0.4)' }}>
+						<div style={{ position: 'absolute', top: '100%', left: 0, minWidth: 220, background: 'var(--bg-sunken)', border: '1px solid var(--border-strong)', borderRadius: 8, zIndex: 100, maxHeight: 200, overflowY: 'auto', marginTop: 4, boxShadow: '0 4px 16px var(--overlay)' }}>
 							{itemSuggestions.map(s => (
 								<div key={s} onClick={() => { setItemSearch(s); setShowItemSuggestions(false) }}
-									style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '1px solid #1a2030' }}
-									onMouseEnter={e => (e.currentTarget.style.background = '#1a2030')}
+									style={{ padding: '9px 14px', cursor: 'pointer', fontSize: 13, borderBottom: '1px solid var(--border)' }}
+									onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
 									onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
 									{s}
 								</div>
@@ -394,31 +394,31 @@ export default function SalesPage() {
 
 			{/* ── Item search result banner ── */}
 			{itemSearch.trim() && (
-				<div style={{ background: '#1a2030', border: '1px solid #243245', borderRadius: 8, padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
-					<span style={{ fontSize: 13, color: '#9ca3af' }}>
-						{itemSearchMode === 'sku' ? 'SKU' : 'Item'} <strong style={{ color: '#e8eef5' }}>"{itemSearch}"</strong>
+				<div style={{ background: 'var(--bg-hover)', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+					<span style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+						{itemSearchMode === 'sku' ? 'SKU' : 'Item'} <strong style={{ color: 'var(--text)' }}>"{itemSearch}"</strong>
 					</span>
-					<span style={{ background: '#2263ff', color: 'white', fontWeight: 700, fontSize: 14, padding: '2px 12px', borderRadius: 20 }}>
+					<span style={{ background: 'var(--accent)', color: 'var(--accent-contrast)', fontWeight: 700, fontSize: 14, padding: '2px 12px', borderRadius: 20 }}>
 						{filteredInvoices.length} bill{filteredInvoices.length !== 1 ? 's' : ''}
 					</span>
 					{itemSearchMode === 'name' && (
-						<span style={{ fontSize: 12, color: '#6b7280' }}>matched by name · select SKU for exact match</span>
+						<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>matched by name · select SKU for exact match</span>
 					)}
 					{itemSearchMode === 'sku' && (
-						<span style={{ fontSize: 12, color: '#6b7280' }}>exact SKU match</span>
+						<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>exact SKU match</span>
 					)}
 				</div>
 			)}
 
 			{/* ── Summary ── */}
 			<div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-				<div style={{ flex: 1, minWidth: 140, background: '#1a2a1a', border: '1px solid #2d5a2d', borderRadius: 8, padding: '12px 16px' }}>
-					<div style={{ fontSize: 12, color: '#81c784', marginBottom: 4 }}>BILLS SHOWN</div>
-					<div style={{ fontSize: 22, fontWeight: 700, color: '#a5d6a7' }}>{filteredInvoices.length}</div>
+				<div style={{ flex: 1, minWidth: 140, background: 'color-mix(in srgb, var(--success) 12%, var(--bg-elevated))', border: '1px solid color-mix(in srgb, var(--success) 35%, var(--border))', borderRadius: 8, padding: '12px 16px' }}>
+					<div style={{ fontSize: 12, color: 'var(--success)', marginBottom: 4 }}>BILLS SHOWN</div>
+					<div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>{filteredInvoices.length}</div>
 				</div>
-				<div style={{ flex: 1, minWidth: 140, background: '#111827', border: '1px solid #243245', borderRadius: 8, padding: '12px 16px' }}>
-					<div style={{ fontSize: 12, color: '#90caf9', marginBottom: 4 }}>TOTAL REVENUE</div>
-					<div style={{ fontSize: 22, fontWeight: 700, color: '#bbdefb' }}>{formatCurrency(totalRevenue, storeInfo.currency)}</div>
+				<div style={{ flex: 1, minWidth: 140, background: 'color-mix(in srgb, var(--accent) 10%, var(--bg-elevated))', border: '1px solid var(--border-strong)', borderRadius: 8, padding: '12px 16px' }}>
+					<div style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 4 }}>TOTAL REVENUE</div>
+					<div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>{formatCurrency(totalRevenue, storeInfo.currency)}</div>
 				</div>
 			</div>
 
@@ -426,42 +426,42 @@ export default function SalesPage() {
 			<div style={{ overflowX: 'auto' }}>
 				<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
 					<thead>
-						<tr style={{ background: '#141920' }}>
+						<tr style={{ background: 'var(--bg-sunken)' }}>
 							{['Invoice #', 'Customer', 'Items', 'Total', 'Date', 'Actions'].map(h => (
-								<th key={h} style={{ padding: '10px 12px', textAlign: h === 'Total' || h === 'Items' ? 'right' : 'left', borderBottom: '2px solid #243245', color: '#8899aa', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+								<th key={h} style={{ padding: '10px 12px', textAlign: h === 'Total' || h === 'Items' ? 'right' : 'left', borderBottom: '2px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
 							))}
 						</tr>
 					</thead>
 					<tbody>
 						{filteredInvoices.length === 0 ? (
-							<tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: '#4a5568' }}>No bills found</td></tr>
+							<tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No bills found</td></tr>
 						) : filteredInvoices.map(inv => {
 							const status = returnStatus(inv)
 							return (
-							<tr key={inv.id} style={{ borderBottom: '1px solid #1a2030', opacity: status === 'full' ? 0.55 : 1 }}
-								onMouseEnter={e => (e.currentTarget.style.background = '#141920')}
+							<tr key={inv.id} style={{ borderBottom: '1px solid var(--border)', opacity: status === 'full' ? 0.55 : 1 }}
+								onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
 								onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-								<td style={{ padding: '10px 12px', fontWeight: 600, color: '#60a5fa' }}>
+								<td style={{ padding: '10px 12px', fontWeight: 600, color: 'var(--accent)' }}>
 									{inv.invoiceNo || inv.id?.slice(-6)}
-									{status === 'full'    && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, background: '#7f1d1d', color: '#fca5a5', padding: '2px 7px', borderRadius: 10 }}>Returned</span>}
-									{status === 'partial' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, background: '#451a03', color: '#fdba74', padding: '2px 7px', borderRadius: 10 }}>Partial Return</span>}
+									{status === 'full'    && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, background: 'var(--danger-bg)', color: 'var(--danger)', padding: '2px 7px', borderRadius: 10 }}>Returned</span>}
+									{status === 'partial' && <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, background: 'var(--warning-bg)', color: 'var(--warning)', padding: '2px 7px', borderRadius: 10 }}>Partial Return</span>}
 								</td>
 								<td style={{ padding: '10px 12px' }}>{inv.customer || 'Walk-in'}</td>
-								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#94a3b8' }}>{(inv.lines || []).length}</td>
-								<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: status === 'full' ? '#6b7280' : '#4ade80' }}>
+								<td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--text-muted)' }}>{(inv.lines || []).length}</td>
+								<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: status === 'full' ? 'var(--text-muted)' : 'var(--success)' }}>
 								{formatCurrency(activeRevenue(inv), storeInfo.currency)}
 								{status !== 'none' && (
-									<div style={{ fontSize: 11, fontWeight: 400, color: '#6b7280', marginTop: 1 }}>
+									<div style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)', marginTop: 1 }}>
 										of {formatCurrency(inv.total || 0, storeInfo.currency)}
 									</div>
 								)}
 							</td>
-								<td style={{ padding: '10px 12px', color: '#94a3b8', whiteSpace: 'nowrap' }}>{inv.date ? new Date(inv.date).toLocaleString() : '—'}</td>
+								<td style={{ padding: '10px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{inv.date ? new Date(inv.date).toLocaleString() : '—'}</td>
 								<td style={{ padding: '10px 12px' }}>
 									<div style={{ display: 'flex', gap: 6 }}>
 										<button style={{ padding: '4px 12px', fontSize: 12 }} onClick={() => setSelectedInvoice(inv)}>View Bill</button>
 										{status !== 'full' && (
-											<button style={{ padding: '4px 12px', fontSize: 12, color: '#f87171', borderColor: '#7f1d1d' }} className="secondary"
+											<button style={{ padding: '4px 12px', fontSize: 12, color: 'var(--danger)', borderColor: 'var(--danger)' }} className="secondary"
 												onClick={() => returnWholeInvoice(inv)} disabled={returning}>
 												Return All
 											</button>
@@ -477,26 +477,26 @@ export default function SalesPage() {
 
 			{/* ── Invoice Detail Modal ── */}
 			{selectedInvoice && (
-				<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 1100 }}>
+				<div style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 1100 }}>
 					<div className="card" style={{ width: '100%', maxWidth: 860, maxHeight: '92vh', overflowY: 'auto', position: 'relative' }}>
 						{/* Modal header */}
 						{(() => {
 							const status = returnStatus(selectedInvoice)
 							return (<>
 								{status === 'full' && (
-									<div style={{ background: '#7f1d1d', color: '#fca5a5', padding: '8px 14px', borderRadius: 6, marginBottom: 12, fontWeight: 600, fontSize: 13 }}>
+									<div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '8px 14px', borderRadius: 6, marginBottom: 12, fontWeight: 600, fontSize: 13 }}>
 										This bill has been fully returned — all items restored to inventory
 									</div>
 								)}
 								{status === 'partial' && (
-									<div style={{ background: '#451a03', color: '#fdba74', padding: '8px 14px', borderRadius: 6, marginBottom: 12, fontWeight: 600, fontSize: 13 }}>
+									<div style={{ background: 'var(--warning-bg)', color: 'var(--warning)', padding: '8px 14px', borderRadius: 6, marginBottom: 12, fontWeight: 600, fontSize: 13 }}>
 										Partial return — some items from this bill have been returned
 									</div>
 								)}
 								<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
 									<div>
 										<h3 style={{ margin: 0 }}>{selectedInvoice.invoiceNo}</h3>
-										<div style={{ fontSize: 13, color: '#9ca3af', marginTop: 2 }}>
+										<div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
 											{selectedInvoice.customer || 'Walk-in'} · {selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleString() : '—'}
 										</div>
 									</div>
@@ -504,12 +504,12 @@ export default function SalesPage() {
 										<button style={{ padding: '6px 14px', fontSize: 13 }} onClick={() => printInvoice(selectedInvoice)}>Print</button>
 										<button className="secondary" style={{ padding: '6px 14px', fontSize: 13 }} onClick={() => downloadInvoicePdf(selectedInvoice)}>PDF</button>
 										{status !== 'full' && (
-											<button className="secondary" style={{ padding: '6px 14px', fontSize: 13, color: '#f87171', borderColor: '#7f1d1d' }}
+											<button className="secondary" style={{ padding: '6px 14px', fontSize: 13, color: 'var(--danger)', borderColor: 'var(--danger)' }}
 												onClick={() => returnWholeInvoice(selectedInvoice)} disabled={returning}>
 												Return Whole Bill
 											</button>
 										)}
-										<button onClick={() => setSelectedInvoice(null)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#9ca3af', padding: '0 4px' }}>×</button>
+										<button onClick={() => setSelectedInvoice(null)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--text-muted)', padding: '0 4px' }}>×</button>
 									</div>
 								</div>
 							</>)
@@ -519,9 +519,9 @@ export default function SalesPage() {
 						<div style={{ overflowX: 'auto', marginBottom: 16 }}>
 							<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
 								<thead>
-									<tr style={{ background: '#141920' }}>
+									<tr style={{ background: 'var(--bg-sunken)' }}>
 										{['SKU', 'Item', 'Qty', 'Unit Price', 'Disc %', 'Amount', 'Return'].map(h => (
-											<th key={h} style={{ padding: '9px 12px', textAlign: h === 'Qty' || h === 'Unit Price' || h === 'Amount' ? 'right' : 'left', borderBottom: '2px solid #243245', color: '#8899aa', fontWeight: 600 }}>{h}</th>
+											<th key={h} style={{ padding: '9px 12px', textAlign: h === 'Qty' || h === 'Unit Price' || h === 'Amount' ? 'right' : 'left', borderBottom: '2px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600 }}>{h}</th>
 										))}
 									</tr>
 								</thead>
@@ -531,8 +531,8 @@ export default function SalesPage() {
 										const lineTotal = (line.qty || 0) * (line.price || 0)
 										const lineAmt = lineTotal - (lineTotal * (line.discount || 0) / 100)
 										return (
-											<tr key={line.id} style={{ borderBottom: '1px solid #1a2030', opacity: returned ? 0.45 : 1 }}>
-												<td style={{ padding: '9px 12px', color: '#94a3b8' }}>{line.sku}</td>
+											<tr key={line.id} style={{ borderBottom: '1px solid var(--border)', opacity: returned ? 0.45 : 1 }}>
+												<td style={{ padding: '9px 12px', color: 'var(--text-muted)' }}>{line.sku}</td>
 												<td style={{ padding: '9px 12px', fontWeight: 500 }}>{line.name}</td>
 												<td style={{ padding: '9px 12px', textAlign: 'right' }}>{line.qty}</td>
 												<td style={{ padding: '9px 12px', textAlign: 'right' }}>{formatCurrency(line.price || 0, storeInfo.currency)}</td>
@@ -540,9 +540,9 @@ export default function SalesPage() {
 												<td style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 600 }}>{formatCurrency(lineAmt, storeInfo.currency)}</td>
 												<td style={{ padding: '9px 12px' }}>
 													{returned ? (
-														<span style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>Returned</span>
+														<span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Returned</span>
 													) : (
-														<button className="secondary" style={{ padding: '3px 10px', fontSize: 12, color: '#f87171', borderColor: '#7f1d1d' }}
+														<button className="secondary" style={{ padding: '3px 10px', fontSize: 12, color: 'var(--danger)', borderColor: 'var(--danger)' }}
 															onClick={() => returnLineItem(selectedInvoice, line)} disabled={returning}>
 															Return
 														</button>
@@ -559,18 +559,18 @@ export default function SalesPage() {
 										const discAmt = (sub * bd) / 100
 										return (<>
 											<tr>
-												<td colSpan={6} style={{ padding: '8px 12px', textAlign: 'right', color: '#94a3b8', borderTop: '1px solid #243245' }}>Subtotal</td>
-												<td style={{ padding: '8px 12px', textAlign: 'right', color: '#94a3b8', borderTop: '1px solid #243245', fontWeight: 500 }}>{formatCurrency(sub, storeInfo.currency)}</td>
+												<td colSpan={6} style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-muted)', borderTop: '1px solid var(--border-strong)' }}>Subtotal</td>
+												<td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-muted)', borderTop: '1px solid var(--border-strong)', fontWeight: 500 }}>{formatCurrency(sub, storeInfo.currency)}</td>
 											</tr>
 											{bd > 0 && (
 												<tr>
-													<td colSpan={6} style={{ padding: '8px 12px', textAlign: 'right', color: '#f59e0b' }}>Bill Discount ({bd}%)</td>
-													<td style={{ padding: '8px 12px', textAlign: 'right', color: '#f59e0b' }}>−{formatCurrency(discAmt, storeInfo.currency)}</td>
+													<td colSpan={6} style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--warning)' }}>Bill Discount ({bd}%)</td>
+													<td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--warning)' }}>−{formatCurrency(discAmt, storeInfo.currency)}</td>
 												</tr>
 											)}
-											<tr style={{ background: '#1a2030' }}>
+											<tr style={{ background: 'var(--bg-hover)' }}>
 												<td colSpan={6} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 15 }}>TOTAL</td>
-												<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 15, color: '#4ade80' }}>{formatCurrency(selectedInvoice.total || (sub - discAmt), storeInfo.currency)}</td>
+												<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 15, color: 'var(--success)' }}>{formatCurrency(selectedInvoice.total || (sub - discAmt), storeInfo.currency)}</td>
 											</tr>
 										</>)
 									})()}

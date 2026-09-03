@@ -348,7 +348,7 @@ export default function AdminPage() {
         <div style={s.navRight}>
           <Link to="/" style={s.navBtn}><FiHome size={14} /> Dashboard</Link>
           <button style={s.navBtn} onClick={() => loadAll()}><FiRefreshCw size={14} /></button>
-          <button style={{ ...s.navBtn, color: '#f87171' }} onClick={() => logout().then(() => navigate('/login'))}>
+          <button style={{ ...s.navBtn, color: 'var(--danger)' }} onClick={() => logout().then(() => navigate('/login'))}>
             <FiLogOut size={14} /> Logout
           </button>
         </div>
@@ -377,11 +377,11 @@ export default function AdminPage() {
               <div style={s.statLbl}>Total Users</div>
             </div>
             <div style={s.statCard}>
-              <div style={{ ...s.statNum, color: '#4ade80' }}>{activeAds}</div>
+              <div style={{ ...s.statNum, color: 'var(--success)' }}>{activeAds}</div>
               <div style={s.statLbl}>Live Ads</div>
             </div>
             <div style={s.statCard}>
-              <div style={{ ...s.statNum, color: '#f59e0b' }}>{admins.length}</div>
+              <div style={{ ...s.statNum, color: 'var(--warning)' }}>{admins.length}</div>
               <div style={s.statLbl}>Admins</div>
             </div>
           </div>
@@ -415,7 +415,7 @@ export default function AdminPage() {
                   ) : (
                     <div style={s.adGrid}>
                       {announcements.map(ad => (
-                        <div key={ad.id} style={{ ...s.adCard, borderColor: ad.is_active ? '#2263ff44' : '#1a2333' }}>
+                        <div key={ad.id} style={{ ...s.adCard, borderColor: ad.is_active ? '#2263ff44' : 'var(--border)' }}>
                           {ad.image_url && (
                             <div style={{ ...s.adThumb, backgroundImage: `url(${ad.image_url})` }} />
                           )}
@@ -426,10 +426,10 @@ export default function AdminPage() {
                           )}
                           <div style={s.adCardBody}>
                             <div style={s.adCardTop}>
-                              <span style={{ ...s.adType, background: ad.type === 'banner' ? '#2263ff22' : '#7c3aed22', color: ad.type === 'banner' ? '#4d8fff' : '#a78bfa' }}>
+                              <span style={{ ...s.adType, background: ad.type === 'banner' ? '#2263ff22' : '#7c3aed22', color: ad.type === 'banner' ? 'var(--accent)' : '#a78bfa' }}>
                                 {ad.type}
                               </span>
-                              <span style={{ ...s.adStatus, background: ad.is_active ? '#16a34a22' : '#6b728022', color: ad.is_active ? '#4ade80' : '#9ca3af' }}>
+                              <span style={{ ...s.adStatus, background: ad.is_active ? 'var(--success-bg)' : 'var(--secondary-btn-bg)', color: ad.is_active ? 'var(--success)' : 'var(--text-muted)' }}>
                                 {ad.is_active ? 'Live' : 'Hidden'}
                               </span>
                             </div>
@@ -442,7 +442,7 @@ export default function AdminPage() {
                               <button style={s.iconBtn} onClick={() => openEditAd(ad)} title="Edit">
                                 <FiEdit2 size={15} />
                               </button>
-                              <button style={{ ...s.iconBtn, color: '#f87171' }} onClick={() => deleteAd(ad.id)} title="Delete">
+                              <button style={{ ...s.iconBtn, color: 'var(--danger)' }} onClick={() => deleteAd(ad.id)} title="Delete">
                                 <FiTrash2 size={15} />
                               </button>
                             </div>
@@ -477,7 +477,7 @@ export default function AdminPage() {
                   )}
 
                   <div style={s.searchRow}>
-                    <FiSearch size={16} style={{ color: '#6b7280', flexShrink: 0 }} />
+                    <FiSearch size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                     <input
                       style={s.searchInput}
                       placeholder="Search by email, store name or phone..."
@@ -494,7 +494,7 @@ export default function AdminPage() {
                       </div>
                     )}
                     {filteredUsers.map(u => (
-                      <div key={u.id} style={{ ...s.userCard, borderColor: u.is_suspended ? '#7f1d1d44' : '#1a2333' }}>
+                      <div key={u.id} style={{ ...s.userCard, borderColor: u.is_suspended ? 'var(--danger)' : 'var(--border)' }}>
                         <div style={s.userAvatar}>
                           {(u.email?.[0] || '?').toUpperCase()}
                         </div>
@@ -515,10 +515,10 @@ export default function AdminPage() {
                             {u.store_name && <span style={s.userMeta}>ðŸª {u.store_name}</span>}
                             {u.phone && <span style={s.userMeta}>ðŸ“ž {u.phone}</span>}
                             {u.website && <span style={s.userMeta}>ðŸŒ {u.website}</span>}
-                            <span style={{ ...s.userMeta, color: '#374151' }}>
+                            <span style={{ ...s.userMeta, color: 'var(--text-muted)' }}>
                               Last seen: {u.last_seen ? new Date(u.last_seen).toLocaleDateString() : 'â€”'}
                             </span>
-                            <span style={{ ...s.userMeta, color: '#374151' }}>
+                            <span style={{ ...s.userMeta, color: 'var(--text-muted)' }}>
                               Joined: {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'â€”'}
                             </span>
                           </div>
@@ -586,7 +586,7 @@ export default function AdminPage() {
                         {a.email === MASTER_ADMIN ? (
                           <span style={s.masterBadge}>Master Admin</span>
                         ) : (
-                          <button style={{ ...s.iconBtn, color: '#f87171' }} onClick={() => removeAdmin(a.id, a.email)}>
+                          <button style={{ ...s.iconBtn, color: 'var(--danger)' }} onClick={() => removeAdmin(a.id, a.email)}>
                             <FiTrash2 size={15} />
                           </button>
                         )}
@@ -617,13 +617,13 @@ export default function AdminPage() {
                {/* Square image upload */}
                <div style={{ marginBottom: 20 }}>
                  <label style={{ ...s.label, marginBottom: 8, display: 'block' }}>
-                   Ad Image <span style={{ color: '#4a5568', fontWeight: 400 }}>(recommended 1080 x 1080 px)</span>
+                   Ad Image <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(recommended 1080 x 1080 px)</span>
                  </label>
                  <div
                    style={{
                      width: '100%', aspectRatio: '1 / 1', maxHeight: 300,
-                     background: '#0a111a',
-                     border: adForm.image_url ? '2px solid #2263ff44' : '2px dashed #1a2333',
+                     background: 'var(--bg-sunken)',
+                     border: adForm.image_url ? '2px solid #2263ff44' : '2px dashed var(--border)',
                      borderRadius: 14, overflow: 'hidden', cursor: 'pointer',
                      position: 'relative',
                      display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -634,7 +634,7 @@ export default function AdminPage() {
                      <img src={adForm.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                        onError={e => { e.currentTarget.style.display = 'none' }} />
                    ) : (
-                     <div style={{ textAlign: 'center', color: '#4a5568', pointerEvents: 'none' }}>
+                     <div style={{ textAlign: 'center', color: 'var(--text-muted)', pointerEvents: 'none' }}>
                        <FiUpload size={28} style={{ marginBottom: 10, opacity: 0.5 }} />
                        <div style={{ fontSize: 13, fontWeight: 600 }}>Click to upload image</div>
                        <div style={{ fontSize: 11, marginTop: 4, opacity: 0.6 }}>PNG, JPG, WEBP - 1080 x 1080 px</div>
@@ -650,7 +650,7 @@ export default function AdminPage() {
                  <input style={{ ...s.input, marginTop: 8 }} placeholder="Or paste image URL directly..."
                    value={adForm.image_url} onChange={e => setAdForm(f => ({ ...f, image_url: e.target.value }))} />
                  {adForm.image_url && (
-                   <button style={{ ...s.uploadBtn, marginTop: 6, color: '#f87171', borderColor: '#f8717144' }}
+                   <button style={{ ...s.uploadBtn, marginTop: 6, color: 'var(--danger)', borderColor: 'var(--danger)' }}
                      onClick={() => setAdForm(f => ({ ...f, image_url: '' }))}>
                      <FiX size={13} /> Remove
                    </button>
@@ -690,7 +690,7 @@ export default function AdminPage() {
 
                  <div style={s.formGroup}>
                    <label style={s.label}>Status</label>
-                   <button style={{ ...s.toggleBtn, background: adForm.is_active ? '#16a34a33' : '#6b728022', color: adForm.is_active ? '#4ade80' : '#9ca3af' }}
+                   <button style={{ ...s.toggleBtn, background: adForm.is_active ? 'var(--success-bg)' : 'var(--secondary-btn-bg)', color: adForm.is_active ? 'var(--success)' : 'var(--text-muted)' }}
                      onClick={() => setAdForm(f => ({ ...f, is_active: !f.is_active }))}>
                      {adForm.is_active ? <><FiToggleRight size={16} /> Live</> : <><FiToggleLeft size={16} /> Hidden</>}
                    </button>
@@ -738,15 +738,15 @@ export default function AdminPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100vh',
-    background: '#060a10',
-    color: '#c9d5e0',
+    background: 'var(--bg)',
+    color: 'var(--text)',
     fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif',
   },
 
   toast: {
     position: 'fixed', top: 20, right: 20, zIndex: 9999,
-    background: '#1a2940', border: '1px solid #2263ff66',
-    color: '#e2e8f0', padding: '10px 18px', borderRadius: 10,
+    background: 'var(--bg-elevated)', border: '1px solid #2263ff66',
+    color: 'var(--text)', padding: '10px 18px', borderRadius: 10,
     fontSize: 13, fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
     animation: 'fadeIn 0.2s ease',
   },
@@ -754,22 +754,22 @@ const s: Record<string, React.CSSProperties> = {
   nav: {
     position: 'sticky', top: 0, zIndex: 100,
     background: 'rgba(6,10,16,0.95)', backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid #1a2333',
+    borderBottom: '1px solid var(--border)',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '0 28px', height: 60,
   },
   navLeft: { display: 'flex', alignItems: 'center', gap: 10 },
-  navTitle: { fontSize: 17, fontWeight: 700, color: '#e8eef5' },
+  navTitle: { fontSize: 17, fontWeight: 700, color: 'var(--text)' },
   adminBadge: {
-    fontSize: 10, fontWeight: 800, color: '#2263ff',
+    fontSize: 10, fontWeight: 800, color: 'var(--accent)',
     background: '#2263ff18', border: '1px solid #2263ff44',
     borderRadius: 5, padding: '2px 7px', letterSpacing: '0.8px',
   },
   navRight: { display: 'flex', alignItems: 'center', gap: 8 },
   navBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 6,
-    padding: '6px 14px', borderRadius: 8, border: '1px solid #1a2333',
-    background: 'transparent', color: '#8b949e', fontSize: 13, cursor: 'pointer',
+    padding: '6px 14px', borderRadius: 8, border: '1px solid var(--border)',
+    background: 'transparent', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer',
     textDecoration: 'none', fontFamily: 'inherit',
   },
 
@@ -777,58 +777,58 @@ const s: Record<string, React.CSSProperties> = {
 
   sidebar: {
     width: 220, flexShrink: 0,
-    background: '#080d14', borderRight: '1px solid #1a2333',
+    background: 'var(--bg-elevated)', borderRight: '1px solid var(--border)',
     padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 4,
   },
   sidebarTitle: {
-    fontSize: 10, fontWeight: 700, color: '#4a5568',
+    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
     textTransform: 'uppercase', letterSpacing: '1px',
     marginBottom: 12, paddingLeft: 8,
   },
   tabBtn: {
     display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 12px', borderRadius: 10, border: 'none',
-    background: 'transparent', color: '#6b7280', cursor: 'pointer',
+    background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer',
     width: '100%', textAlign: 'left', fontFamily: 'inherit', fontSize: 14,
     transition: 'all 0.15s',
   },
   tabBtnActive: {
     background: 'rgba(34,99,255,0.12)',
-    color: '#4d8fff',
+    color: 'var(--accent)',
     border: '1px solid rgba(34,99,255,0.2)',
   },
   tabIcon: { flexShrink: 0 },
   tabLabel: { flex: 1 },
   tabCount: {
-    fontSize: 11, fontWeight: 700, color: '#4a5568',
-    background: '#1a2333', borderRadius: 20, padding: '1px 7px',
+    fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
+    background: 'var(--secondary-btn-bg)', borderRadius: 20, padding: '1px 7px',
   },
   statCards: { marginTop: 'auto', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 8 },
   statCard: {
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
     borderRadius: 10, padding: '12px 16px',
   },
-  statNum: { fontSize: 24, fontWeight: 800, color: '#4d8fff', lineHeight: 1 },
-  statLbl: { fontSize: 11, color: '#4a5568', marginTop: 4 },
+  statNum: { fontSize: 24, fontWeight: 800, color: 'var(--accent)', lineHeight: 1 },
+  statLbl: { fontSize: 11, color: 'var(--text-muted)', marginTop: 4 },
 
   main: { flex: 1, padding: '32px 36px', maxWidth: 1100 },
-  loader: { textAlign: 'center', padding: 80, color: '#4a5568' },
+  loader: { textAlign: 'center', padding: 80, color: 'var(--text-muted)' },
 
   sectionHeader: {
     display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
     marginBottom: 28, gap: 16,
   },
-  sectionTitle: { fontSize: 22, fontWeight: 700, color: '#e8eef5', margin: 0, letterSpacing: '-0.5px' },
-  sectionSub: { fontSize: 13, color: '#4a5568', margin: '6px 0 0' },
+  sectionTitle: { fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' },
+  sectionSub: { fontSize: 13, color: 'var(--text-muted)', margin: '6px 0 0' },
 
   emptyState: {
-    textAlign: 'center', padding: '60px 20px', color: '#4a5568',
-    background: '#080d14', borderRadius: 16, border: '1px dashed #1a2333',
+    textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)',
+    background: 'var(--bg-sunken)', borderRadius: 16, border: '1px dashed var(--border)',
   },
 
   primaryBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 8,
-    background: 'linear-gradient(135deg, #2263ff, #1a4fd4)',
+    background: 'linear-gradient(135deg, var(--accent), var(--accent))',
     color: 'white', border: 'none', borderRadius: 10,
     padding: '10px 20px', fontSize: 14, fontWeight: 600,
     cursor: 'pointer', boxShadow: '0 4px 16px rgba(34,99,255,0.3)',
@@ -839,12 +839,12 @@ const s: Record<string, React.CSSProperties> = {
     display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16,
   },
   adCard: {
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
     borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s',
   },
   adThumb: {
     height: 130, backgroundSize: 'cover', backgroundPosition: 'center',
-    background: '#0a111a',
+    background: 'var(--bg-sunken)',
   },
   adCardBody: { padding: '14px 16px' },
   adCardTop: { display: 'flex', gap: 8, marginBottom: 10 },
@@ -856,47 +856,47 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
     textTransform: 'uppercase', letterSpacing: '0.5px',
   },
-  adTitle: { fontSize: 14, fontWeight: 600, color: '#e2e8f0', marginBottom: 4 },
+  adTitle: { fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 4 },
   adContent: {
-    fontSize: 12, color: '#6b7280', lineHeight: 1.5,
+    fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5,
     overflow: 'hidden', display: '-webkit-box',
     WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
   },
   adActions: {
     display: 'flex', gap: 6, marginTop: 14,
-    borderTop: '1px solid #1a2333', paddingTop: 12,
+    borderTop: '1px solid var(--border)', paddingTop: 12,
   },
   iconBtn: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: 32, height: 32, borderRadius: 8, border: '1px solid #1a2333',
-    background: '#0a111a', color: '#8b949e', cursor: 'pointer',
+    width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border)',
+    background: 'var(--bg-sunken)', color: 'var(--text-muted)', cursor: 'pointer',
     fontFamily: 'inherit', transition: 'all 0.15s',
   },
 
   searchRow: {
     display: 'flex', alignItems: 'center', gap: 10,
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
     borderRadius: 10, padding: '0 14px', marginBottom: 20,
   },
   searchInput: {
     flex: 1, background: 'transparent', border: 'none', outline: 'none',
-    color: '#e2e8f0', fontSize: 14, padding: '12px 0', fontFamily: 'inherit',
+    color: 'var(--text)', fontSize: 14, padding: '12px 0', fontFamily: 'inherit',
   },
 
-  tableWrap: { borderRadius: 14, border: '1px solid #1a2333', overflow: 'hidden' },
+  tableWrap: { borderRadius: 14, border: '1px solid var(--border)', overflow: 'hidden' },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: {
     padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700,
-    color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.6px',
-    background: '#080d14', borderBottom: '1px solid #1a2333',
+    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px',
+    background: 'var(--bg-sunken)', borderBottom: '1px solid var(--border)',
   },
   td: {
-    padding: '12px 16px', fontSize: 13, color: '#8b949e',
-    borderBottom: '1px solid #0f1825',
+    padding: '12px 16px', fontSize: 13, color: 'var(--text-muted)',
+    borderBottom: '1px solid var(--border)',
   },
   tr: { transition: 'background 0.1s' },
   currencyBadge: {
-    fontSize: 11, fontWeight: 700, color: '#4d8fff',
+    fontSize: 11, fontWeight: 700, color: 'var(--accent)',
     background: '#2263ff18', padding: '2px 8px', borderRadius: 20,
   },
 
@@ -904,71 +904,71 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', gap: 12, marginBottom: 24,
   },
   addAdminInput: {
-    flex: 1, background: '#0d1521', border: '1px solid #1a2333',
-    borderRadius: 10, color: '#e2e8f0', fontSize: 14,
+    flex: 1, background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+    borderRadius: 10, color: 'var(--text)', fontSize: 14,
     padding: '10px 14px', outline: 'none', fontFamily: 'inherit',
   },
   warnBox: {
-    background: '#451a0322', border: '1px solid #f59e0b55',
+    background: 'var(--warning-bg)', border: '1px solid var(--warning)',
     borderRadius: 12, padding: '14px 18px', marginBottom: 20,
-    fontSize: 13, color: '#fbbf24', lineHeight: 1.6,
+    fontSize: 13, color: 'var(--warning)', lineHeight: 1.6,
   },
   code: {
-    background: '#0a111a', border: '1px solid #1a2333',
+    background: 'var(--bg-sunken)', border: '1px solid var(--border)',
     borderRadius: 5, padding: '1px 6px', fontFamily: 'monospace',
-    fontSize: 12, color: '#e2e8f0',
+    fontSize: 12, color: 'var(--text)',
   },
   userCard: {
     display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
     borderRadius: 14, padding: '16px 20px', transition: 'border-color 0.2s',
   },
   userAvatar: {
     width: 44, height: 44, borderRadius: 12, flexShrink: 0,
     background: 'rgba(34,99,255,0.15)', border: '1px solid rgba(34,99,255,0.25)',
-    color: '#4d8fff', fontWeight: 700, fontSize: 18,
+    color: 'var(--accent)', fontWeight: 700, fontSize: 18,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
-  userEmail: { fontSize: 14, fontWeight: 600, color: '#e2e8f0' },
-  userMeta: { fontSize: 12, color: '#6b7280' },
+  userEmail: { fontSize: 14, fontWeight: 600, color: 'var(--text)' },
+  userMeta: { fontSize: 12, color: 'var(--text-muted)' },
   userActions: { display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' },
   actionBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 6,
-    padding: '7px 12px', borderRadius: 8, border: '1px solid #1a2333',
-    background: '#0a111a', color: '#8b949e', cursor: 'pointer',
+    padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)',
+    background: 'var(--bg-sunken)', color: 'var(--text-muted)', cursor: 'pointer',
     fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
   },
-  actionBtnAmber: { borderColor: '#f59e0b44', color: '#f59e0b', background: '#f59e0b11' },
-  actionBtnGreen: { borderColor: '#4ade8044', color: '#4ade80', background: '#4ade8011' },
-  actionBtnRed: { borderColor: '#f8717144', color: '#f87171', background: '#f8717111' },
+  actionBtnAmber: { borderColor: 'var(--warning)', color: 'var(--warning)', background: 'var(--warning-bg)' },
+  actionBtnGreen: { borderColor: 'var(--success)', color: 'var(--success)', background: 'var(--success-bg)' },
+  actionBtnRed: { borderColor: 'var(--danger)', color: 'var(--danger)', background: 'var(--danger-bg)' },
   activeBadge: {
-    fontSize: 10, fontWeight: 700, color: '#4ade80',
-    background: '#16a34a22', border: '1px solid #4ade8033',
+    fontSize: 10, fontWeight: 700, color: 'var(--success)',
+    background: 'var(--success-bg)', border: '1px solid var(--success)',
     padding: '2px 8px', borderRadius: 20,
   },
   suspendedBadge: {
-    fontSize: 10, fontWeight: 700, color: '#f87171',
-    background: '#ef444422', border: '1px solid #f8717133',
+    fontSize: 10, fontWeight: 700, color: 'var(--danger)',
+    background: 'var(--danger-bg)', border: '1px solid var(--danger)',
     padding: '2px 8px', borderRadius: 20,
   },
 
   adminList: { display: 'flex', flexDirection: 'column', gap: 8 },
   adminRow: {
     display: 'flex', alignItems: 'center', gap: 14,
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
     borderRadius: 12, padding: '14px 18px',
   },
   adminAvatar: {
     width: 40, height: 40, borderRadius: 12,
     background: 'rgba(34,99,255,0.15)', border: '1px solid rgba(34,99,255,0.25)',
-    color: '#4d8fff', fontWeight: 700, fontSize: 16,
+    color: 'var(--accent)', fontWeight: 700, fontSize: 16,
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  adminEmail: { fontSize: 14, fontWeight: 600, color: '#e2e8f0' },
-  adminDate: { fontSize: 12, color: '#4a5568', marginTop: 2 },
+  adminEmail: { fontSize: 14, fontWeight: 600, color: 'var(--text)' },
+  adminDate: { fontSize: 12, color: 'var(--text-muted)', marginTop: 2 },
   masterBadge: {
-    fontSize: 10, fontWeight: 800, color: '#f59e0b',
-    background: '#f59e0b18', border: '1px solid #f59e0b44',
+    fontSize: 10, fontWeight: 800, color: 'var(--warning)',
+    background: 'var(--warning-bg)', border: '1px solid var(--warning)',
     padding: '3px 10px', borderRadius: 20, letterSpacing: '0.5px',
   },
 
@@ -978,24 +978,24 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
   },
   modal: {
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: 'var(--bg-elevated)', border: '1px solid var(--border)',
     borderRadius: 18, width: '100%', maxWidth: 620,
     maxHeight: '90vh', display: 'flex', flexDirection: 'column',
     boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
   },
   modalHeader: {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '20px 24px', borderBottom: '1px solid #1a2333',
+    padding: '20px 24px', borderBottom: '1px solid var(--border)',
   },
-  modalTitle: { fontSize: 18, fontWeight: 700, color: '#e8eef5', margin: 0 },
+  modalTitle: { fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 },
   closeBtn: {
-    background: '#0a111a', border: '1px solid #1a2333', borderRadius: 8,
-    color: '#6b7280', cursor: 'pointer', padding: 6, display: 'flex', fontFamily: 'inherit',
+    background: 'var(--bg-sunken)', border: '1px solid var(--border)', borderRadius: 8,
+    color: 'var(--text-muted)', cursor: 'pointer', padding: 6, display: 'flex', fontFamily: 'inherit',
   },
   modalBody: { flex: 1, overflow: 'auto', padding: 24 },
   modalFooter: {
     display: 'flex', gap: 10, justifyContent: 'flex-end',
-    padding: '16px 24px', borderTop: '1px solid #1a2333',
+    padding: '16px 24px', borderTop: '1px solid var(--border)',
   },
 
   adPreview: {
@@ -1012,16 +1012,16 @@ const s: Record<string, React.CSSProperties> = {
     display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16,
   },
   formGroup: { display: 'flex', flexDirection: 'column', gap: 7 },
-  label: { fontSize: 12, fontWeight: 600, color: '#6b7280', letterSpacing: '0.3px' },
+  label: { fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '0.3px' },
   input: {
-    background: '#0a111a', border: '1px solid #1a2333', borderRadius: 10,
-    color: '#e2e8f0', fontSize: 14, padding: '10px 14px',
+    background: 'var(--bg-sunken)', border: '1px solid var(--border)', borderRadius: 10,
+    color: 'var(--text)', fontSize: 14, padding: '10px 14px',
     outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', width: '100%',
   },
   uploadBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 6,
-    background: '#0a111a', border: '1px solid #1a2333', borderRadius: 10,
-    color: '#8b949e', fontSize: 13, padding: '10px 14px',
+    background: 'var(--bg-sunken)', border: '1px solid var(--border)', borderRadius: 10,
+    color: 'var(--text-muted)', fontSize: 13, padding: '10px 14px',
     cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
   },
   toggleBtn: {
@@ -1030,8 +1030,8 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
   },
   cancelBtn: {
-    background: '#0a111a', border: '1px solid #1a2333', borderRadius: 10,
-    color: '#8b949e', fontSize: 14, padding: '10px 20px',
+    background: 'var(--bg-sunken)', border: '1px solid var(--border)', borderRadius: 10,
+    color: 'var(--text-muted)', fontSize: 14, padding: '10px 20px',
     cursor: 'pointer', fontFamily: 'inherit',
   },
 }

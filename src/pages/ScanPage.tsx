@@ -110,11 +110,11 @@ export default function ScanPage() {
 				</label>
 			</div>
 			{info && <div className="badge">{info}</div>}
-			{error && <div className="badge" style={{ background: '#ff4444' }}>{error}</div>}
+			{error && <div className="badge" style={{ background: 'var(--danger)' }}>{error}</div>}
 			<p style={{ opacity: 0.8 }}>Use camera to scan barcodes or connect a barcode reader and scan directly into the input field. Press Enter or click Process to handle the barcode.</p>
 
 			{editOpen && (
-				<div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
+				<div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
 					<div className="card" style={{ width: '100%', maxWidth: 480 }}>
 						<h3>New Product Details</h3>
 						<div className="form-grid">

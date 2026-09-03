@@ -196,17 +196,17 @@ function CropModal({ src, initial, onApply, onClose }: {
   const handles: Handle[] = ['nw','n','ne','w','e','sw','s','se']
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}>
-      <div style={{ background: '#111827', border: '1px solid #374151', borderRadius: 14, padding: 24, maxWidth: '95vw' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}>
+      <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 14, padding: 24, maxWidth: '95vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0, color: '#e8eef5', fontSize: 18 }}>Crop Logo</h3>
+          <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 18 }}>Crop Logo</h3>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => onApply(null)} className="secondary" style={{ fontSize: 13, padding: '5px 14px' }}>Remove Crop</button>
             <button onClick={apply} style={{ fontSize: 13, padding: '5px 14px' }}>Apply</button>
             <button onClick={onClose} className="secondary" style={{ fontSize: 13, padding: '5px 14px' }}>Cancel</button>
           </div>
         </div>
-        <p style={{ margin: '0 0 12px', color: '#6b7280', fontSize: 12 }}>Drag on the image to select the area you want to keep</p>
+        <p style={{ margin: '0 0 12px', color: 'var(--text-muted)', fontSize: 12 }}>Drag on the image to select the area you want to keep</p>
 
         <div ref={areaRef} style={{ position: 'relative', display: 'inline-block', cursor: 'crosshair', userSelect: 'none' }}
           onMouseDown={startDraw}>
@@ -412,27 +412,27 @@ export default function InvoiceHeaderDesigner({
         <button onClick={deleteSelected} disabled={!selected} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>Delete</button>
         <button onClick={bringForward} disabled={!selected} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>↑ Forward</button>
         <button onClick={sendBackward} disabled={!selected} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>↓ Backward</button>
-        <span style={{ width: 1, height: 22, background: '#374151', margin: '0 2px', flexShrink: 0 }} />
+        <span style={{ width: 1, height: 22, background: 'var(--border-strong)', margin: '0 2px', flexShrink: 0 }} />
         {/* Background color */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#94a3b8' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
           BG
           <input type="color" value={layout.bgColor}
             onChange={e => setLayout(l => ({ ...l, bgColor: e.target.value }))}
-            style={{ width: 28, height: 28, padding: 1, border: '1px solid #374151', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
+            style={{ width: 28, height: 28, padding: 1, border: '1px solid var(--border-strong)', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
         </label>
         {/* Border color */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#94a3b8' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
           Border
           <input type="color" value={layout.borderColor}
             onChange={e => setLayout(l => ({ ...l, borderColor: e.target.value }))}
-            style={{ width: 28, height: 28, padding: 1, border: '1px solid #374151', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
+            style={{ width: 28, height: 28, padding: 1, border: '1px solid var(--border-strong)', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
         </label>
-        <span style={{ width: 1, height: 22, background: '#374151', margin: '0 2px', flexShrink: 0 }} />
+        <span style={{ width: 1, height: 22, background: 'var(--border-strong)', margin: '0 2px', flexShrink: 0 }} />
         <button onClick={reset} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>Reset to Default</button>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          {savedMsg && <span style={{ color: savedMsg === 'Save failed' ? '#f87171' : '#4ade80', fontSize: 13, fontWeight: 600 }}>{savedMsg}</span>}
+          {savedMsg && <span style={{ color: savedMsg === 'Save failed' ? 'var(--danger)' : 'var(--success)', fontSize: 13, fontWeight: 600 }}>{savedMsg}</span>}
           <button onClick={save} disabled={saving}
-            style={{ padding: '7px 20px', background: saving ? '#1a4bc4' : '#2263ff', color: 'white', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.8 : 1 }}>
+            style={{ padding: '7px 20px', background: 'var(--accent)', color: 'var(--accent-contrast)', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.8 : 1 }}>
             {saving ? 'Saving...' : 'Save Layout'}
           </button>
         </div>
@@ -443,24 +443,24 @@ export default function InvoiceHeaderDesigner({
         <div style={{
           display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center',
           marginBottom: 10, padding: '8px 14px',
-          background: '#0d1526', border: '1px solid #1e3a5f', borderRadius: 10,
+          background: 'color-mix(in srgb, var(--accent) 10%, var(--bg-elevated))', border: '1px solid color-mix(in srgb, var(--accent) 30%, var(--border))', borderRadius: 10,
         }}>
           {sel.kind === 'text' && <>
-            <span style={{ fontSize: 11, color: '#60a5fa', fontWeight: 700, marginRight: 2 }}>TEXT</span>
+            <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, marginRight: 2 }}>TEXT</span>
             {editingId !== sel.id
               ? <button style={{ fontSize: 12, padding: '3px 10px' }} onClick={() => setEditingId(sel.id)}>Edit Text</button>
               : <button style={{ fontSize: 12, padding: '3px 10px' }} className="secondary" onClick={() => setEditingId(null)}>Done</button>
             }
             <input type="number" min={8} max={96} value={sel.fontSize ?? 14}
               onChange={e => updateElem(sel.id, { fontSize: +e.target.value || 14 })}
-              style={{ width: 52, padding: '3px 6px', fontSize: 12, background: '#1e293b', border: '1px solid #374151', color: '#e8eef5', borderRadius: 6 }}
+              style={{ width: 52, padding: '3px 6px', fontSize: 12, background: 'var(--bg-sunken)', border: '1px solid var(--border-strong)', color: 'var(--text)', borderRadius: 6 }}
               title="Font size (px)" />
-            <span style={{ color: '#374151', fontSize: 11 }}>px</span>
+            <span style={{ color: 'var(--text-faint)', fontSize: 11 }}>px</span>
 
             {/* Bold / Italic */}
             {([['bold', 'B', 'bold'], ['italic', 'I', 'italic']] as [keyof HElem, string, string][]).map(([k, label, style]) => (
               <button key={label} onClick={() => updateElem(sel.id, { [k]: !sel[k] })}
-                style={{ fontWeight: 700, fontStyle: style === 'italic' ? 'italic' : 'normal', fontSize: 13, padding: '3px 10px', background: sel[k] ? '#2263ff' : '#1e293b', color: sel[k] ? 'white' : '#94a3b8', border: '1px solid #374151', borderRadius: 6, cursor: 'pointer' }}>
+                style={{ fontWeight: 700, fontStyle: style === 'italic' ? 'italic' : 'normal', fontSize: 13, padding: '3px 10px', background: sel[k] ? 'var(--accent)' : 'var(--bg-sunken)', color: sel[k] ? 'var(--accent-contrast)' : 'var(--text-muted)', border: '1px solid var(--border-strong)', borderRadius: 6, cursor: 'pointer' }}>
                 {label}
               </button>
             ))}
@@ -468,7 +468,7 @@ export default function InvoiceHeaderDesigner({
             {/* Alignment */}
             {(['left', 'center', 'right'] as Align[]).map(a => (
               <button key={a} onClick={() => updateElem(sel.id, { align: a })}
-                style={{ fontSize: 13, padding: '3px 9px', background: sel.align === a ? '#2263ff' : '#1e293b', color: sel.align === a ? 'white' : '#94a3b8', border: '1px solid #374151', borderRadius: 6, cursor: 'pointer' }}
+                style={{ fontSize: 13, padding: '3px 9px', background: sel.align === a ? 'var(--accent)' : 'var(--bg-sunken)', color: sel.align === a ? 'var(--accent-contrast)' : 'var(--text-muted)', border: '1px solid var(--border-strong)', borderRadius: 6, cursor: 'pointer' }}
                 title={`Align ${a}`}>
                 {a === 'left' ? '≡' : a === 'center' ? '☰' : '≡'}
                 <span style={{ fontSize: 10, marginLeft: 2 }}>{a[0].toUpperCase()}</span>
@@ -477,22 +477,22 @@ export default function InvoiceHeaderDesigner({
 
             {/* Color */}
             <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>Color</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Color</span>
               <input type="color" value={sel.color ?? '#111111'}
                 onChange={e => updateElem(sel.id, { color: e.target.value })}
-                style={{ width: 28, height: 28, padding: 1, border: '1px solid #374151', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
+                style={{ width: 28, height: 28, padding: 1, border: '1px solid var(--border-strong)', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
             </label>
           </>}
 
           {sel.kind === 'logo' && <>
-            <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 700, marginRight: 2 }}>LOGO</span>
+            <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 700, marginRight: 2 }}>LOGO</span>
             <button style={{ fontSize: 12, padding: '3px 12px' }} onClick={() => setCropElem(sel)}>Crop</button>
             {sel.crop && (
               <button className="secondary" style={{ fontSize: 12, padding: '3px 10px' }} onClick={() => updateElem(sel.id, { crop: null })}>Clear Crop</button>
             )}
           </>}
 
-          <span style={{ marginLeft: 'auto', fontSize: 11, color: '#475569' }}>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-faint)' }}>
             x:{Math.round(sel.x)} y:{Math.round(sel.y)} · {Math.round(sel.w)}×{Math.round(sel.h)}
           </span>
         </div>
@@ -509,8 +509,8 @@ export default function InvoiceHeaderDesigner({
               width: CW, height: CH,
               background: layout.bgColor,
               borderBottom: `3px solid ${layout.borderColor}`,
-              boxShadow: '0 4px 24px rgba(0,0,0,0.45)',
-              outline: '1px solid #374151',
+              boxShadow: '0 4px 24px var(--overlay)',
+              outline: '1px solid var(--border-strong)',
               transformOrigin: 'top left',
               transform: `scale(${scale})`,
               userSelect: 'none',
@@ -583,7 +583,7 @@ export default function InvoiceHeaderDesigner({
         </div>
       </div>
 
-      <p style={{ margin: '8px 0 0', color: '#4b5563', fontSize: 12 }}>
+      <p style={{ margin: '8px 0 0', color: 'var(--text-muted)', fontSize: 12 }}>
         Drag to move · Double-click text to edit · Drag corners to resize · Click canvas background to deselect
       </p>
 

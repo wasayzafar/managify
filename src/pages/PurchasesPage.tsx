@@ -1,11 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { db, Item, Purchase, StoreInfo } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
+import { usePagination } from '../hooks/usePagination'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
-import { auth } from '../firebase'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import { getThermalPrintStyles, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
+import { StatCard } from '../ui/StatCard'
+import {
+	PiShoppingBagDuotone, PiMoneyDuotone, PiCreditCardDuotone, PiStorefrontDuotone,
+	PiTagDuotone, PiPhoneDuotone, PiCalendarBlankDuotone, PiBarcodeDuotone, PiPlusDuotone,
+	PiMagnifyingGlassDuotone, PiDotsThreeVerticalDuotone, PiPrinterDuotone, PiFilePdfDuotone,
+	PiTrashDuotone, PiWarningCircleDuotone, PiWarningDuotone, PiCaretDownDuotone,
+	PiCaretDoubleLeftDuotone, PiCaretLeftDuotone, PiCaretRightDuotone, PiCaretDoubleRightDuotone,
+	PiDownloadDuotone,
+} from 'react-icons/pi'
+
+const fieldLabelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 } as const
 
 export default function PurchasesPage() {
 	const [rows, setRows] = useState<Purchase[]>([])
@@ -23,8 +34,13 @@ export default function PurchasesPage() {
 	const [note, setNote] = useState('')
 	const [paymentType, setPaymentType] = useState<'debit' | 'credit'>('debit')
 	const [creditDeadline, setCreditDeadline] = useState('')
-	const [showAllPurchases, setShowAllPurchases] = useState(false)
 	const [paymentFilter, setPaymentFilter] = useState<'all' | 'debit' | 'credit'>('all')
+	const [searchTerm, setSearchTerm] = useState('')
+	const [itemsPerPage, setItemsPerPage] = useState(10)
+	const [openRowMenu, setOpenRowMenu] = useState<string | null>(null)
+	const [deleteTarget, setDeleteTarget] = useState<Purchase | null>(null)
+	const [deleting, setDeleting] = useState(false)
+	const [formError, setFormError] = useState('')
 	const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7))
 	const [reportStart, setReportStart] = useState(() => new Date().toISOString().slice(0, 10))
 	const [reportEnd, setReportEnd] = useState(() => new Date().toISOString().slice(0, 10))
@@ -36,7 +52,11 @@ export default function PurchasesPage() {
 	type ImeiPair = { imei1: string; imei2: string; warrantyTill: string }
 	const [imeiPairs, setImeiPairs] = useState<ImeiPair[]>([])
 
-	const existing = items.find(i => i.sku === sku)
+	// Match SKUs case-insensitively and ignore stray whitespace — otherwise a
+	// scanned/typed SKU that differs only in case or padding from an existing
+	// item's SKU silently creates a duplicate item instead of recognizing it.
+	const trimmedSku = sku.trim()
+	const existing = trimmedSku ? items.find(i => i.sku.trim().toLowerCase() === trimmedSku.toLowerCase()) : undefined
 
 	// Close supplier dropdown on outside click
 	useEffect(() => {
@@ -95,14 +115,19 @@ export default function PurchasesPage() {
 
 	const onSubmit = async () => {
 		if (submitting) return
+		setFormError('')
 		const qtyNum = Number(qty || '0')
-		if (!qtyNum) { alert('Please enter a quantity'); return }
-		if (!sku)    { alert('Please enter a SKU'); return }
+		if (!trimmedSku)             { setFormError('Please enter a SKU.'); return }
+		if (!qtyNum || qtyNum <= 0)  { setFormError('Please enter a valid quantity.'); return }
 		setSubmitting(true)
 		try {
 			let found = existing
 			if (!found) {
-				found = await db.createItem({ sku, name: newName || sku, price: newPrice ? Number(newPrice) : 0 })
+				found = await db.createItem({
+					sku: trimmedSku, name: newName || trimmedSku,
+					price: newPrice ? Number(newPrice) : 0,
+					costPrice: costPrice ? Number(costPrice) : 0,
+				})
 				setItems(await db.listItems())
 			} else if (newPrice && Number(newPrice) !== found.price) {
 				await db.updateItem(found.id, { price: Number(newPrice) })
@@ -142,10 +167,9 @@ export default function PurchasesPage() {
 			setNote(''); setNewName(''); setNewPrice(''); setShowSupplierDropdown(false)
 			setPurchasedAt(new Date().toISOString().slice(0, 16))
 			setIsMobilePhone(false); setImeiPairs([])
-			alert('Purchase added successfully!')
 		} catch (err: any) {
 			console.error('Error creating purchase:', err)
-			alert('Error creating purchase: ' + (err?.message || err))
+			setFormError('Could not save purchase. Please try again.')
 		} finally {
 			setSubmitting(false)
 		}
@@ -177,6 +201,16 @@ export default function PurchasesPage() {
 	}
 
 	function downloadBulkPdf(filtered: Purchase[], title: string, subtitle: string) {
+		// jsPDF's built-in fonts only cover WinAnsi/Latin-1, not currency glyphs
+		// like ₹ (INR) — those render as blank boxes. Fall back to the plain
+		// ISO code for anything outside the safe ASCII symbols ($) so the
+		// report never silently loses the currency on every price cell.
+		const pdfSafeSymbol: Record<string, string> = { USD: '$', PKR: 'PKR', AED: 'AED', SAR: 'SAR' }
+		const pdfCurrency = (amount: number) => {
+			const symbol = pdfSafeSymbol[storeInfo.currency] ?? storeInfo.currency
+			return symbol === '$' ? `$${amount.toFixed(2)}` : `${symbol} ${amount.toFixed(2)}`
+		}
+
 		const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' })
 		const pageW = pdf.internal.pageSize.getWidth()
 		const pageH = pdf.internal.pageSize.getHeight()
@@ -196,7 +230,7 @@ export default function PurchasesPage() {
 		const cols = [
 			{ label: 'Date', w: 22 }, { label: 'SKU', w: 22 }, { label: 'Item', w: 44 },
 			{ label: 'Qty', w: 12 }, { label: 'Cost/Unit', w: 24 }, { label: 'Total', w: 24 },
-			{ label: 'Supplier', w: 30 }, { label: 'Payment', w: 22 },
+			{ label: 'Vendor', w: 30 }, { label: 'Payment', w: 22 },
 		]
 		const tableW = cols.reduce((s, c) => s + c.w, 0)
 		const startX = (pageW - tableW) / 2
@@ -216,13 +250,13 @@ export default function PurchasesPage() {
 			const q = r.quantity || r.qty || 0; const c = r.costPrice || 0; const t = q * c
 			totalCost += t
 			if (idx % 2 === 0) { pdf.setFillColor(252, 252, 252); pdf.rect(startX, y, tableW, 6, 'F') }
-			const cells = [r.date ? new Date(r.date).toLocaleDateString() : '—', item?.sku || '—', item?.name || 'Unknown', String(q), c ? formatCurrency(c, storeInfo.currency) : '—', t ? formatCurrency(t, storeInfo.currency) : '—', r.supplier || '—', r.paymentType === 'credit' ? 'Credit' : 'Debit']
+			const cells = [r.date ? new Date(r.date).toLocaleDateString() : '—', item?.sku || '—', item?.name || 'Unknown', String(q), c ? pdfCurrency(c) : '—', t ? pdfCurrency(t) : '—', r.supplier || '—', r.paymentType === 'credit' ? 'Credit' : 'Debit']
 			let x = startX; cols.forEach((col, ci) => { const text = pdf.splitTextToSize(cells[ci], col.w - 2)[0] || ''; pdf.text(text, x + 1, y + 4); x += col.w }); y += 6
 		})
 
 		y += 2; pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9)
 		pdf.text(`Total: ${filtered.length} purchases`, margin, y)
-		pdf.text(`Total Cost: ${formatCurrency(totalCost, storeInfo.currency)}`, pageW - margin, y, { align: 'right' })
+		pdf.text(`Total Cost: ${pdfCurrency(totalCost)}`, pageW - margin, y, { align: 'right' })
 
 		const totalPages = (pdf as any).internal.getNumberOfPages()
 		for (let i = 1; i <= totalPages; i++) {
@@ -252,129 +286,167 @@ export default function PurchasesPage() {
 		downloadBulkPdf(filtered, 'Purchase Report', `${new Date(reportStart).toLocaleDateString()} – ${new Date(reportEnd).toLocaleDateString()}`)
 	}
 
-	async function handleDeletePurchase(id: string) {
-		if (!window.confirm('Delete this purchase? Stock will be reduced automatically.')) return
+	async function confirmDeletePurchase() {
+		if (!deleteTarget) return
+		setDeleting(true)
 		try {
-			await db.deletePurchase(id)
+			await db.deletePurchase(deleteTarget.id)
 			const [p, i] = await Promise.all([db.listPurchases(), db.listItems()])
 			setRows(p); setItems(i)
+			setDeleteTarget(null)
 		} catch (err: any) {
 			alert('Error deleting purchase: ' + (err?.message || err))
+		} finally {
+			setDeleting(false)
 		}
 	}
 
+	const stats = useMemo(() => {
+		const totalPurchases = rows.length
+		const totalSpend = rows.reduce((s, r) => s + (r.quantity || r.qty || 0) * (r.costPrice || 0), 0)
+		const creditRows = rows.filter(r => r.paymentType === 'credit')
+		const creditTotal = creditRows.reduce((s, r) => s + (r.quantity || r.qty || 0) * (r.costPrice || 0), 0)
+		return { totalPurchases, totalSpend, creditTotal, creditCount: creditRows.length }
+	}, [rows])
+
+	const filteredRows = useMemo(() => {
+		const term = searchTerm.trim().toLowerCase()
+		return rows.filter(r => {
+			if (paymentFilter !== 'all' && r.paymentType !== paymentFilter) return false
+			if (!term) return true
+			const item = items.find(i => i.id === r.itemId)
+			return (item?.sku || '').toLowerCase().includes(term) || (item?.name || '').toLowerCase().includes(term) || (r.supplier || '').toLowerCase().includes(term)
+		})
+	}, [rows, items, paymentFilter, searchTerm])
+
+	const pagination = usePagination({ data: filteredRows, itemsPerPage })
+	useEffect(() => { pagination.goToPage(1) }, [searchTerm, paymentFilter, itemsPerPage])
+
 	if (loading) {
 		return (
-			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
+			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: 'var(--text)' }}>
 				Loading purchases...
 			</div>
 		)
 	}
 
-	const filteredRows = showAllPurchases
-		? rows.filter(r => paymentFilter === 'all' || r.paymentType === paymentFilter)
-		: rows.slice(0, 5)
-
 	return (
-		<div className="card">
-			<div style={{ marginBottom: 4 }}>
-				<h2 style={{ margin: '0 0 4px 0' }}>Purchases</h2>
-				<p style={{ margin: 0, fontSize: 13, color: '#6b7280' }}>Press Ctrl + M to quickly add a purchase</p>
+		<div>
+			{/* ── Header ── */}
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+				<div>
+					<h1 style={{ margin: '0 0 4px 0', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>Purchases</h1>
+					<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13.5 }}>{stats.totalPurchases} purchase order{stats.totalPurchases === 1 ? '' : 's'} recorded · Press Ctrl + M to quick-add</p>
+				</div>
+			</div>
+
+			{/* ── Summary cards ── */}
+			<div className="dashboard-stats">
+				<StatCard icon={<PiShoppingBagDuotone />} tint="accent" label="Total purchases" value={stats.totalPurchases} caption="All-time purchase orders" />
+				<StatCard icon={<PiMoneyDuotone />} tint="accent" iconStyle={{ background: 'color-mix(in srgb, #8b5cf6 16%, var(--bg-elevated))', color: '#8b5cf6' }} label="Total spend" value={formatCurrency(stats.totalSpend, storeInfo.currency)} caption="Cost of goods purchased" />
+				<StatCard icon={<PiCreditCardDuotone />} tint={stats.creditTotal > 0 ? 'warning' : 'neutral'} label="Credit owed" value={formatCurrency(stats.creditTotal, storeInfo.currency)} caption={`${stats.creditCount} unpaid credit purchase${stats.creditCount === 1 ? '' : 's'}`} captionColor={stats.creditTotal > 0 ? 'var(--warning)' : undefined} />
+				<StatCard icon={<PiStorefrontDuotone />} tint="accent" label="Vendors" value={suppliers.length} caption="Active vendors on record" />
 			</div>
 
 			{/* ── Add Purchase ── */}
-			<div className="card" style={{ marginTop: 16, opacity: submitting ? 0.7 : 1, pointerEvents: submitting ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
-				<h3 style={{ marginTop: 0 }}>
+			<div className="card" style={{ opacity: submitting ? 0.7 : 1, pointerEvents: submitting ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
+				<h3 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700 }}>
 					Add Purchase
-					{submitting && <span style={{ marginLeft: 10, fontSize: 13, fontWeight: 400, color: '#f59e0b' }}>Saving…</span>}
+					{submitting && <span style={{ marginLeft: 10, fontSize: 13, fontWeight: 400, color: 'var(--warning)' }}>Saving…</span>}
 				</h3>
 				<div className="form-grid">
 					<div>
-						<label>SKU</label>
-						<input value={sku} onChange={e => setSku(e.target.value)} placeholder="Scan or enter SKU" autoFocus />
+						<label style={fieldLabelStyle}>SKU</label>
+						<div style={{ position: 'relative' }}>
+							<PiTagDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+							<input value={sku} onChange={e => setSku(e.target.value)} placeholder="Scan or enter SKU" autoFocus style={{ paddingLeft: 32 }} />
+						</div>
 					</div>
 					<div>
-						<label>Quantity</label>
+						<label style={fieldLabelStyle}>Quantity</label>
 						<input type="number" value={qty} onChange={e => setQty(e.target.value)} placeholder="Qty" />
 					</div>
 					<div>
-						<label>Cost Price</label>
+						<label style={fieldLabelStyle}>Cost Price</label>
 						<input type="number" step="0.01" value={costPrice} onChange={e => setCostPrice(e.target.value)} placeholder="Cost Price" />
 					</div>
 					<div>
-						<label>Selling Price</label>
+						<label style={fieldLabelStyle}>Selling Price</label>
 						<input type="number" step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="Selling Price" />
 					</div>
 					<div style={{ position: 'relative' }} data-supplier-dropdown>
-						<label>Supplier Name</label>
-						<input value={supplier} onChange={e => setSupplier(e.target.value)} onFocus={() => setShowSupplierDropdown(true)} placeholder="Supplier" />
+						<label style={fieldLabelStyle}>Vendor</label>
+						<div style={{ position: 'relative' }}>
+							<PiStorefrontDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+							<input value={supplier} onChange={e => setSupplier(e.target.value)} onFocus={() => setShowSupplierDropdown(true)} placeholder="Vendor name" style={{ paddingLeft: 32, paddingRight: 32 }} />
+							<PiCaretDownDuotone style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 13, pointerEvents: 'none' }} />
+						</div>
 						{showSupplierDropdown && suppliers.length > 0 && (
-							<div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid #ddd', borderRadius: 4, maxHeight: 200, overflowY: 'auto', zIndex: 1000, color: 'black' }}>
+							<div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 8, maxHeight: 200, overflowY: 'auto', boxShadow: '0 8px 24px var(--overlay)', zIndex: 1000 }}>
 								{suppliers.filter(s => s.name.toLowerCase().includes(supplier.toLowerCase())).map(s => (
-									<div key={s.id} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
-										onClick={() => { setSupplier(s.name); setSupplierPhone(s.phone); setShowSupplierDropdown(false) }}
-										onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
-										onMouseLeave={e => (e.currentTarget.style.background = 'white')}>
-										<div style={{ fontWeight: 'bold' }}>{s.name}</div>
-										<div style={{ fontSize: 12, color: '#666' }}>{s.phone}</div>
-									</div>
+									<button key={s.id} type="button"
+										onMouseDown={() => { setSupplier(s.name); setSupplierPhone(s.phone); setShowSupplierDropdown(false) }}
+										style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+										onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+										onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+									>
+										<PiStorefrontDuotone style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+										<span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+										{s.phone && <span style={{ color: 'var(--text-faint)', fontSize: 12 }}>{s.phone}</span>}
+									</button>
 								))}
 							</div>
 						)}
 					</div>
 					<div>
-						<label>Supplier Phone</label>
-						<input value={supplierPhone} onChange={e => setSupplierPhone(e.target.value)} placeholder="Phone" />
-					</div>
-					<div>
-						<label>Time of Purchase</label>
-						<input type="datetime-local" value={purchasedAt} onChange={e => setPurchasedAt(e.target.value)} />
-					</div>
-					<div>
-						<label>Note</label>
-						<input value={note} onChange={e => setNote(e.target.value)} placeholder="Note" />
-					</div>
-					<div>
-						<label>Payment Type</label>
-						<select value={paymentType} onChange={e => setPaymentType(e.target.value as 'debit' | 'credit')}>
-							<option value="debit">Debit Purchase</option>
-							<option value="credit">Credit Purchase</option>
-						</select>
-					</div>
-					{paymentType === 'credit' && (
-						<div>
-							<label>Credit Deadline</label>
-							<input type="date" value={creditDeadline} onChange={e => setCreditDeadline(e.target.value)} />
+						<label style={fieldLabelStyle}>Vendor Phone</label>
+						<div style={{ position: 'relative' }}>
+							<input value={supplierPhone} onChange={e => setSupplierPhone(e.target.value)} placeholder="Phone" style={{ paddingRight: 34 }} />
+							<PiPhoneDuotone style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
 						</div>
-					)}
+					</div>
+					<div>
+						<label style={fieldLabelStyle}>Time of Purchase</label>
+						<div style={{ position: 'relative' }}>
+							<PiCalendarBlankDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+							<input type="datetime-local" value={purchasedAt} onChange={e => setPurchasedAt(e.target.value)} style={{ paddingLeft: 32 }} />
+						</div>
+					</div>
+					<div>
+						<label style={fieldLabelStyle}>Note</label>
+						<input value={note} onChange={e => setNote(e.target.value)} placeholder="Note (optional)" />
+					</div>
+
 					{isMobile && (
 						<div style={{ gridColumn: '1 / -1' }}>
-							<label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-								<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} />
-								Enable Barcode Scanner
+							<label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--text-muted)' }}>
+								<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} style={{ width: 'auto' }} />
+								<PiBarcodeDuotone size={15} /> Enable Barcode Scanner
 							</label>
 							{scanEnabled && (
 								<>
 									<video ref={videoRef} style={{ width: '100%', maxHeight: 220, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />
-									{scanError && <div className="badge" style={{ background: '#ff4444', marginTop: 8 }}>{scanError}</div>}
+									{scanError && <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, color: 'var(--danger)', fontSize: 13 }}><PiWarningCircleDuotone size={15} /> {scanError}</div>}
 									{isScanning && <div className="badge" style={{ marginTop: 8 }}>Scanner active — point camera at barcode</div>}
 								</>
 							)}
 						</div>
 					)}
+
 					{sku && !existing && (
 						<div>
-							<label>Item Name <span style={{ color: '#f59e0b', fontSize: 12 }}>(new product)</span></label>
+							<label style={fieldLabelStyle}>Item Name <span style={{ color: 'var(--warning)', fontWeight: 400 }}>(new product)</span></label>
 							<input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Item Name" />
 						</div>
 					)}
+
 					{mobilePOS && (
 						<div style={{ gridColumn: '1 / -1' }}>
 							<label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
 								<input
 									type="checkbox"
 									checked={isMobilePhone}
-									style={{ width: 'auto', cursor: 'pointer', accentColor: '#2263ff' }}
+									style={{ width: 'auto', cursor: 'pointer', accentColor: 'var(--accent)' }}
 									onChange={e => {
 										const checked = e.target.checked
 										setIsMobilePhone(checked)
@@ -387,21 +459,21 @@ export default function PurchasesPage() {
 									}}
 								/>
 								<span style={{ fontWeight: 600, fontSize: 14 }}>Mobile Phone Purchase</span>
-								{isMobilePhone && <span style={{ fontSize: 12, color: '#9ca3af' }}>— enter 2 IMEIs per unit</span>}
+								{isMobilePhone && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— enter 2 IMEIs per unit</span>}
 							</label>
 						</div>
 					)}
 					{mobilePOS && isMobilePhone && imeiPairs.length > 0 && (
 						<div style={{ gridColumn: '1 / -1' }}>
-							<label style={{ display: 'block', marginBottom: 10, fontSize: 13, color: '#9ca3af' }}>
+							<label style={{ display: 'block', marginBottom: 10, fontSize: 13, color: 'var(--text-muted)' }}>
 								IMEI Numbers ({imeiPairs.length} {imeiPairs.length === 1 ? 'unit' : 'units'})
 							</label>
 							<div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 								{imeiPairs.map((pair, i) => (
 									<div key={i} style={{ display: 'grid', gridTemplateColumns: '70px 1fr 1fr 150px', gap: 8, alignItems: 'end' }}>
-										<span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500, paddingBottom: 8 }}>Unit {i + 1}</span>
+										<span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500, paddingBottom: 8 }}>Unit {i + 1}</span>
 										<div>
-											<label style={{ display: 'block', fontSize: 11, color: '#6b7280', marginBottom: 2 }}>IMEI 1</label>
+											<label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>IMEI 1</label>
 											<input
 												placeholder="IMEI 1"
 												value={pair.imei1}
@@ -410,7 +482,7 @@ export default function PurchasesPage() {
 											/>
 										</div>
 										<div>
-											<label style={{ display: 'block', fontSize: 11, color: '#6b7280', marginBottom: 2 }}>IMEI 2</label>
+											<label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>IMEI 2</label>
 											<input
 												placeholder="IMEI 2"
 												value={pair.imei2}
@@ -419,7 +491,7 @@ export default function PurchasesPage() {
 											/>
 										</div>
 										<div>
-											<label style={{ display: 'block', fontSize: 11, color: '#6b7280', marginBottom: 2 }}>Warranty Till</label>
+											<label style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Warranty Till</label>
 											<input
 												type="date"
 												value={pair.warrantyTill}
@@ -432,99 +504,172 @@ export default function PurchasesPage() {
 							</div>
 						</div>
 					)}
+
+					<div style={{ gridColumn: '1 / -1' }}>
+						<label style={fieldLabelStyle}>Payment Type</label>
+						<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+							<button type="button" onClick={() => setPaymentType('debit')}
+								style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 16px', borderRadius: 8, border: '1px solid', fontSize: 13, background: paymentType === 'debit' ? 'color-mix(in srgb, var(--success) 14%, var(--bg-elevated))' : 'transparent', color: 'var(--success)', borderColor: paymentType === 'debit' ? 'var(--success)' : 'var(--border-strong)', cursor: 'pointer', fontWeight: paymentType === 'debit' ? 700 : 500 }}
+							><PiMoneyDuotone size={15} /> Debit Purchase</button>
+							<button type="button" onClick={() => setPaymentType('credit')}
+								style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 16px', borderRadius: 8, border: '1px solid', fontSize: 13, background: paymentType === 'credit' ? 'color-mix(in srgb, var(--warning) 14%, var(--bg-elevated))' : 'transparent', color: 'var(--warning)', borderColor: paymentType === 'credit' ? 'var(--warning)' : 'var(--border-strong)', cursor: 'pointer', fontWeight: paymentType === 'credit' ? 700 : 500 }}
+							><PiCreditCardDuotone size={15} /> Credit Purchase</button>
+							{paymentType === 'credit' && (
+								<>
+									<span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Due Date:</span>
+									<input type="date" value={creditDeadline} onChange={e => setCreditDeadline(e.target.value)} style={{ fontSize: 13, width: 'auto' }} />
+								</>
+							)}
+						</div>
+					</div>
+
+					{formError && (
+						<div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--danger)', fontSize: 13 }}>
+							<PiWarningCircleDuotone size={15} /> {formError}
+						</div>
+					)}
+
 					<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-						<button onClick={onSubmit} disabled={submitting} style={{ opacity: submitting ? 0.6 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}>
-						{submitting ? 'Adding…' : 'Add Purchase'}
-					</button>
+						<button onClick={onSubmit} disabled={submitting} style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: submitting ? 0.6 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}>
+							<PiPlusDuotone size={15} /> {submitting ? 'Adding…' : 'Add Purchase'}
+						</button>
 					</div>
 				</div>
 			</div>
 
 			{/* ── Download Report ── */}
-			<div className="card" style={{ marginTop: 16 }}>
-				<h3 style={{ marginTop: 0 }}>Download Purchase Report</h3>
+			<div className="card">
+				<h3 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700 }}>Download Purchase Report</h3>
 				<div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
 					<div style={{ flex: 1, minWidth: 200 }}>
-						<label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#9ca3af' }}>By Month</label>
+						<label style={fieldLabelStyle}>By Month</label>
 						<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
 							<input type="month" value={reportMonth} onChange={e => setReportMonth(e.target.value)} style={{ flex: 1 }} />
-							<button onClick={downloadMonthPdf} style={{ whiteSpace: 'nowrap' }}>Download</button>
+							<button className="secondary" onClick={downloadMonthPdf} style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}><PiFilePdfDuotone size={14} /> Download</button>
 						</div>
 					</div>
 					<div style={{ flex: 2, minWidth: 280 }}>
-						<label style={{ display: 'block', marginBottom: 6, fontSize: 13, color: '#9ca3af' }}>By Date Range</label>
+						<label style={fieldLabelStyle}>By Date Range</label>
 						<div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
 							<input type="date" value={reportStart} onChange={e => setReportStart(e.target.value)} style={{ flex: 1, minWidth: 120 }} />
-							<span style={{ color: '#6b7280' }}>to</span>
+							<span style={{ color: 'var(--text-muted)' }}>to</span>
 							<input type="date" value={reportEnd} onChange={e => setReportEnd(e.target.value)} style={{ flex: 1, minWidth: 120 }} />
-							<button onClick={downloadDateRangePdf} style={{ whiteSpace: 'nowrap' }}>Download</button>
+							<button className="secondary" onClick={downloadDateRangePdf} style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}><PiFilePdfDuotone size={14} /> Download</button>
 						</div>
 					</div>
 					<div style={{ display: 'flex', alignItems: 'flex-end' }}>
-						<button className="secondary" onClick={downloadAllTimePdf}>All Time PDF</button>
+						<button className="secondary" onClick={downloadAllTimePdf} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><PiDownloadDuotone size={14} /> All Time PDF</button>
 					</div>
 				</div>
 			</div>
 
 			{/* ── Purchase List ── */}
-			<div className="card" style={{ marginTop: 16 }}>
-				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-					<h3 style={{ margin: 0 }}>
-						{showAllPurchases ? 'All Purchases' : 'Recent Purchases'}
-						<span style={{ marginLeft: 8, fontSize: 13, fontWeight: 400, color: '#6b7280' }}>({rows.length} total)</span>
-					</h3>
-					<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-						{showAllPurchases && (
-							<select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value as 'all' | 'debit' | 'credit')} style={{ fontSize: 13 }}>
-								<option value="all">All</option>
-								<option value="debit">Debit</option>
-								<option value="credit">Credit</option>
+			<div className="card">
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+					<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+						<div style={{ position: 'relative' }}>
+							<PiMagnifyingGlassDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+							<input
+								type="text"
+								placeholder="Search by SKU, item, or vendor…"
+								value={searchTerm}
+								onChange={e => setSearchTerm(e.target.value)}
+								style={{ padding: '7px 10px 7px 32px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-sunken)', color: 'var(--text)', minWidth: 220, fontSize: 13 }}
+							/>
+						</div>
+						<select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value as 'all' | 'debit' | 'credit')} style={{ width: 'auto', fontSize: 13, padding: '6px 8px', borderRadius: 7 }}>
+							<option value="all">All payments</option>
+							<option value="debit">Debit</option>
+							<option value="credit">Credit</option>
+						</select>
+						<span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Showing {pagination.currentData.length} of {pagination.totalItems} purchases</span>
+					</div>
+
+					<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+						<label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
+							Show
+							<select value={itemsPerPage} onChange={e => setItemsPerPage(Number(e.target.value))} style={{ width: 'auto', padding: '5px 8px', fontSize: 13, borderRadius: 7 }}>
+								<option value={10}>10</option>
+								<option value={20}>20</option>
+								<option value={50}>50</option>
+								<option value={100}>100</option>
 							</select>
+							per page
+						</label>
+
+						{pagination.totalPages > 1 && (
+							<div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+								<button className="secondary" onClick={pagination.goToFirstPage} disabled={!pagination.hasPrevPage} style={{ display: 'flex', padding: 6 }}><PiCaretDoubleLeftDuotone size={13} /></button>
+								<button className="secondary" onClick={pagination.prevPage}      disabled={!pagination.hasPrevPage} style={{ display: 'flex', padding: 6 }}><PiCaretLeftDuotone size={13} /></button>
+								<span style={{ padding: '0 6px', fontSize: 13, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Page {pagination.currentPage} of {pagination.totalPages}</span>
+								<button className="secondary" onClick={pagination.nextPage}      disabled={!pagination.hasNextPage} style={{ display: 'flex', padding: 6 }}><PiCaretRightDuotone size={13} /></button>
+								<button className="secondary" onClick={pagination.goToLastPage}  disabled={!pagination.hasNextPage} style={{ display: 'flex', padding: 6 }}><PiCaretDoubleRightDuotone size={13} /></button>
+							</div>
 						)}
-						<button className="secondary" onClick={() => setShowAllPurchases(!showAllPurchases)}>
-							{showAllPurchases ? 'Show Recent' : 'Show All'}
-						</button>
 					</div>
 				</div>
 
-				{filteredRows.length === 0 ? (
-					<div style={{ textAlign: 'center', padding: 32, color: '#4b5563' }}>No purchases found</div>
+				{pagination.currentData.length === 0 ? (
+					<div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>No purchases found</div>
 				) : (
 					<div style={{ overflowX: 'auto' }}>
 						<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
 							<thead>
-								<tr style={{ background: '#141920' }}>
-									{['Date', 'SKU', 'Item', 'Qty', 'Cost/Unit', 'Total', 'Supplier', 'Payment', 'Actions'].map(h => (
-										<th key={h} style={{ padding: '10px 12px', textAlign: h === 'Qty' || h === 'Cost/Unit' || h === 'Total' ? 'right' : 'left', borderBottom: '2px solid #243245', color: '#8899aa', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+								<tr style={{ background: 'var(--bg-sunken)' }}>
+									{['Date', 'SKU', 'Item', 'Qty', 'Cost/Unit', 'Total', 'Vendor', 'Payment'].map(h => (
+										<th key={h} style={{ padding: '10px 12px', textAlign: h === 'Qty' || h === 'Cost/Unit' || h === 'Total' ? 'right' : 'left', borderBottom: '2px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
 									))}
+									<th style={{ padding: '10px 12px', width: 40 }}></th>
 								</tr>
 							</thead>
 							<tbody>
-								{filteredRows.map(r => {
+								{pagination.currentData.map(r => {
 									const item = items.find(i => i.id === r.itemId)
 									const q = r.quantity || r.qty || 0
 									const total = q * (r.costPrice || 0)
 									return (
-										<tr key={r.id} style={{ borderBottom: '1px solid #1a2030' }}
-											onMouseEnter={e => (e.currentTarget.style.background = '#141920')}
+										<tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}
+											onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
 											onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-											<td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: '#94a3b8' }}>{r.date ? new Date(r.date).toLocaleDateString() : '—'}</td>
-											<td style={{ padding: '10px 12px', color: '#94a3b8' }}>{item?.sku || '—'}</td>
+											<td style={{ padding: '10px 12px', whiteSpace: 'nowrap', color: 'var(--text-muted)' }}>{r.date ? new Date(r.date).toLocaleDateString() : '—'}</td>
+											<td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item?.sku || '—'}</td>
 											<td style={{ padding: '10px 12px', fontWeight: 500 }}>{item?.name || 'Unknown'}</td>
 											<td style={{ padding: '10px 12px', textAlign: 'right' }}>{q}</td>
 											<td style={{ padding: '10px 12px', textAlign: 'right' }}>{r.costPrice != null ? formatCurrency(r.costPrice, storeInfo.currency) : '—'}</td>
-											<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{total != null ? formatCurrency(total, storeInfo.currency) : '—'}</td>
-											<td style={{ padding: '10px 12px', color: '#94a3b8' }}>{r.supplier || '—'}</td>
+											<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{total ? formatCurrency(total, storeInfo.currency) : '—'}</td>
+											<td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{r.supplier || '—'}</td>
 											<td style={{ padding: '10px 12px' }}>
-												<span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: r.paymentType === 'credit' ? '#451a03' : '#052e16', color: r.paymentType === 'credit' ? '#fb923c' : '#4ade80' }}>
+												<span style={{ padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: r.paymentType === 'credit' ? 'var(--warning-bg)' : 'var(--success-bg)', color: r.paymentType === 'credit' ? 'var(--warning)' : 'var(--success)' }}>
 													{r.paymentType === 'credit' ? 'Credit' : 'Debit'}
 												</span>
 											</td>
-											<td style={{ padding: '10px 12px' }}>
-												<div style={{ display: 'flex', gap: 6 }}>
-													<button style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => printInvoice(r)}>Print</button>
-													<button className="secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => downloadInvoicePdf(r)}>PDF</button>
-													<button className="secondary" style={{ padding: '4px 10px', fontSize: 12, color: '#f87171', borderColor: '#7f1d1d' }} onClick={() => handleDeletePurchase(r.id)}>Delete</button>
+											<td style={{ padding: '10px 12px', textAlign: 'center', position: 'relative' }}>
+												<div tabIndex={-1} onBlur={() => setTimeout(() => setOpenRowMenu(m => m === r.id ? null : m), 150)}>
+													<button className="secondary" onClick={() => setOpenRowMenu(m => m === r.id ? null : r.id)} style={{ display: 'inline-flex', padding: 6, background: 'transparent', color: 'var(--text-muted)' }}>
+														<PiDotsThreeVerticalDuotone size={16} />
+													</button>
+													{openRowMenu === r.id && (
+														<div style={{ position: 'absolute', top: '100%', right: 8, marginTop: 2, minWidth: 160, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 8, boxShadow: '0 8px 24px var(--overlay)', zIndex: 100, overflow: 'hidden', textAlign: 'left' }}>
+															<button
+																onMouseDown={() => { printInvoice(r); setOpenRowMenu(null) }}
+																style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+																onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+																onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+															><PiPrinterDuotone size={14} /> Print</button>
+															<button
+																onMouseDown={() => { downloadInvoicePdf(r); setOpenRowMenu(null) }}
+																style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+																onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+																onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+															><PiFilePdfDuotone size={14} /> Download PDF</button>
+															<button
+																onMouseDown={() => { setDeleteTarget(r); setOpenRowMenu(null) }}
+																style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--danger)', fontSize: 13, cursor: 'pointer' }}
+																onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+																onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+															><PiTrashDuotone size={14} /> Delete</button>
+														</div>
+													)}
 												</div>
 											</td>
 										</tr>
@@ -536,9 +681,34 @@ export default function PurchasesPage() {
 				)}
 			</div>
 
+			{/* ── Delete confirmation ── */}
+			{deleteTarget && (
+				<div style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}
+					onClick={() => !deleting && setDeleteTarget(null)}
+				>
+					<div className="card" style={{ maxWidth: 380, width: '100%', marginBottom: 0 }} onClick={e => e.stopPropagation()}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+							<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'var(--danger-bg)', color: 'var(--danger)', flexShrink: 0 }}>
+								<PiWarningDuotone size={17} />
+							</span>
+							<h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Delete this purchase?</h3>
+						</div>
+						<p style={{ margin: '0 0 16px', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.5 }}>
+							Stock added by this purchase will be reduced automatically. This can't be undone.
+						</p>
+						<div className="form-actions">
+							<button className="secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button>
+							<button onClick={confirmDeletePurchase} disabled={deleting} style={{ background: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
+								<PiTrashDuotone size={15} /> {deleting ? 'Deleting…' : 'Delete Purchase'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* Hidden invoice divs for print/PDF — rendered off-screen */}
 			<div style={{ position: 'fixed', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
-				{filteredRows.map(r => {
+				{pagination.currentData.map(r => {
 					const item = items.find(i => i.id === r.itemId)
 					return (
 						<div key={r.id} id={`purch-invoice-${r.id}`} style={{ ...getThermalPrintStyles().container, padding: 20, width: 600 }}>
@@ -560,7 +730,7 @@ export default function PurchasesPage() {
 									{r.paymentType === 'credit' && r.creditDeadline && <><strong>Deadline:</strong> {new Date(r.creditDeadline).toLocaleDateString()}<br /></>}
 								</div>
 								<div style={{ fontSize: 13, lineHeight: 1.7, textAlign: 'right' }}>
-									<strong>Supplier:</strong> {r.supplier || 'N/A'}<br />
+									<strong>Vendor:</strong> {r.supplier || 'N/A'}<br />
 									<strong>Phone:</strong> {r.supplierPhone || 'N/A'}
 								</div>
 							</div>

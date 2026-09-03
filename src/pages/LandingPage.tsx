@@ -51,7 +51,7 @@ const features = [
   {
     icon: <FiShoppingCart size={22} />,
     title: 'Purchase Management',
-    desc: 'Log supplier purchases, track cost prices, generate bulk purchase PDFs, and export to Excel.',
+    desc: 'Log vendor purchases, track cost prices, generate bulk purchase PDFs, and export to Excel.',
   },
   {
     icon: <FiDollarSign size={22} />,
@@ -102,15 +102,15 @@ const industries = [
   {
     icon: '👔',
     name: 'Garment & Apparel',
-    desc: 'Manage clothing stock by size and variant, track seasonal inventory, and generate supplier purchase orders.',
+    desc: 'Manage clothing stock by size and variant, track seasonal inventory, and generate vendor purchase orders.',
     tags: ['Variants', 'Seasonal Stock', 'PO Management'],
     color: '#8b5cf6',
   },
   {
     icon: <FiSettings size={24} />,
     name: 'Electronics & Computers',
-    desc: 'Component-level inventory, SKU-based billing, supplier credit tracking, and detailed profit reports.',
-    tags: ['SKU Billing', 'Supplier Credits', 'Profit Reports'],
+    desc: 'Component-level inventory, SKU-based billing, vendor credit tracking, and detailed profit reports.',
+    tags: ['SKU Billing', 'Vendor Credits', 'Profit Reports'],
     color: '#06b6d4',
   },
   {
@@ -123,8 +123,8 @@ const industries = [
   {
     icon: <FiTool size={24} />,
     name: 'Auto Parts & Hardware',
-    desc: 'Part number catalogues, multi-supplier purchases, restock alerts, and customer credit ledgers.',
-    tags: ['Part Catalogue', 'Multi-supplier', 'Ledger'],
+    desc: 'Part number catalogues, multi-vendor purchases, restock alerts, and customer credit ledgers.',
+    tags: ['Part Catalogue', 'Multi-vendor', 'Ledger'],
     color: '#f59e0b',
   },
   {
