@@ -13,14 +13,14 @@ const getDaysUntil = (deadline: string) =>
 	Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000)
 
 const statusBadge = (days: number | null, isPaid: boolean, isSale = false, paidAmount = 0, total = 0) => {
-	if (isPaid) return { label: isSale ? 'Returned' : 'Paid', bg: '#052e16', color: '#4ade80' }
+	if (isPaid) return { label: isSale ? 'Returned' : 'Paid', bg: 'var(--success-bg)', color: 'var(--success)' }
 	if (isSale && paidAmount > 0 && paidAmount < total)
-		return { label: 'Partial', bg: '#292200', color: '#fbbf24' }
-	if (days === null) return { label: 'No deadline', bg: '#1e293b', color: '#94a3b8' }
-	if (days < 0) return { label: `${Math.abs(days)}d overdue`, bg: '#450a0a', color: '#f87171' }
-	if (days === 0) return { label: 'Due today', bg: '#451a03', color: '#fb923c' }
-	if (days <= 7) return { label: `${days}d left`, bg: '#451a03', color: '#fb923c' }
-	return { label: `${days}d left`, bg: '#052e16', color: '#4ade80' }
+		return { label: 'Partial', bg: 'var(--warning-bg)', color: 'var(--warning)' }
+	if (days === null) return { label: 'No deadline', bg: 'var(--secondary-btn-bg)', color: 'var(--text-muted)' }
+	if (days < 0) return { label: `${Math.abs(days)}d overdue`, bg: 'var(--danger-bg)', color: 'var(--danger)' }
+	if (days === 0) return { label: 'Due today', bg: 'var(--warning-bg)', color: 'var(--warning)' }
+	if (days <= 7) return { label: `${days}d left`, bg: 'var(--warning-bg)', color: 'var(--warning)' }
+	return { label: `${days}d left`, bg: 'var(--success-bg)', color: 'var(--success)' }
 }
 
 type CreditSale = Sale & { item?: Item }
@@ -286,16 +286,16 @@ export default function CreditsPage() {
 	}
 
 	if (loading) return (
-		<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
+		<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: 'var(--text)' }}>
 			Loading credits...
 		</div>
 	)
 
 	const s = {
 		amtCell: { fontSize: 13, fontWeight: 600 } as React.CSSProperties,
-		paid: { color: '#4ade80' } as React.CSSProperties,
-		remaining: { color: '#f87171' } as React.CSSProperties,
-		muted: { color: '#6b7a8d', fontSize: 11 } as React.CSSProperties,
+		paid: { color: 'var(--success)' } as React.CSSProperties,
+		remaining: { color: 'var(--danger)' } as React.CSSProperties,
+		muted: { color: 'var(--text-muted)', fontSize: 11 } as React.CSSProperties,
 	}
 
 	return (
@@ -303,23 +303,23 @@ export default function CreditsPage() {
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
 				<h2 style={{ margin: 0 }}>Credits</h2>
 				{totalAlerts > 0 && (
-					<span style={{ background: '#451a03', color: '#fb923c', padding: '4px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
+					<span style={{ background: 'var(--warning-bg)', color: 'var(--warning)', padding: '4px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>
 						{totalAlerts} due within 7 days
 					</span>
 				)}
 			</div>
 
 			{/* Tabs */}
-			<div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid #243245' }}>
+			<div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '1px solid var(--border-strong)' }}>
 				{([['purchase', 'Purchase Credits'], ['sale', 'Sales Credits']] as [Tab, string][]).map(([key, label]) => (
 					<button
 						key={key}
 						onClick={() => setTab(key)}
-						style={{ padding: '8px 24px', borderRadius: '6px 6px 0 0', border: 'none', cursor: 'pointer', fontWeight: tab === key ? 700 : 400, fontSize: 14, background: tab === key ? '#2263ff' : 'transparent', color: tab === key ? 'white' : '#8899aa', borderBottom: tab === key ? '2px solid #2263ff' : 'none' }}
+						style={{ padding: '8px 24px', borderRadius: '6px 6px 0 0', border: 'none', cursor: 'pointer', fontWeight: tab === key ? 700 : 400, fontSize: 14, background: tab === key ? 'var(--accent)' : 'transparent', color: tab === key ? 'var(--accent-contrast)' : 'var(--text-muted)', borderBottom: tab === key ? '2px solid var(--accent)' : 'none' }}
 					>
 						{label}
-						{key === 'purchase' && purchaseAlerts > 0 && <span style={{ marginLeft: 6, background: '#fb923c', color: '#1c0a00', borderRadius: 10, padding: '1px 7px', fontSize: 11 }}>{purchaseAlerts}</span>}
-						{key === 'sale' && saleAlerts > 0 && <span style={{ marginLeft: 6, background: '#fb923c', color: '#1c0a00', borderRadius: 10, padding: '1px 7px', fontSize: 11 }}>{saleAlerts}</span>}
+						{key === 'purchase' && purchaseAlerts > 0 && <span style={{ marginLeft: 6, background: 'var(--warning)', color: 'var(--warning-bg)', borderRadius: 10, padding: '1px 7px', fontSize: 11 }}>{purchaseAlerts}</span>}
+						{key === 'sale' && saleAlerts > 0 && <span style={{ marginLeft: 6, background: 'var(--warning)', color: 'var(--warning-bg)', borderRadius: 10, padding: '1px 7px', fontSize: 11 }}>{saleAlerts}</span>}
 					</button>
 				))}
 			</div>
@@ -327,7 +327,7 @@ export default function CreditsPage() {
 			{/* Filters */}
 			<div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
 				<input
-					placeholder={tab === 'purchase' ? 'Search supplier or PO #' : 'Search customer, phone, invoice #'}
+					placeholder={tab === 'purchase' ? 'Search vendor or PO #' : 'Search customer, phone, invoice #'}
 					value={searchTerm}
 					onChange={e => setSearchTerm(e.target.value)}
 					style={{ flex: 1, minWidth: 200 }}
@@ -343,12 +343,12 @@ export default function CreditsPage() {
 			{tab === 'purchase' && (
 				<>
 					{filteredPurchases.length === 0 ? (
-						<div style={{ color: '#6b7280', textAlign: 'center', padding: '40px 0' }}>No purchase credits found.</div>
+						<div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px 0' }}>No purchase credits found.</div>
 					) : (
 						<table className="table">
 							<thead>
 								<tr>
-									<th>PO #</th><th>Supplier</th><th>Phone</th><th>Item</th>
+									<th>PO #</th><th>Vendor</th><th>Phone</th><th>Item</th>
 									<th>Amount</th><th>Purchase Date</th><th>Due Date</th><th>Status</th><th>Actions</th>
 								</tr>
 							</thead>
@@ -371,7 +371,7 @@ export default function CreditsPage() {
 												<button style={{ fontSize: 12, padding: '3px 10px' }} onClick={() => setSelectedPurchase(p)}>View</button>
 												{!p.isPaid && (
 													<button
-														style={{ fontSize: 12, padding: '3px 10px', background: '#4ade80', color: '#052e16', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
+														style={{ fontSize: 12, padding: '3px 10px', background: 'var(--success)', color: 'var(--success-bg)', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}
 														onClick={async () => {
 															await db.updatePurchase(p.id, { isPaid: true })
 															setCreditPurchases(prev => prev.map(x => x.id === p.id ? { ...x, isPaid: true } : x))
@@ -395,12 +395,12 @@ export default function CreditsPage() {
 					{invoiceCredits.length > 0 && (
 						<div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
 							{[
-								{ label: 'Total Customers', value: new Set(invoiceCredits.map(i => i.customerName)).size, color: '#60a5fa', isNum: true },
-								{ label: 'Outstanding', value: formatCurrency(invoiceCredits.reduce((sum, i) => sum + getInvoiceRemaining(i), 0), currency), color: '#f87171', isNum: false },
-								{ label: 'Collected', value: formatCurrency(invoiceCredits.reduce((sum, i) => sum + i.paidAmount, 0), currency), color: '#4ade80', isNum: false },
+								{ label: 'Total Customers', value: new Set(invoiceCredits.map(i => i.customerName)).size, color: 'var(--accent)', isNum: true },
+								{ label: 'Outstanding', value: formatCurrency(invoiceCredits.reduce((sum, i) => sum + getInvoiceRemaining(i), 0), currency), color: 'var(--danger)', isNum: false },
+								{ label: 'Collected', value: formatCurrency(invoiceCredits.reduce((sum, i) => sum + i.paidAmount, 0), currency), color: 'var(--success)', isNum: false },
 							].map(stat => (
-								<div key={stat.label} style={{ background: '#0d1521', border: '1px solid #1a2a3a', borderRadius: 10, padding: '10px 18px', minWidth: 150 }}>
-									<div style={{ fontSize: 11, color: '#6b7a8d', marginBottom: 3 }}>{stat.label}</div>
+								<div key={stat.label} style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border-strong)', borderRadius: 10, padding: '10px 18px', minWidth: 150 }}>
+									<div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>{stat.label}</div>
 									<div style={{ fontSize: 16, fontWeight: 700, color: stat.color }}>{stat.value}</div>
 								</div>
 							))}
@@ -408,24 +408,24 @@ export default function CreditsPage() {
 					)}
 
 					{customerGroups.length === 0 ? (
-						<div style={{ color: '#6b7280', textAlign: 'center', padding: '40px 0' }}>No sales credits found.</div>
+						<div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px 0' }}>No sales credits found.</div>
 					) : (
 						<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 							{customerGroups.map(group => {
 								const outstanding = group.invoices.reduce((sum, i) => sum + getInvoiceRemaining(i), 0)
 								const collected = group.invoices.reduce((sum, i) => sum + i.paidAmount, 0)
 								return (
-									<div key={group.name + group.phone} style={{ border: '1px solid #1a2a3a', borderRadius: 12, overflow: 'hidden' }}>
+									<div key={group.name + group.phone} style={{ border: '1px solid var(--border-strong)', borderRadius: 12, overflow: 'hidden' }}>
 										{/* Customer header */}
-										<div style={{ background: '#0d1521', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+										<div style={{ background: 'var(--bg-sunken)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
 											<div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-												<div style={{ width: 36, height: 36, borderRadius: '50%', background: '#1a2a4a', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa', flexShrink: 0 }}>
+												<div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--accent) 18%, var(--bg-elevated))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', flexShrink: 0 }}>
 													<FiUser size={16} />
 												</div>
 												<div>
-													<div style={{ fontWeight: 700, fontSize: 15, color: '#e8eef5' }}>{group.name}</div>
+													<div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{group.name}</div>
 													{group.phone && (
-														<div style={{ fontSize: 12, color: '#6b7a8d', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+														<div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
 															<FiPhone size={11} /> {group.phone}
 														</div>
 													)}
@@ -434,19 +434,19 @@ export default function CreditsPage() {
 											<div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
 												{collected > 0 && (
 													<div style={{ textAlign: 'right' }}>
-														<div style={{ fontSize: 11, color: '#6b7a8d' }}>Collected</div>
-														<div style={{ fontSize: 13, fontWeight: 600, color: '#4ade80' }}>{formatCurrency(collected, currency)}</div>
+														<div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Collected</div>
+														<div style={{ fontSize: 13, fontWeight: 600, color: 'var(--success)' }}>{formatCurrency(collected, currency)}</div>
 													</div>
 												)}
 												{outstanding > 0 && (
 													<div style={{ textAlign: 'right' }}>
-														<div style={{ fontSize: 11, color: '#6b7a8d' }}>Outstanding</div>
-														<div style={{ fontSize: 15, fontWeight: 700, color: '#f87171' }}>{formatCurrency(outstanding, currency)}</div>
+														<div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Outstanding</div>
+														<div style={{ fontSize: 15, fontWeight: 700, color: 'var(--danger)' }}>{formatCurrency(outstanding, currency)}</div>
 													</div>
 												)}
 												<button
 													onClick={() => downloadCustomerReport(group.name, group.phone, group.invoices)}
-													style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: '#1a2a4a', border: '1px solid #2a3a5a', borderRadius: 8, color: '#60a5fa', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+													style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'color-mix(in srgb, var(--accent) 18%, var(--bg-elevated))', border: '1px solid color-mix(in srgb, var(--accent) 35%, var(--border))', borderRadius: 8, color: 'var(--accent)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
 												>
 													<FiDownload size={13} /> PDF Report
 												</button>
@@ -478,7 +478,7 @@ export default function CreditsPage() {
 
 														return (
 															<React.Fragment key={inv.invoiceKey}>
-																<tr style={{ background: isPaying ? '#0a111a' : undefined }}>
+																<tr style={{ background: isPaying ? 'var(--bg-hover)' : undefined }}>
 																	<td style={{ fontFamily: 'monospace', fontSize: 12 }}>{inv.invoiceNo}</td>
 																	<td style={s.muted}>{inv.date ? new Date(inv.date).toLocaleDateString() : '—'}</td>
 
@@ -494,7 +494,7 @@ export default function CreditsPage() {
 																					autoFocus
 																					style={{ width: 90, padding: '2px 6px', fontSize: 13 }}
 																				/>
-																				<FiX size={13} style={{ cursor: 'pointer', color: '#6b7a8d' }} onClick={() => setEditingId(null)} />
+																				<FiX size={13} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setEditingId(null)} />
 																			</div>
 																		) : (
 																			<span
@@ -535,14 +535,14 @@ export default function CreditsPage() {
 																			<div style={{ display: 'flex', gap: 6 }}>
 																				<button
 																					onClick={() => { setPaymentId(isPaying ? null : inv.invoiceKey); setPaymentVal('') }}
-																					style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 10px', background: isPaying ? '#1a2a1a' : '#052e16', color: '#4ade80', border: '1px solid #166534', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+																					style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 10px', background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success)', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
 																				>
 																					<FiDollarSign size={12} /> {isPaying ? 'Cancel' : 'Add Payment'}
 																				</button>
 																				{remaining === 0 && (
 																					<button
 																						onClick={() => markReturned(inv)}
-																						style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 10px', background: '#052e16', color: '#4ade80', border: '1px solid #166534', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+																						style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 10px', background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success)', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
 																					>
 																						<FiCheck size={12} /> Mark Returned
 																					</button>
@@ -555,9 +555,9 @@ export default function CreditsPage() {
 																{/* Payment input row */}
 																{isPaying && (
 																	<tr>
-																		<td colSpan={8} style={{ background: '#081018', padding: '12px 16px', borderTop: '1px solid #1a2a3a' }}>
+																		<td colSpan={8} style={{ background: 'var(--bg-sunken)', padding: '12px 16px', borderTop: '1px solid var(--border-strong)' }}>
 																			<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-																				<span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>Payment received:</span>
+																				<span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Payment received:</span>
 																				<input
 																					type="number"
 																					min="0"
@@ -571,12 +571,12 @@ export default function CreditsPage() {
 																				<button
 																					onClick={() => addPayment(inv)}
 																					disabled={paymentSaving || !paymentVal}
-																					style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 16px', background: '#166534', color: '#4ade80', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
+																					style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 16px', background: 'var(--success)', color: 'var(--success-bg)', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13 }}
 																				>
 																					<FiCheck size={14} /> {paymentSaving ? 'Saving…' : 'Save Payment'}
 																				</button>
-																				<span style={{ fontSize: 12, color: '#6b7a8d' }}>
-																					Remaining after: <strong style={{ color: '#f87171' }}>
+																				<span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+																					Remaining after: <strong style={{ color: 'var(--danger)' }}>
 																						{formatCurrency(Math.max(0, remaining - (parseFloat(paymentVal) || 0)), currency)}
 																					</strong>
 																				</span>
@@ -600,7 +600,7 @@ export default function CreditsPage() {
 
 			{/* Purchase invoice modal */}
 			{selectedPurchase && (
-				<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
+				<div style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }}>
 					<div className="card" style={{ width: '100%', maxWidth: 800, maxHeight: '90vh', overflow: 'auto' }}>
 						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
 							<h3>Purchase Invoice</h3>
@@ -641,7 +641,7 @@ export default function CreditsPage() {
 									<div><strong>Status:</strong> {selectedPurchase.isPaid ? 'PAID' : 'UNPAID'}</div>
 								</div>
 								<div style={{ fontSize: 13, lineHeight: 1.7, textAlign: 'right' }}>
-									<div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>SUPPLIER</div>
+									<div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>VENDOR</div>
 									<div><strong>{selectedPurchase.supplier || '—'}</strong></div>
 									{selectedPurchase.supplierPhone && <div>Phone: {selectedPurchase.supplierPhone}</div>}
 									{selectedPurchase.supplierAddress && <div>Address: {selectedPurchase.supplierAddress}</div>}

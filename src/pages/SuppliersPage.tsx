@@ -89,21 +89,21 @@ export default function SuppliersPage() {
 
 	if (loading) {
 		return (
-			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
-				Loading suppliers...
+			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: 'var(--text)' }}>
+				Loading vendors...
 			</div>
 		)
 	}
 
 	return (
 		<div className="card">
-			<h2>Suppliers</h2>
+			<h2>Vendors</h2>
 			<form onSubmit={onSubmit} className="form-grid">
-				<input placeholder="Supplier Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
+				<input placeholder="Vendor Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />
 				<input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
 				<input placeholder="Address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
 				<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-					<button type="submit">Add Supplier</button>
+					<button type="submit">Add Vendor</button>
 				</div>
 			</form>
 			<div className="table-container">
@@ -146,8 +146,8 @@ export default function SuppliersPage() {
 								<td>
 									{creditAmount.toFixed(2)}
 									{creditAmount > 0 ? (
-										<button 
-											style={{ marginLeft: '8px', padding: '4px 8px', fontSize: '12px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+										<button
+											style={{ marginLeft: '8px', padding: '4px 8px', fontSize: '12px', background: 'var(--success)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
 											onClick={() => payCredit(s.name, creditAmount)}
 										>
 											Pay

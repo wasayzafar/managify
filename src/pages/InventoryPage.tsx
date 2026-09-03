@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, Fragment, type CSSProperties } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useItems, usePurchases, useInventory, queryKeys } from '../hooks/useDataQueries'
 import { usePagination } from '../hooks/usePagination'
@@ -6,10 +7,43 @@ import { TableSkeleton } from '../components/LoadingSkeleton'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import { exportItemsToShopifyCSV, exportInventoryToExcel } from '../utils/exportCSV'
 import { db, StoreInfo } from '../storage'
+import { StatCard } from '../ui/StatCard'
 import jsPDF from 'jspdf'
+import {
+	PiMagnifyingGlassDuotone, PiFileXlsDuotone, PiFilePdfDuotone, PiStorefrontDuotone,
+	PiCurrencyDollarDuotone, PiWalletDuotone, PiChartLineUpDuotone, PiChartLineDownDuotone,
+	PiPackageDuotone, PiWarningCircleDuotone, PiCheckDuotone, PiXDuotone,
+	PiCaretDoubleLeftDuotone, PiCaretLeftDuotone, PiCaretRightDuotone, PiCaretDoubleRightDuotone,
+	PiCaretUpDuotone, PiCaretDownDuotone, PiFunnelDuotone, PiCaretUpDownDuotone,
+	PiDotsThreeVerticalDuotone, PiPencilDuotone,
+} from 'react-icons/pi'
+
+type StockFilter = 'all' | 'in' | 'low' | 'out' | 'attention'
+
+function stockStatusOf(stock: number): { label: string; tint: 'success' | 'warning' | 'danger' } {
+	if (stock === 0) return { label: 'Out of Stock', tint: 'danger' }
+	if (stock <= 5) return { label: 'Low Stock', tint: 'warning' }
+	return { label: 'In Stock', tint: 'success' }
+}
+
+const exportBtnStyle: CSSProperties = {
+	display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500,
+	background: 'var(--bg-elevated)', color: 'var(--text)', border: '1px solid var(--border-strong)',
+}
+
+function StatusPill({ stock }: { stock: number }) {
+	const { label, tint } = stockStatusOf(stock)
+	return (
+		<span style={{
+			display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 20,
+			fontSize: 11.5, fontWeight: 700, background: `var(--${tint}-bg)`, color: `var(--${tint})`,
+		}}>{label}</span>
+	)
+}
 
 export default function InventoryPage() {
-	const [searchTerm, setSearchTerm] = useState('')
+	const [searchParams] = useSearchParams()
+	const [searchTerm, setSearchTerm] = useState(() => searchParams.get('q') || '')
 	const [currency, setCurrency] = useState('PKR')
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({ storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '' })
 	const [editingQty, setEditingQty] = useState<{ itemId: string, value: string } | null>(null)
@@ -19,6 +53,11 @@ export default function InventoryPage() {
 	const [openImeiItemId, setOpenImeiItemId] = useState<string | null>(null)
 	const [imeiCache, setImeiCache] = useState<Record<string, any[]>>({})
 	const [loadingImeiId, setLoadingImeiId] = useState<string | null>(null)
+	const [itemsPerPage, setItemsPerPage] = useState(20)
+	const [stockFilter, setStockFilter] = useState<StockFilter>('all')
+	const [showFilters, setShowFilters] = useState(false)
+	const [sortDir, setSortDir] = useState<'asc' | 'desc' | null>(null)
+	const [openRowMenu, setOpenRowMenu] = useState<string | null>(null)
 
 	const { data: items = [], isLoading: itemsLoading } = useItems()
 	const { data: purchases = [], isLoading: purchasesLoading } = usePurchases()
@@ -28,6 +67,11 @@ export default function InventoryPage() {
 		loadCurrency().then(setCurrency)
 		db.getStoreInfo().then(setStoreInfo).catch(() => {})
 	}, [])
+
+	useEffect(() => {
+		const q = searchParams.get('q')
+		if (q) setSearchTerm(q)
+	}, [searchParams])
 
 	const loading = itemsLoading || purchasesLoading || inventoryLoading
 
@@ -50,18 +94,29 @@ export default function InventoryPage() {
 		})
 	}, [inventory, items, purchases])
 
-	const filteredItems = useMemo(() =>
-		enrichedInventory.filter(item =>
+	const filteredItems = useMemo(() => {
+		let list = enrichedInventory.filter(item =>
 			item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			item.itemSku.toLowerCase().includes(searchTerm.toLowerCase())
-		), [enrichedInventory, searchTerm])
+		)
+		if (stockFilter === 'in') list = list.filter(i => i.stock > 5)
+		else if (stockFilter === 'low') list = list.filter(i => i.stock > 0 && i.stock <= 5)
+		else if (stockFilter === 'out') list = list.filter(i => i.stock === 0)
+		else if (stockFilter === 'attention') list = list.filter(i => i.stock <= 5)
+		if (sortDir) {
+			list = [...list].sort((a, b) => sortDir === 'asc' ? a.stock - b.stock : b.stock - a.stock)
+		}
+		return list
+	}, [enrichedInventory, searchTerm, stockFilter, sortDir])
 
-	const lowStockItems = useMemo(() => filteredItems.filter(i => i.stock <= 5), [filteredItems])
+	const lowStockItems = useMemo(() => enrichedInventory.filter(i => i.stock <= 5), [enrichedInventory])
 
 	const totalRetail = useMemo(() => enrichedInventory.reduce((s, i) => s + i.totalValue, 0), [enrichedInventory])
 	const totalCost   = useMemo(() => enrichedInventory.reduce((s, i) => s + i.totalCostValue, 0), [enrichedInventory])
 
-	const pagination = usePagination({ data: filteredItems, itemsPerPage: 20 })
+	const pagination = usePagination({ data: filteredItems, itemsPerPage })
+
+	useEffect(() => { pagination.goToPage(1) }, [searchTerm, stockFilter, itemsPerPage])
 
 	async function handleQtySave(itemId: string, currentStock: number) {
 		if (!editingQty || editingQty.itemId !== itemId) return
@@ -113,7 +168,7 @@ export default function InventoryPage() {
 
 	function handleExcelExport() {
 		exportInventoryToExcel(
-			enrichedInventory.map(i => ({
+			filteredItems.map(i => ({
 				sku: i.itemSku, name: i.itemName, stock: i.stock,
 				price: i.price, costPrice: i.costPrice,
 				totalRetail: i.totalValue, totalCost: i.totalCostValue,
@@ -123,6 +178,16 @@ export default function InventoryPage() {
 	}
 
 	function handlePdfExport() {
+		// jsPDF's built-in fonts only cover WinAnsi/Latin-1, not currency glyphs
+		// like ₹ (INR) — those render as blank boxes. Fall back to the plain
+		// ISO code for anything outside the safe ASCII symbols ($) so the
+		// report never silently loses the currency on every price cell.
+		const pdfSafeSymbol: Record<string, string> = { USD: '$', PKR: 'PKR', AED: 'AED', SAR: 'SAR' }
+		const pdfCurrency = (amount: number) => {
+			const symbol = pdfSafeSymbol[currency] ?? currency
+			return symbol === '$' ? `$${amount.toFixed(2)}` : `${symbol} ${amount.toFixed(2)}`
+		}
+
 		const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4' })
 		const pageW = pdf.internal.pageSize.getWidth()
 		const pageH = pdf.internal.pageSize.getHeight()
@@ -160,11 +225,11 @@ export default function InventoryPage() {
 		let totalRetailSum = 0; let totalCostSum = 0
 		pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5)
 
-		enrichedInventory.forEach((item, idx) => {
+		filteredItems.forEach((item, idx) => {
 			if (y > pageH - 20) { pdf.addPage(); y = margin; drawHeader(); pdf.setFont('helvetica', 'normal'); pdf.setFontSize(7.5) }
 			totalRetailSum += item.totalValue; totalCostSum += item.totalCostValue
 			if (idx % 2 === 0) { pdf.setFillColor(252, 252, 252); pdf.rect(startX, y, tableW, 6, 'F') }
-			const cells = [item.itemSku, item.itemName, String(item.stock), formatCurrency(item.price, currency), formatCurrency(item.costPrice, currency), formatCurrency(item.totalValue, currency), formatCurrency(item.totalCostValue, currency)]
+			const cells = [item.itemSku, item.itemName, String(item.stock), pdfCurrency(item.price), pdfCurrency(item.costPrice), pdfCurrency(item.totalValue), pdfCurrency(item.totalCostValue)]
 			let x = startX
 			cols.forEach((c, ci) => { const text = pdf.splitTextToSize(cells[ci], c.w - 2)[0] || ''; pdf.text(text, x + 1, y + 4); x += c.w })
 			y += 6
@@ -172,8 +237,8 @@ export default function InventoryPage() {
 
 		y += 3
 		pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9)
-		pdf.text(`Total Items: ${enrichedInventory.length}`, margin, y)
-		pdf.text(`Total Retail: ${formatCurrency(totalRetailSum, currency)}   Total Cost: ${formatCurrency(totalCostSum, currency)}   Profit: ${formatCurrency(totalRetailSum - totalCostSum, currency)}`, pageW - margin, y, { align: 'right' })
+		pdf.text(`Total Items: ${filteredItems.length}`, margin, y)
+		pdf.text(`Total Retail: ${pdfCurrency(totalRetailSum)}   Total Cost: ${pdfCurrency(totalCostSum)}   Profit: ${pdfCurrency(totalRetailSum - totalCostSum)}`, pageW - margin, y, { align: 'right' })
 
 		const totalPages = (pdf as any).internal.getNumberOfPages()
 		for (let i = 1; i <= totalPages; i++) {
@@ -193,91 +258,158 @@ export default function InventoryPage() {
 		)
 	}
 
+	const potentialProfit = totalRetail - totalCost
+	const profitPositive = potentialProfit >= 0
+
 	return (
-		<div className="card">
+		<div>
 			{/* ── Header ── */}
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
-				<h2 style={{ margin: 0 }}>Inventory</h2>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+				<div>
+					<h1 style={{ margin: '0 0 4px 0', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>Inventory</h1>
+					<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13.5 }}>{enrichedInventory.length} products &middot; {formatCurrency(totalRetail, currency)} in stock value</p>
+				</div>
 				<div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-					<input
-						type="text"
-						placeholder="Search SKU or name…"
-						value={searchTerm}
-						onChange={e => setSearchTerm(e.target.value)}
-						style={{ padding: '8px 12px', border: '1px solid #243245', borderRadius: 6, background: '#0b0f14', color: '#e8eef5', minWidth: 200 }}
-					/>
-					<button className="secondary" onClick={handleExcelExport}>Export Excel</button>
-					<button className="secondary" onClick={handlePdfExport}>Export PDF</button>
-					<button className="secondary" onClick={() => exportItemsToShopifyCSV(
+					<button onClick={handleExcelExport} style={exportBtnStyle}><span style={{ display: 'flex', color: 'var(--success)' }}><PiFileXlsDuotone size={15} /></span> Excel</button>
+					<button onClick={handlePdfExport} style={exportBtnStyle}><span style={{ display: 'flex', color: 'var(--danger)' }}><PiFilePdfDuotone size={15} /></span> PDF</button>
+					<button onClick={() => exportItemsToShopifyCSV(
 						filteredItems.map(i => ({ sku: i.itemSku, name: i.itemName, price: i.price, costPrice: i.costPrice, stock: i.stock })),
 						'inventory_shopify.csv'
-					)}>Shopify CSV</button>
+					)} style={exportBtnStyle}><span style={{ display: 'flex', color: 'var(--success)' }}><PiStorefrontDuotone size={15} /></span> Shopify CSV</button>
 				</div>
 			</div>
 
 			{/* ── Summary cards ── */}
-			<div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-				<div style={{ flex: 1, minWidth: 160, background: '#1a2a1a', border: '1px solid #2d5a2d', borderRadius: 8, padding: '14px 18px' }}>
-					<div style={{ fontSize: 12, color: '#81c784', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Retail Value</div>
-					<div style={{ fontSize: 20, fontWeight: 700, color: '#a5d6a7' }}>{formatCurrency(totalRetail, currency)}</div>
-					<div style={{ fontSize: 11, color: '#4a5a4a', marginTop: 3 }}>Stock × Selling Price</div>
-				</div>
-				<div style={{ flex: 1, minWidth: 160, background: '#111827', border: '1px solid #243245', borderRadius: 8, padding: '14px 18px' }}>
-					<div style={{ fontSize: 12, color: '#90caf9', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Cost Value</div>
-					<div style={{ fontSize: 20, fontWeight: 700, color: '#bbdefb' }}>{formatCurrency(totalCost, currency)}</div>
-					<div style={{ fontSize: 11, color: '#3a4a5a', marginTop: 3 }}>Stock × Cost Price</div>
-				</div>
-				<div style={{ flex: 1, minWidth: 160, background: '#1f1810', border: '1px solid #5a3e1a', borderRadius: 8, padding: '14px 18px' }}>
-					<div style={{ fontSize: 12, color: '#ffcc80', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Potential Profit</div>
-					<div style={{ fontSize: 20, fontWeight: 700, color: '#ffe0b2' }}>{formatCurrency(totalRetail - totalCost, currency)}</div>
-					<div style={{ fontSize: 11, color: '#4a3a20', marginTop: 3 }}>Retail − Cost</div>
-				</div>
-				<div style={{ flex: 1, minWidth: 160, background: '#111827', border: '1px solid #243245', borderRadius: 8, padding: '14px 18px' }}>
-					<div style={{ fontSize: 12, color: '#b0bec5', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Items</div>
-					<div style={{ fontSize: 20, fontWeight: 700, color: '#e8eef5' }}>{enrichedInventory.length}</div>
-					<div style={{ fontSize: 11, color: '#3a4a5a', marginTop: 3 }}>{lowStockItems.length} low stock</div>
-				</div>
+			<div className="dashboard-stats">
+				<StatCard
+					icon={<PiCurrencyDollarDuotone />} tint="accent" label="Total retail value"
+					value={formatCurrency(totalRetail, currency)}
+					caption="Stock × selling price"
+				/>
+				<StatCard
+					icon={<PiWalletDuotone />} tint="accent"
+					iconStyle={{ background: 'color-mix(in srgb, #8b5cf6 16%, var(--bg-elevated))', color: '#8b5cf6' }}
+					label="Total cost value"
+					value={formatCurrency(totalCost, currency)}
+					caption="Stock × cost price"
+				/>
+				<StatCard
+					icon={profitPositive ? <PiChartLineUpDuotone /> : <PiChartLineDownDuotone />}
+					tint={profitPositive ? 'success' : 'danger'} label="Potential profit"
+					value={formatCurrency(potentialProfit, currency)}
+					valueColor={profitPositive ? 'var(--success)' : 'var(--danger)'}
+					caption="Retail − cost"
+				/>
+				<StatCard
+					icon={<PiPackageDuotone />} tint={lowStockItems.length > 0 ? 'danger' : 'neutral'} label="Total items"
+					value={enrichedInventory.length}
+					caption={lowStockItems.length > 0 ? `${lowStockItems.length} low on stock` : 'All well stocked'}
+					captionColor={lowStockItems.length > 0 ? 'var(--danger)' : undefined}
+				/>
 			</div>
 
 			{/* ── Low stock alert ── */}
 			{lowStockItems.length > 0 && (
-				<div style={{ background: '#7f1d1d', color: '#fecaca', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 14 }}>
-					⚠️ <strong>{lowStockItems.length} item{lowStockItems.length > 1 ? 's' : ''}</strong> {lowStockItems.length > 1 ? 'are' : 'is'} low on stock (≤ 5 units)
+				<div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderLeft: '3px solid var(--danger)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, fontSize: 13.5 }}>
+					<PiWarningCircleDuotone style={{ color: 'var(--danger)', fontSize: 18, flexShrink: 0 }} />
+					<span style={{ flex: 1 }}><strong>{lowStockItems.length} item{lowStockItems.length > 1 ? 's' : ''}</strong> {lowStockItems.length > 1 ? 'are' : 'is'} low on stock (≤ 5 units)</span>
+					<button className="secondary" onClick={() => setStockFilter('attention')} style={{ fontSize: 12.5, color: 'var(--danger)', borderColor: 'var(--danger)', background: 'transparent', flexShrink: 0 }}>View low stock</button>
 				</div>
 			)}
 
-			{/* ── Pagination info ── */}
-			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, fontSize: 13, color: '#8899aa' }}>
-				<span>Showing {pagination.currentData.length} of {pagination.totalItems} items</span>
-				{pagination.totalPages > 1 && (
-					<div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-						<button onClick={pagination.goToFirstPage} disabled={!pagination.hasPrevPage} style={{ padding: '3px 8px', fontSize: 12 }}>«</button>
-						<button onClick={pagination.prevPage}      disabled={!pagination.hasPrevPage} style={{ padding: '3px 8px', fontSize: 12 }}>‹</button>
-						<span>Page {pagination.currentPage} / {pagination.totalPages}</span>
-						<button onClick={pagination.nextPage}      disabled={!pagination.hasNextPage} style={{ padding: '3px 8px', fontSize: 12 }}>›</button>
-						<button onClick={pagination.goToLastPage}  disabled={!pagination.hasNextPage} style={{ padding: '3px 8px', fontSize: 12 }}>»</button>
+			<div className="card">
+			{/* ── Toolbar ── */}
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 14 }}>
+				<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+					<div style={{ position: 'relative' }}>
+						<PiMagnifyingGlassDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+						<input
+							type="text"
+							placeholder="Search SKU or name…"
+							value={searchTerm}
+							onChange={e => setSearchTerm(e.target.value)}
+							style={{ padding: '7px 10px 7px 32px', border: '1px solid var(--border-strong)', borderRadius: 8, background: 'var(--bg-sunken)', color: 'var(--text)', minWidth: 200, fontSize: 13 }}
+						/>
 					</div>
-				)}
+					<span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Showing {pagination.currentData.length} of {pagination.totalItems} items</span>
+				</div>
+
+				<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+					<div style={{ position: 'relative' }} tabIndex={-1} onBlur={() => setTimeout(() => setShowFilters(false), 150)}>
+						<button className="secondary" onClick={() => setShowFilters(o => !o)} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, position: 'relative' }}>
+							<PiFunnelDuotone size={14} /> Filters
+							{stockFilter !== 'all' && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)' }} />}
+						</button>
+						{showFilters && (
+							<div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, minWidth: 170, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 8, boxShadow: '0 8px 24px var(--overlay)', zIndex: 100, overflow: 'hidden' }}>
+								{([['all', 'All Items'], ['in', 'In Stock'], ['low', 'Low Stock'], ['out', 'Out of Stock']] as [StockFilter, string][]).map(([val, label]) => (
+									<button
+										key={val}
+										type="button"
+										onMouseDown={() => { setStockFilter(val); setShowFilters(false) }}
+										style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', textAlign: 'left', padding: '8px 12px', background: stockFilter === val ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+										onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+										onMouseLeave={e => (e.currentTarget.style.background = stockFilter === val ? 'var(--bg-hover)' : 'transparent')}
+									>
+										{label}
+										{stockFilter === val && <PiCheckDuotone size={13} style={{ color: 'var(--accent)' }} />}
+									</button>
+								))}
+							</div>
+						)}
+					</div>
+
+					<label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
+						Show
+						<select value={itemsPerPage} onChange={e => setItemsPerPage(Number(e.target.value))} style={{ width: 'auto', padding: '5px 8px', fontSize: 13, borderRadius: 7 }}>
+							<option value={10}>10</option>
+							<option value={20}>20</option>
+							<option value={50}>50</option>
+							<option value={100}>100</option>
+						</select>
+						per page
+					</label>
+
+					{pagination.totalPages > 1 && (
+						<div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+							<button className="secondary" onClick={pagination.goToFirstPage} disabled={!pagination.hasPrevPage} style={{ display: 'flex', padding: 6 }}><PiCaretDoubleLeftDuotone size={13} /></button>
+							<button className="secondary" onClick={pagination.prevPage}      disabled={!pagination.hasPrevPage} style={{ display: 'flex', padding: 6 }}><PiCaretLeftDuotone size={13} /></button>
+							<span style={{ padding: '0 6px', fontSize: 13, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Page {pagination.currentPage} of {pagination.totalPages}</span>
+							<button className="secondary" onClick={pagination.nextPage}      disabled={!pagination.hasNextPage} style={{ display: 'flex', padding: 6 }}><PiCaretRightDuotone size={13} /></button>
+							<button className="secondary" onClick={pagination.goToLastPage}  disabled={!pagination.hasNextPage} style={{ display: 'flex', padding: 6 }}><PiCaretDoubleRightDuotone size={13} /></button>
+						</div>
+					)}
+				</div>
 			</div>
 
 			{/* ── Table ── */}
 			<div style={{ overflowX: 'auto' }}>
 				<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
 					<thead>
-						<tr style={{ background: '#141920', position: 'sticky', top: 0 }}>
-							{['SKU', 'Name', 'Stock', 'Selling Price', 'Cost Price', 'Total Retail', 'Total Cost', ...(mobilePOS ? ['IMEIs'] : [])].map(h => (
-								<th key={h} style={{ padding: '10px 12px', textAlign: h === 'SKU' || h === 'Name' || h === 'IMEIs' ? 'left' : 'right', borderBottom: '2px solid #243245', color: '#8899aa', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
+						<tr style={{ background: 'var(--bg-sunken)', position: 'sticky', top: 0 }}>
+							{['SKU', 'Name', 'Stock', 'Selling Price', 'Cost Price', 'Total Retail', 'Total Cost'].map(h => (
+								<th key={h} style={{ padding: '10px 12px', textAlign: h === 'SKU' || h === 'Name' ? 'left' : 'right', borderBottom: '2px solid var(--border-strong)', color: 'var(--text-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+									{h === 'Stock' ? (
+										<button
+											onClick={() => setSortDir(d => d === 'asc' ? 'desc' : d === 'desc' ? null : 'asc')}
+											style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', padding: 0, color: 'var(--text-muted)', fontWeight: 600, fontSize: 'inherit', cursor: 'pointer' }}
+										>
+											Stock <PiCaretUpDownDuotone size={13} style={{ color: sortDir ? 'var(--accent)' : 'var(--text-faint)' }} />
+										</button>
+									) : h}
+								</th>
 							))}
+							<th style={{ padding: '10px 12px', width: 40 }}></th>
 						</tr>
 					</thead>
 					<tbody>
 						{pagination.currentData.map(item => (
-							<>
-							<tr key={item.itemId} style={{ borderBottom: '1px solid #1a2030', background: item.stock <= 5 ? '#2d1b1b' : 'transparent' }}
-								onMouseEnter={e => (e.currentTarget.style.background = item.stock <= 5 ? '#3a1f1f' : '#141920')}
-								onMouseLeave={e => (e.currentTarget.style.background = item.stock <= 5 ? '#2d1b1b' : 'transparent')}
+							<Fragment key={item.itemId}>
+							<tr key={item.itemId} style={{ borderBottom: '1px solid var(--border)', background: item.stock <= 5 ? 'color-mix(in srgb, var(--danger) 8%, transparent)' : 'transparent' }}
+								onMouseEnter={e => (e.currentTarget.style.background = item.stock <= 5 ? 'color-mix(in srgb, var(--danger) 14%, transparent)' : 'var(--bg-hover)')}
+								onMouseLeave={e => (e.currentTarget.style.background = item.stock <= 5 ? 'color-mix(in srgb, var(--danger) 8%, transparent)' : 'transparent')}
 							>
-								<td style={{ padding: '10px 12px', color: '#94a3b8' }}>{item.itemSku}</td>
+								<td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{item.itemSku}</td>
 								<td style={{ padding: '10px 12px', fontWeight: 500 }}>{item.itemName}</td>
 								<td style={{ padding: '10px 12px', textAlign: 'right' }}>
 									{editingQty?.itemId === item.itemId ? (
@@ -291,53 +423,68 @@ export default function InventoryPage() {
 												style={{ width: 70, padding: '3px 6px', fontSize: 13, textAlign: 'right' }}
 											/>
 											<button onClick={() => handleQtySave(item.itemId, item.stock)} disabled={savingQty}
-												style={{ padding: '3px 8px', fontSize: 12 }}>
-												{savingQty ? '…' : '✓'}
+												style={{ display: 'flex', padding: 6 }}>
+												{savingQty ? '…' : <PiCheckDuotone size={13} />}
 											</button>
 											<button className="secondary" onClick={() => setEditingQty(null)}
-												style={{ padding: '3px 8px', fontSize: 12 }}>✕</button>
+												style={{ display: 'flex', padding: 6 }}><PiXDuotone size={13} /></button>
 										</div>
 									) : (
-										<span
-											onClick={() => setEditingQty({ itemId: item.itemId, value: String(item.stock) })}
-											title="Click to edit stock"
-											style={{ cursor: 'pointer', color: item.stock <= 5 ? '#f87171' : '#e8eef5', fontWeight: item.stock <= 5 ? 700 : 400, borderBottom: '1px dashed #4b5563', paddingBottom: 1 }}>
-											{item.stock <= 5 && <span style={{ marginRight: 4 }}>⚠</span>}{item.stock}
-										</span>
+										<div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+											<span
+												onClick={() => setEditingQty({ itemId: item.itemId, value: String(item.stock) })}
+												title="Click to edit stock"
+												style={{ cursor: 'pointer', color: 'var(--text)', borderBottom: '1px dashed var(--text-muted)', paddingBottom: 1 }}>
+												{item.stock}
+											</span>
+											<StatusPill stock={item.stock} />
+										</div>
 									)}
 								</td>
-								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#86efac' }}>{formatCurrency(item.price, currency)}</td>
-								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#93c5fd' }}>{formatCurrency(item.costPrice, currency)}</td>
+								<td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(item.price, currency)}</td>
+								<td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(item.costPrice, currency)}</td>
 								<td style={{ padding: '10px 12px', textAlign: 'right' }}>{formatCurrency(item.totalValue, currency)}</td>
-								<td style={{ padding: '10px 12px', textAlign: 'right', color: '#94a3b8' }}>{formatCurrency(item.totalCostValue, currency)}</td>
-								{mobilePOS && (
-									<td style={{ padding: '10px 12px' }}>
-										<button
-											className="secondary"
-											onClick={() => handleToggleImeis(item.itemId)}
-											style={{ padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap' }}
-										>
-											{loadingImeiId === item.itemId ? '…' : openImeiItemId === item.itemId ? '▲ Hide' : '▼ IMEIs'}
-										</button>
-									</td>
-								)}
+								<td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(item.totalCostValue, currency)}</td>
+								<td style={{ padding: '10px 12px', textAlign: 'center', position: 'relative' }} tabIndex={-1} onBlur={() => setTimeout(() => setOpenRowMenu(m => m === item.itemId ? null : m), 150)}>
+									<button className="secondary" onClick={() => setOpenRowMenu(m => m === item.itemId ? null : item.itemId)} style={{ display: 'inline-flex', padding: 6, background: 'transparent', color: 'var(--text-muted)' }}>
+										<PiDotsThreeVerticalDuotone size={16} />
+									</button>
+									{openRowMenu === item.itemId && (
+										<div style={{ position: 'absolute', top: '100%', right: 8, marginTop: 2, minWidth: 160, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 8, boxShadow: '0 8px 24px var(--overlay)', zIndex: 100, overflow: 'hidden', textAlign: 'left' }}>
+											<button
+												onMouseDown={() => { setEditingQty({ itemId: item.itemId, value: String(item.stock) }); setOpenRowMenu(null) }}
+												style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+												onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+												onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+											><PiPencilDuotone size={14} /> Edit Stock</button>
+											{mobilePOS && (
+												<button
+													onMouseDown={() => { handleToggleImeis(item.itemId); setOpenRowMenu(null) }}
+													style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+													onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+													onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+												>{openImeiItemId === item.itemId ? <PiCaretUpDuotone size={14} /> : <PiCaretDownDuotone size={14} />} {openImeiItemId === item.itemId ? 'Hide IMEIs' : 'View IMEIs'}</button>
+											)}
+										</div>
+									)}
+								</td>
 							</tr>
 							{mobilePOS && openImeiItemId === item.itemId && (
-								<tr key={`imei-${item.itemId}`} style={{ background: '#0d1521' }}>
+								<tr key={`imei-${item.itemId}`} style={{ background: 'var(--bg-sunken)' }}>
 									<td colSpan={8} style={{ padding: '0 12px 12px 12px' }}>
 										{(() => {
 											const imeis = imeiCache[item.itemId]
-											if (!imeis) return <div style={{ padding: '10px 0', color: '#6b7280', fontSize: 13 }}>Loading…</div>
+											if (!imeis) return <div style={{ padding: '10px 0', color: 'var(--text-muted)', fontSize: 13 }}>Loading…</div>
 											const availableImeis = imeis.filter((i: any) => !i.is_sold)
-											if (availableImeis.length === 0) return <div style={{ padding: '10px 0', color: '#6b7280', fontSize: 13 }}>{imeis.length > 0 ? 'All units sold.' : 'No IMEIs recorded for this item.'}</div>
+											if (availableImeis.length === 0) return <div style={{ padding: '10px 0', color: 'var(--text-muted)', fontSize: 13 }}>{imeis.length > 0 ? 'All units sold.' : 'No IMEIs recorded for this item.'}</div>
 											return (
 												<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 4 }}>
 													<thead>
-														<tr style={{ background: '#141920' }}>
-															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600, width: 40 }}>#</th>
-															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>IMEI 1</th>
-															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>IMEI 2</th>
-															<th style={{ padding: '6px 10px', textAlign: 'left', color: '#6b7280', fontWeight: 600 }}>Warranty Till</th>
+														<tr style={{ background: 'var(--bg-sunken)' }}>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, width: 40 }}>#</th>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>IMEI 1</th>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>IMEI 2</th>
+															<th style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600 }}>Warranty Till</th>
 														</tr>
 													</thead>
 													<tbody>
@@ -345,16 +492,16 @@ export default function InventoryPage() {
 															const warrantyDate = imei.warranty_till ? new Date(imei.warranty_till) : null
 															const warrantyExpired = warrantyDate && warrantyDate < new Date()
 															return (
-															<tr key={imei.id} style={{ borderBottom: '1px solid #1a2030' }}>
-																<td style={{ padding: '6px 10px', color: '#4b5563' }}>{idx + 1}</td>
-																<td style={{ padding: '6px 10px', fontFamily: 'monospace', color: '#93c5fd' }}>{imei.imei1}</td>
-																<td style={{ padding: '6px 10px', fontFamily: 'monospace', color: imei.imei2 ? '#93c5fd' : '#374151' }}>{imei.imei2 || '—'}</td>
+															<tr key={imei.id} style={{ borderBottom: '1px solid var(--border)' }}>
+																<td style={{ padding: '6px 10px', color: 'var(--text-muted)' }}>{idx + 1}</td>
+																<td style={{ padding: '6px 10px', fontFamily: 'monospace', color: 'var(--text)' }}>{imei.imei1}</td>
+																<td style={{ padding: '6px 10px', fontFamily: 'monospace', color: imei.imei2 ? 'var(--text)' : 'var(--text-muted)' }}>{imei.imei2 || '—'}</td>
 																<td style={{ padding: '6px 10px', fontSize: 12 }}>
 																	{warrantyDate ? (
-																		<span style={{ color: warrantyExpired ? '#f87171' : '#4ade80' }}>
+																		<span style={{ color: warrantyExpired ? 'var(--danger)' : 'var(--success)' }}>
 																			{warrantyDate.toLocaleDateString()}{warrantyExpired ? ' (expired)' : ''}
 																		</span>
-																	) : <span style={{ color: '#374151' }}>—</span>}
+																	) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
 																</td>
 															</tr>
 															)
@@ -366,10 +513,10 @@ export default function InventoryPage() {
 									</td>
 								</tr>
 							)}
-							</>
+							</Fragment>
 						))}
 						{pagination.currentData.length === 0 && (
-							<tr><td colSpan={mobilePOS ? 8 : 7} style={{ padding: 32, textAlign: 'center', color: '#4a5568' }}>No items found</td></tr>
+							<tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>No items found</td></tr>
 						)}
 					</tbody>
 				</table>
@@ -383,13 +530,14 @@ export default function InventoryPage() {
 						if (pageNum > pagination.totalPages) return null
 						return (
 							<button key={pageNum} onClick={() => pagination.goToPage(pageNum)}
-								style={{ padding: '6px 12px', background: pageNum === pagination.currentPage ? '#2263ff' : '#1a2030', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: pageNum === pagination.currentPage ? 700 : 400 }}>
+								style={{ padding: '6px 12px', background: pageNum === pagination.currentPage ? 'var(--accent)' : 'var(--secondary-btn-bg)', color: pageNum === pagination.currentPage ? 'var(--accent-contrast)' : 'var(--secondary-btn-text)', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: pageNum === pagination.currentPage ? 700 : 400 }}>
 								{pageNum}
 							</button>
 						)
 					})}
 				</div>
 			)}
+			</div>
 		</div>
 	)
 }

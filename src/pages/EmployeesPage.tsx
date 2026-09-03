@@ -103,7 +103,7 @@ export default function EmployeesPage() {
 
 	if (loading) {
 		return (
-			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: '#e8eef5' }}>
+			<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh', color: 'var(--text)' }}>
 				Loading employees...
 			</div>
 		)

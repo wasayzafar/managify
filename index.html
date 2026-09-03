@@ -58,6 +58,17 @@
 		</script>
 		
 		<title>Managify - Store Management System & POS Solution | Inventory, Sales & Billing</title>
+		<script>
+			(function () {
+				try {
+					var saved = localStorage.getItem('theme');
+					var resolved = saved === 'light' || saved === 'dark'
+						? saved
+						: (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+					document.documentElement.setAttribute('data-theme', resolved);
+				} catch (e) {}
+			})();
+		</script>
 	</head>
 	<body>
 		<div id="root"></div>

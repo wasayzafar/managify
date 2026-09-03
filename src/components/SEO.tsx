@@ -29,9 +29,9 @@ const pageData: Record<string, SEOProps> = {
     keywords: 'sales management, POS transactions, invoice generation, sales tracking, customer orders'
   },
   '/purchases': {
-    title: 'Purchase Management - Supplier Orders | Managify',
-    description: 'Manage supplier orders, track purchase history, and control procurement processes for your business.',
-    keywords: 'purchase management, supplier orders, procurement, purchase tracking, vendor management'
+    title: 'Purchase Management - Vendor Orders | Managify',
+    description: 'Manage vendor orders, track purchase history, and control procurement processes for your business.',
+    keywords: 'purchase management, vendor orders, procurement, purchase tracking, vendor management'
   },
   '/billing': {
     title: 'Billing & Invoicing - POS Billing System',
@@ -54,9 +54,9 @@ const pageData: Record<string, SEOProps> = {
     keywords: 'employee management, staff administration, user roles, team management, staff tracking'
   },
   '/suppliers': {
-    title: 'Supplier Management - Vendor Relations',
-    description: 'Manage supplier information, contact details, and vendor relationships for efficient procurement.',
-    keywords: 'supplier management, vendor management, supplier database, vendor relations, procurement contacts'
+    title: 'Vendor Management - Vendor Relations',
+    description: 'Manage vendor information, contact details, and vendor relationships for efficient procurement.',
+    keywords: 'vendor management, vendor database, vendor relations, procurement contacts'
   },
   '/expenses': {
     title: 'Expense Management - Business Expenses',

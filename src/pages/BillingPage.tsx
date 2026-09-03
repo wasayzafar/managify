@@ -7,6 +7,11 @@ import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintP
 import { preloadImageAsBase64, getCachedImage } from '../utils/imageCache'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import { InvoiceHeader, ThermalHeader, InvoiceFooter, preloadBrandingLogos } from '../utils/invoiceHeader'
+import {
+	PiCopyDuotone, PiUserDuotone, PiCaretDownDuotone, PiPhoneDuotone, PiCalendarBlankDuotone,
+	PiMagnifyingGlassDuotone, PiPlusDuotone, PiTrayDuotone, PiReceiptDuotone, PiTrashDuotone,
+	PiMoneyDuotone, PiCreditCardDuotone,
+} from 'react-icons/pi'
 
  type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number, originalPrice?: number, imei1?: string, imei2?: string, warrantyTill?: string }
 //test
@@ -38,6 +43,8 @@ export default function BillingPage() {
 	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any, serviceFrom?: string, serviceTo?: string } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
 	const [finalizing, setFinalizing] = useState(false)
+	const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
+	const [invoiceNoCopied, setInvoiceNoCopied] = useState(false)
 	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
 		storeName: 'Managify',
 		phone: '',
@@ -57,6 +64,24 @@ export default function BillingPage() {
 		const billDiscountAmount = (subtotal * billDiscount) / 100
 		return subtotal - billDiscountAmount
 	}, [subtotal, billDiscount])
+
+	const customerSuggestions = useMemo(() => {
+		const seen = new Set<string>()
+		const list: { name: string, phone?: string }[] = []
+		for (const inv of savedInvoices) {
+			const name = (inv.customer || '').trim()
+			if (!name || seen.has(name)) continue
+			seen.add(name)
+			list.push({ name, phone: inv.phone })
+		}
+		return list
+	}, [savedInvoices])
+
+	const filteredCustomers = useMemo(() => {
+		const q = customer.trim().toLowerCase()
+		const base = q ? customerSuggestions.filter(c => c.name.toLowerCase().includes(q)) : customerSuggestions
+		return base.slice(0, 6)
+	}, [customerSuggestions, customer])
 
 	// Load store info
 	useEffect(() => {
@@ -202,9 +227,9 @@ export default function BillingPage() {
 			<div
 				data-imei-dropdown
 				tabIndex={-1}
-				style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#0b0f14', border: '1px solid #243245', borderRadius: 6, minWidth: 300, boxShadow: '0 4px 16px rgba(0,0,0,0.5)', outline: 'none' }}
+				style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: 'var(--bg-sunken)', border: '1px solid var(--border-strong)', borderRadius: 6, minWidth: 300, boxShadow: '0 4px 16px var(--overlay)', outline: 'none' }}
 			>
-				<div style={{ padding: '8px', borderBottom: '1px solid #243245' }}>
+				<div style={{ padding: '8px', borderBottom: '1px solid var(--border-strong)' }}>
 					<input
 						placeholder="Search IMEI..."
 						value={imeiSearchTerm}
@@ -212,14 +237,14 @@ export default function BillingPage() {
 						onBlur={e => {
 							if (!(e.relatedTarget as Element | null)?.closest('[data-imei-dropdown]')) closeImeiDropdown()
 						}}
-						style={{ width: '100%', fontSize: 12, fontFamily: 'monospace', background: '#141920', border: '1px solid #2d3748', borderRadius: 4, color: '#e8eef5', padding: '6px 8px', boxSizing: 'border-box' }}
+						style={{ width: '100%', fontSize: 12, fontFamily: 'monospace', background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 4, color: 'var(--text)', padding: '6px 8px', boxSizing: 'border-box' }}
 					/>
 				</div>
 				<div style={{ maxHeight: 200, overflowY: 'auto' }}>
 					{allImeis === undefined ? (
-						<div style={{ padding: '10px 14px', color: '#6b7280', fontSize: 12 }}>Loadingâ€¦</div>
+						<div style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: 12 }}>Loadingâ€¦</div>
 					) : available.length === 0 ? (
-						<div style={{ padding: '10px 14px', color: '#6b7280', fontSize: 12 }}>
+						<div style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: 12 }}>
 							{imeiSearchTerm ? 'No matching IMEIs' : 'No available IMEIs in stock'}
 						</div>
 					) : available.map((imei: any) => (
@@ -230,16 +255,16 @@ export default function BillingPage() {
 								updateLine(line.id, { imei1: imei.imei1, imei2: imei.imei2 || '', warrantyTill: imei.warranty_till || '' })
 								closeImeiDropdown()
 							}}
-							style={{ padding: '8px 14px', cursor: 'pointer', borderBottom: '1px solid #1a2030', fontSize: 12, fontFamily: 'monospace' }}
-							onMouseEnter={e => (e.currentTarget.style.background = '#141920')}
+							style={{ padding: '8px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border)', fontSize: 12, fontFamily: 'monospace' }}
+							onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
 							onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
 						>
-							<div style={{ color: '#e8eef5', letterSpacing: 0.5 }}>IMEI 1: {imei.imei1}</div>
-							{imei.imei2 && <div style={{ color: '#6b7280', fontSize: 11 }}>IMEI 2: {imei.imei2}</div>}
+							<div style={{ color: 'var(--text)', letterSpacing: 0.5 }}>IMEI 1: {imei.imei1}</div>
+							{imei.imei2 && <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>IMEI 2: {imei.imei2}</div>}
 							{imei.warranty_till && (() => {
 								const exp = new Date(imei.warranty_till)
 								const expired = exp < new Date()
-								return <div style={{ fontSize: 11, color: expired ? '#f87171' : '#4ade80' }}>Warranty: {exp.toLocaleDateString()}{expired ? ' (expired)' : ''}</div>
+								return <div style={{ fontSize: 11, color: expired ? 'var(--danger)' : 'var(--success)' }}>Warranty: {exp.toLocaleDateString()}{expired ? ' (expired)' : ''}</div>
 							})()}
 						</div>
 					))}
@@ -382,36 +407,95 @@ export default function BillingPage() {
 		pdf.save(`${lastInvoice?.invoiceNo || 'invoice'}.pdf`)
 	}
 
+	const fieldLabelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }
+
 	return (
-		<div className="card" style={{ position: 'relative', opacity: finalizing ? 0.6 : 1, pointerEvents: finalizing ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
+		<div>
+			<div style={{ marginBottom: 16 }}>
+				<h1 style={{ margin: '0 0 2px 0', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>Billing</h1>
+				<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12.5 }}>Create a new invoice for your customer</p>
+			</div>
+
+			<div style={{ position: 'relative', opacity: finalizing ? 0.6 : 1, pointerEvents: finalizing ? 'none' : 'auto', transition: 'opacity 0.2s' }}>
 			{finalizing && (
-				<div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 12 }}>
-					<div style={{ background: '#0b0f14', border: '1px solid #243245', borderRadius: 12, padding: '20px 36px', color: '#e8eef5', fontSize: 15, fontWeight: 600, letterSpacing: 0.3 }}>
+				<div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+					<div style={{ background: 'var(--bg-sunken)', border: '1px solid var(--border-strong)', borderRadius: 12, padding: '20px 36px', color: 'var(--text)', fontSize: 15, fontWeight: 600, letterSpacing: 0.3 }}>
 						Finalizing billâ€¦
 					</div>
 				</div>
 			)}
-			<h2>Billing</h2>
-			<div className="form-grid" style={{ marginBottom: 12 }}>
-				<input placeholder="Invoice No" value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} />
-				<input
-				placeholder={paymentType === 'credit' ? 'Customer Name (required for credit)' : 'Customer'}
-				value={customer}
-				onChange={e => setCustomer(e.target.value)}
-				style={paymentType === 'credit' && !customer.trim() ? { borderColor: '#fb923c', boxShadow: '0 0 0 2px #fb923c33' } : {}}
-			/>
-				<input placeholder="Phone" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+			<div className="card">
+			<div className="form-grid" style={{ marginBottom: periodBilling || ecommerceMode ? 12 : 0 }}>
 				<div>
-					<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Bill Date</label>
-					<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+					<label style={fieldLabelStyle}>Invoice No.</label>
+					<div style={{ position: 'relative' }}>
+						<input placeholder="Invoice No" value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} style={{ paddingRight: 38 }} />
+						<button
+							type="button"
+							title="Copy invoice number"
+							onClick={() => { navigator.clipboard?.writeText(invoiceNo).then(() => { setInvoiceNoCopied(true); setTimeout(() => setInvoiceNoCopied(false), 1500) }) }}
+							style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, padding: 0, background: 'transparent', color: invoiceNoCopied ? 'var(--success)' : 'var(--text-muted)' }}
+						>
+							{invoiceNoCopied ? <PiReceiptDuotone size={15} /> : <PiCopyDuotone size={15} />}
+						</button>
+					</div>
+				</div>
+				<div>
+					<label style={fieldLabelStyle}>Customer</label>
+					<div style={{ position: 'relative' }} tabIndex={-1} onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 150)}>
+						<PiUserDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
 						<input
-							type="datetime-local"
-							value={billDate}
-							disabled={useCurrentDate}
-							onChange={e => setBillDate(e.target.value)}
-							style={{ opacity: useCurrentDate ? 0.45 : 1 }}
+							placeholder={paymentType === 'credit' ? 'Customer name (required for credit)' : 'Select or enter customer'}
+							value={customer}
+							onChange={e => setCustomer(e.target.value)}
+							onFocus={() => setShowCustomerDropdown(true)}
+							style={{
+								paddingLeft: 32, paddingRight: 32,
+								...(paymentType === 'credit' && !customer.trim() ? { borderColor: 'var(--warning)', boxShadow: '0 0 0 2px color-mix(in srgb, var(--warning) 20%, transparent)' } : {}),
+							}}
 						/>
-						<label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#9ca3af', cursor: 'pointer', userSelect: 'none' }}>
+						<PiCaretDownDuotone style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 13, pointerEvents: 'none' }} />
+						{showCustomerDropdown && filteredCustomers.length > 0 && (
+							<div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 8, boxShadow: '0 8px 24px var(--overlay)', zIndex: 100, overflow: 'hidden' }}>
+								{filteredCustomers.map(c => (
+									<button
+										key={c.name}
+										type="button"
+										onMouseDown={() => { setCustomer(c.name); if (c.phone) setCustomerPhone(c.phone); setShowCustomerDropdown(false) }}
+										style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+										onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+										onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+									>
+										<PiUserDuotone style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+										<span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+										{c.phone && <span style={{ color: 'var(--text-faint)', fontSize: 12 }}>{c.phone}</span>}
+									</button>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
+				<div>
+					<label style={fieldLabelStyle}>Phone</label>
+					<div style={{ position: 'relative' }}>
+						<input placeholder="Enter customer phone number" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} style={{ paddingRight: 34 }} />
+						<PiPhoneDuotone style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+					</div>
+				</div>
+				<div>
+					<label style={fieldLabelStyle}>Bill Date</label>
+					<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+						<div style={{ position: 'relative' }}>
+							<PiCalendarBlankDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+							<input
+								type="datetime-local"
+								value={billDate}
+								disabled={useCurrentDate}
+								onChange={e => setBillDate(e.target.value)}
+								style={{ opacity: useCurrentDate ? 0.6 : 1, paddingLeft: 32 }}
+							/>
+						</div>
+						<label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>
 							<input
 								type="checkbox"
 								checked={useCurrentDate}
@@ -436,35 +520,49 @@ export default function BillingPage() {
 				{periodBilling && (
 					<div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
 						<div>
-							<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Service Period From</label>
+							<label style={fieldLabelStyle}>Service Period From</label>
 							<input type="date" value={serviceFrom} onChange={e => setServiceFrom(e.target.value)} />
 						</div>
 						<div>
-							<label style={{ display: 'block', fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>Service Period To</label>
+							<label style={fieldLabelStyle}>Service Period To</label>
 							<input type="date" value={serviceTo} onChange={e => setServiceTo(e.target.value)} />
 						</div>
 					</div>
 				)}
 			</div>
+			</div>
 
 			<div className="card">
-				<h3>Add Items</h3>
-				<div className="form-grid">
-					<input placeholder="Scan or enter SKU" value={skuInput} onChange={e => setSkuInput(e.target.value)} autoFocus />
-					<input placeholder="Qty" type="number" value={qtyInput} onChange={e => setQtyInput(e.target.value)} />
-					<input placeholder="Price (manual only)" type="number" step="0.01" value={priceInput} onChange={e => setPriceInput(e.target.value)} />
-					<div className="form-actions" style={{ gridColumn: '1 / -1' }}>
-						<button onClick={addManual}>Add</button>
-						{isMobile && (
-							<label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-								<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} /> Enable scanner
-							</label>
-						)}
+				<h3 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 700 }}>Add Items</h3>
+				<div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr', gap: 12 }}>
+					<div>
+						<label style={fieldLabelStyle}>SKU</label>
+						<div style={{ position: 'relative' }}>
+							<PiMagnifyingGlassDuotone style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-faint)', fontSize: 15, pointerEvents: 'none' }} />
+							<input placeholder="Scan or enter SKU" value={skuInput} onChange={e => setSkuInput(e.target.value)} autoFocus style={{ paddingLeft: 32 }} />
+						</div>
 					</div>
+					<div>
+						<label style={fieldLabelStyle}>Qty</label>
+						<input placeholder="Qty" type="number" value={qtyInput} onChange={e => setQtyInput(e.target.value)} />
+					</div>
+					<div>
+						<label style={fieldLabelStyle}>Price (manual only)</label>
+						<input placeholder="Enter price manually" type="number" step="0.01" value={priceInput} onChange={e => setPriceInput(e.target.value)} />
+					</div>
+				</div>
+				<div className="form-actions" style={{ justifyContent: isMobile ? 'space-between' : 'flex-end', marginTop: 12 }}>
+					{isMobile && (
+						<label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+							<input type="checkbox" checked={scanEnabled} onChange={e => setScanEnabled(e.target.checked)} /> Enable scanner
+						</label>
+					)}
+					<button onClick={addManual} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><PiPlusDuotone size={15} /> Add</button>
 				</div>
 				{isMobile && <video ref={videoRef} style={{ width: '100%', maxHeight: 240, background: '#111', borderRadius: 12, marginTop: 8 }} muted playsInline />}
 			</div>
 
+			<div className="card">
 			<table className="table">
 				<thead>
 					<tr>
@@ -479,6 +577,15 @@ export default function BillingPage() {
 					</tr>
 				</thead>
 				<tbody>
+					{cart.length === 0 && (
+						<tr>
+							<td colSpan={mobilePOS ? 8 : 7} style={{ padding: '40px 16px', textAlign: 'center' }}>
+								<PiTrayDuotone style={{ fontSize: 36, color: 'var(--text-faint)', marginBottom: 8 }} />
+								<div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>No items added yet</div>
+								<div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>Search and add items to get started</div>
+							</td>
+						</tr>
+					)}
 					{cart.map(l => (
 						<tr key={l.id}>
 							<td>{l.sku}</td>
@@ -538,53 +645,60 @@ export default function BillingPage() {
 						</tr>
 					))}
 				</tbody>
-				<tfoot>
-					<tr>
-						<td colSpan={5} style={{ textAlign: 'right' }}><strong>Subtotal</strong></td>
-						<td>{formatCurrency(subtotal, storeInfo.currency)}</td>
-					</tr>
-					<tr>
-						<td colSpan={4} style={{ textAlign: 'right' }}><strong>Bill Discount %</strong></td>
-						<td><input type="number" min="0" max="100" value={billDiscount} onChange={e => setBillDiscount(Math.min(100, Math.max(0, Number(e.target.value || '0'))))} style={{ width: '60px' }} /></td>
-						<td>{formatCurrency((subtotal * billDiscount) / 100, storeInfo.currency)}</td>
-					</tr>
-					<tr style={{ background: '#2263ff', color: 'white' }}>
-						<td colSpan={5} style={{ textAlign: 'right' }}><strong>Total</strong></td>
-						<td><strong>{formatCurrency(total, storeInfo.currency)}</strong></td>
-					</tr>
-				</tfoot>
 			</table>
 
-			<div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-				<span style={{ color: '#8899aa', fontSize: 13 }}>Payment:</span>
-				<button
-					onClick={() => setPaymentType('debit')}
-					style={{ padding: '5px 16px', borderRadius: 6, border: '1px solid', fontSize: 13, background: paymentType === 'debit' ? '#4ade80' : 'transparent', color: paymentType === 'debit' ? '#052e16' : '#4ade80', borderColor: '#4ade80', cursor: 'pointer', fontWeight: paymentType === 'debit' ? 700 : 400 }}
-				>Cash / Debit</button>
-				<button
-					onClick={() => setPaymentType('credit')}
-					style={{ padding: '5px 16px', borderRadius: 6, border: '1px solid', fontSize: 13, background: paymentType === 'credit' ? '#fb923c' : 'transparent', color: paymentType === 'credit' ? '#1c0a00' : '#fb923c', borderColor: '#fb923c', cursor: 'pointer', fontWeight: paymentType === 'credit' ? 700 : 400 }}
-				>Credit</button>
-				{paymentType === 'credit' && (
-					<>
-						<span style={{ color: '#8899aa', fontSize: 13 }}>Due Date:</span>
-						<input type="date" value={creditDeadline} onChange={e => setCreditDeadline(e.target.value)} style={{ fontSize: 13 }} />
-						<span style={{ color: '#8899aa', fontSize: 13 }}>Down Payment:</span>
-						<input
-							type="number"
-							min="0"
-							value={downPayment || ''}
-							onChange={e => setDownPayment(Number(e.target.value) || 0)}
-							placeholder="0"
-							style={{ fontSize: 13, width: 90 }}
-						/>
-					</>
-				)}
+			<div style={{ padding: '14px 16px 0' }}>
+				<div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13.5 }}>
+					<strong>Subtotal</strong>
+					<span>{formatCurrency(subtotal, storeInfo.currency)}</span>
+				</div>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+					<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+						<strong>Bill Discount %</strong>
+						<input type="number" min="0" max="100" value={billDiscount} onChange={e => setBillDiscount(Math.min(100, Math.max(0, Number(e.target.value || '0'))))} style={{ width: '60px' }} />
+					</div>
+					<span>{formatCurrency((subtotal * billDiscount) / 100, storeInfo.currency)}</span>
+				</div>
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--accent)', color: 'var(--accent-contrast)', borderRadius: 8, padding: '12px 16px', marginTop: 8, fontSize: 15 }}>
+					<strong>Total</strong>
+					<strong>{formatCurrency(total, storeInfo.currency)}</strong>
+				</div>
+
+				<div style={{ marginTop: 16 }}>
+					<label style={fieldLabelStyle}>Payment Method</label>
+					<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+						<button
+							onClick={() => setPaymentType('debit')}
+							style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 16px', borderRadius: 8, border: '1px solid', fontSize: 13, background: paymentType === 'debit' ? 'color-mix(in srgb, var(--success) 14%, var(--bg-elevated))' : 'transparent', color: 'var(--success)', borderColor: paymentType === 'debit' ? 'var(--success)' : 'var(--border-strong)', cursor: 'pointer', fontWeight: paymentType === 'debit' ? 700 : 500 }}
+						><PiMoneyDuotone size={15} /> Cash / Debit</button>
+						<button
+							onClick={() => setPaymentType('credit')}
+							style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 16px', borderRadius: 8, border: '1px solid', fontSize: 13, background: paymentType === 'credit' ? 'color-mix(in srgb, var(--warning) 14%, var(--bg-elevated))' : 'transparent', color: 'var(--warning)', borderColor: paymentType === 'credit' ? 'var(--warning)' : 'var(--border-strong)', cursor: 'pointer', fontWeight: paymentType === 'credit' ? 700 : 500 }}
+						><PiCreditCardDuotone size={15} /> Credit</button>
+						{paymentType === 'credit' && (
+							<>
+								<span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Due Date:</span>
+								<input type="date" value={creditDeadline} onChange={e => setCreditDeadline(e.target.value)} style={{ fontSize: 13 }} />
+								<span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Down Payment:</span>
+								<input
+									type="number"
+									min="0"
+									value={downPayment || ''}
+									onChange={e => setDownPayment(Number(e.target.value) || 0)}
+									placeholder="0"
+									style={{ fontSize: 13, width: 90 }}
+								/>
+							</>
+						)}
+					</div>
+				</div>
+			</div>
 			</div>
 
-			<div className="form-actions" style={{ marginTop: 10 }}>
-				<button onClick={finalize} disabled={finalizing}>{finalizing ? 'Finalizingâ€¦' : 'Finalize Bill'}</button>
-				<button className="secondary" onClick={() => setCart([])}>Clear</button>
+			<div className="form-actions" style={{ marginTop: 14 }}>
+				<button className="secondary" onClick={() => setCart([])} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><PiTrashDuotone size={15} /> Clear</button>
+				<button onClick={finalize} disabled={finalizing} style={{ display: 'flex', alignItems: 'center', gap: 6 }}><PiReceiptDuotone size={15} /> {finalizing ? 'Finalizingâ€¦' : 'Finalize Bill'}</button>
+			</div>
 			</div>
 
 			{lastInvoice && (

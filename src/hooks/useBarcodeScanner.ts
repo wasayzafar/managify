@@ -7,6 +7,16 @@ export function useBarcodeScanner(onScan: (code: string) => void, enabled: boole
 	const [isScanning, setIsScanning] = useState(false)
 	const [error, setError] = useState('')
 
+	// The scan session is started once (see the effect below, keyed only on
+	// `enabled`) and its decode callback is registered at that moment. Calling
+	// `onScan` directly would freeze that closure for the whole session, so a
+	// scan completed after the caller's state changed (e.g. the user typed
+	// into other fields after opening the scanner) would fire a stale
+	// callback and clobber that newer state. Route through a ref that's
+	// always kept current instead.
+	const onScanRef = useRef(onScan)
+	useEffect(() => { onScanRef.current = onScan }, [onScan])
+
 	const startScanning = async () => {
 		if (!enabled) return
 		
@@ -32,7 +42,7 @@ export function useBarcodeScanner(onScan: (code: string) => void, enabled: boole
 				
 				codeReader.decodeFromVideoDevice(undefined, videoRef.current, (result, error) => {
 					if (result) {
-						onScan(result.getText())
+						onScanRef.current(result.getText())
 					}
 				})
 			}
