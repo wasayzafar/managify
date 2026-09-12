@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { db, Purchase, Sale, Item, StoreInfo } from '../storage'
+import { useBranch } from '../auth/BranchContext'
+import { matchesBranch } from '../utils/branchFilter'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -60,8 +62,9 @@ export default function CreditsPage() {
 	const [paymentId, setPaymentId] = useState<string | null>(null)
 	const [paymentVal, setPaymentVal] = useState('')
 	const [paymentSaving, setPaymentSaving] = useState(false)
+	const { currentBranchId, mainBranchId } = useBranch()
 
-	useEffect(() => { loadAll() }, [])
+	useEffect(() => { loadAll() }, [currentBranchId, mainBranchId])
 
 	async function loadAll() {
 		setLoading(true)
@@ -73,8 +76,15 @@ export default function CreditsPage() {
 			setCurrency(await loadCurrency())
 			preloadBrandingLogos().catch(console.warn)
 
+			const branchPurchases = currentBranchId === 'all'
+				? purchases
+				: purchases.filter(p => matchesBranch(p.branchId, currentBranchId, mainBranchId))
+			const branchSales = currentBranchId === 'all'
+				? sales
+				: sales.filter(s => matchesBranch(s.branchId, currentBranchId, mainBranchId))
+
 			setCreditPurchases(
-				purchases
+				branchPurchases
 					.filter(p => p.paymentType === 'credit')
 					.map(p => ({ ...p, item: items.find(i => i.id === p.itemId) }))
 					.sort((a, b) => {
@@ -84,7 +94,7 @@ export default function CreditsPage() {
 					})
 			)
 			setCreditSales(
-				sales
+				branchSales
 					.filter(s => s.paymentType === 'credit')
 					.map(s => ({ ...s, item: items.find(i => i.id === s.itemId) }))
 					.sort((a, b) => {

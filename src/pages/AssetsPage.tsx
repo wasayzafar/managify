@@ -3,6 +3,8 @@ import { db, Asset } from '../storage'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import { exportAssetsToExcel } from '../utils/exportCSV'
 import { usePagination } from '../hooks/usePagination'
+import { useBranch } from '../auth/BranchContext'
+import { matchesBranch } from '../utils/branchFilter'
 import { StatCard } from '../ui/StatCard'
 import jsPDF from 'jspdf'
 import {
@@ -75,6 +77,8 @@ export default function AssetsPage() {
 	const [itemsPerPage, setItemsPerPage] = useState(10)
 	const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null)
 	const [deleting, setDeleting] = useState(false)
+	const { currentBranchId, mainBranchId } = useBranch()
+	const writeBranchId = currentBranchId === 'all' ? mainBranchId : currentBranchId
 
 	useEffect(() => {
 		const load = async () => {
@@ -112,6 +116,7 @@ export default function AssetsPage() {
 				purchaseDate: form.purchaseDate,
 				purchasePrice: price,
 				description: form.description,
+				branchId: writeBranchId,
 			})
 			setAssets(await db.listAssets())
 			setForm(emptyForm)
@@ -171,7 +176,12 @@ export default function AssetsPage() {
 		}
 	}
 
-	const enrichedAssets = useMemo(() => assets.map(a => ({ ...a, ...depreciationOf(a) })), [assets])
+	const branchAssets = useMemo(() => {
+		if (currentBranchId === 'all') return assets
+		return assets.filter(a => matchesBranch(a.branchId, currentBranchId, mainBranchId))
+	}, [assets, currentBranchId, mainBranchId])
+
+	const enrichedAssets = useMemo(() => branchAssets.map(a => ({ ...a, ...depreciationOf(a) })), [branchAssets])
 
 	const filteredAssets = useMemo(() => {
 		const term = searchTerm.trim().toLowerCase()
@@ -186,11 +196,11 @@ export default function AssetsPage() {
 	useEffect(() => { pagination.goToPage(1) }, [searchTerm, categoryFilter, itemsPerPage])
 
 	const stats = useMemo(() => {
-		const totalInvested = assets.reduce((s, a) => s + a.purchasePrice, 0)
+		const totalInvested = branchAssets.reduce((s, a) => s + a.purchasePrice, 0)
 		const totalBookValue = enrichedAssets.reduce((s, a) => s + a.bookValue, 0)
 		const totalDepreciation = enrichedAssets.reduce((s, a) => s + a.accumulatedDepreciation, 0)
-		return { count: assets.length, totalInvested, totalBookValue, totalDepreciation }
-	}, [assets, enrichedAssets])
+		return { count: branchAssets.length, totalInvested, totalBookValue, totalDepreciation }
+	}, [branchAssets, enrichedAssets])
 
 	function handleExcelExport() {
 		exportAssetsToExcel(filteredAssets.map(a => ({

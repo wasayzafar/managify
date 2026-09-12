@@ -4,7 +4,6 @@ import { preloadImageAsBase64, getCachedImage } from './imageCache'
 
 // Must match InvoiceHeaderDesigner constants
 const CW = 794
-const STORAGE_KEY = 'invoiceHeaderLayout'
 
 // ── Minimal type mirrors (no import cycle) ────────────────────────────────────
 
@@ -18,50 +17,63 @@ type HElem = {
   src?: string; crop?: Crop | null
 }
 
-type HeaderLayout = { elements: HElem[]; bgColor: string; borderColor: string }
+export type HeaderLayout = { elements: HElem[]; bgColor: string; borderColor: string; removedIds?: string[] }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-export function loadHeaderLayout(): HeaderLayout | null {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '') } catch { return null }
+export function parseHeaderLayout(json?: string | null): HeaderLayout | null {
+  if (!json) return null
+  try {
+    const parsed = JSON.parse(json)
+    return parsed && Array.isArray(parsed.elements) ? parsed : null
+  } catch {
+    return null
+  }
 }
 
+// Renders a crop of `src` inside a w×h box using the CSS background-position
+// trick. background-position percentages are relative to (container size -
+// background size), NOT to the crop rectangle directly, so the offset has to
+// be crop.x / (1 - crop.w) — not crop.x / crop.w. Getting this wrong (as the
+// previous version did) shows blank space instead of the cropped region for
+// any crop that isn't anchored at the image's top-left corner.
 function CroppedImg({ src, crop }: { src: string; crop?: Crop | null }) {
   if (!crop || crop.w <= 0 || crop.h <= 0)
     return <img src={src} alt="" draggable={false}
       style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
       onError={e => { e.currentTarget.style.display = 'none' }} />
+  const posX = crop.w >= 1 ? 0 : (crop.x / (1 - crop.w)) * 100
+  const posY = crop.h >= 1 ? 0 : (crop.y / (1 - crop.h)) * 100
   return (
     <div style={{
       width: '100%', height: '100%',
       backgroundImage: `url("${src}")`,
       backgroundRepeat: 'no-repeat',
       backgroundSize: `${100 / crop.w}% ${100 / crop.h}%`,
-      backgroundPosition: `${(-crop.x / crop.w) * 100}% ${(-crop.y / crop.h) * 100}%`,
+      backgroundPosition: `${posX}% ${posY}%`,
     }} />
   )
 }
 
 // ── Custom layout header ──────────────────────────────────────────────────────
-// Renders the saved designer layout scaled to `width` px.
-// Uses absolute pixel values (not transforms) so html2canvas + printing work.
+// Renders a saved designer layout scaled to `width` px. Uses absolute pixel
+// values (not transforms) so html2canvas + printing work.
 
-export function InvoiceHeaderPrint({ width = 640 }: { width?: number }) {
-  const layout = loadHeaderLayout()
-  if (!layout || !layout.elements.length) return null
+export function InvoiceHeaderPrint({ headerLayout, width = 640 }: { headerLayout?: HeaderLayout | null; width?: number }) {
+  if (!headerLayout || !headerLayout.elements.length) return null
 
   const scale = width / CW
-  const contentH = layout.elements.reduce((m, e) => Math.max(m, e.y + e.h), 0)
+  const contentH = headerLayout.elements.reduce((m, e) => Math.max(m, e.y + e.h), 0)
   const height = Math.max(60, contentH * scale + 16)
 
   return (
     <div style={{
       position: 'relative', width, height,
-      background: layout.bgColor || 'white',
-      borderBottom: `2px solid ${layout.borderColor || '#333'}`,
+      background: headerLayout.bgColor || 'white',
+      borderBottom: `2px solid ${headerLayout.borderColor || '#333'}`,
       marginBottom: 24, overflow: 'hidden',
     }}>
-      {layout.elements.map(el => (
+      {headerLayout.elements.map(el => (
         <div key={el.id} style={{
           position: 'absolute',
           left:   el.x * scale,
@@ -75,7 +87,7 @@ export function InvoiceHeaderPrint({ width = 640 }: { width?: number }) {
           {el.kind === 'logo' && el.src && <CroppedImg src={el.src} crop={el.crop} />}
           {el.kind === 'text' && (
             <span style={{
-              width: '100%', display: 'block', overflow: 'hidden',
+              width: '100%', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis',
               color: el.color || '#111',
               fontSize: (el.fontSize || 14) * scale,
               fontWeight: el.bold ? 700 : 400,
@@ -112,10 +124,15 @@ export function FallbackHeader({ storeInfo }: { storeInfo: StoreInfo }) {
 }
 
 // ── Smart header: custom layout if saved, fallback otherwise ─────────────────
+// The layout must come from storeInfo.headerLayout (the database) — this is
+// the single source of truth. It used to be read from a localStorage key
+// that the Designer's real save path (db.updateHeaderLayout) never actually
+// wrote to, so a custom header designed in Settings never appeared on any
+// real invoice. Passing the layout down as a prop closes that gap.
 
-export function InvoiceHeader({ storeInfo, width = 640 }: { storeInfo: StoreInfo; width?: number }) {
-  const layout = loadHeaderLayout()
-  if (layout && layout.elements.length > 0) return <InvoiceHeaderPrint width={width} />
+export function InvoiceHeader({ storeInfo, headerLayout, width = 640 }: { storeInfo: StoreInfo; headerLayout?: string | null; width?: number }) {
+  const layout = parseHeaderLayout(headerLayout ?? storeInfo.headerLayout)
+  if (layout && layout.elements.length > 0) return <InvoiceHeaderPrint headerLayout={layout} width={width} />
   return <FallbackHeader storeInfo={storeInfo} />
 }
 
@@ -198,6 +215,9 @@ export function InvoiceFooter({ storeInfo, thermal = false }: { storeInfo: Store
 }
 
 // ── Compact thermal header (plain text — no designer layout) ─────────────────
+// Thermal receipts (58mm/80mm) are too narrow for an A4-proportioned custom
+// layout to make sense, so this intentionally stays a simple text header
+// regardless of what's designed for the full-page format.
 
 export function ThermalHeader({ storeInfo }: { storeInfo: StoreInfo }) {
   return (

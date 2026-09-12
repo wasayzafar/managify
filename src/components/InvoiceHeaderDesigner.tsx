@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { StoreInfo } from '../storage'
+import {
+	PiTextAaDuotone, PiTrashDuotone, PiCaretUpDuotone, PiCaretDownDuotone,
+	PiArrowClockwiseDuotone, PiCropDuotone, PiTextItalicDuotone,
+	PiTextAlignLeftDuotone, PiTextAlignCenterDuotone, PiTextAlignRightDuotone,
+	PiFloppyDiskDuotone, PiPlusCircleDuotone, PiWarningDuotone, PiInfoDuotone,
+	PiPaletteDuotone,
+} from 'react-icons/pi'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -27,6 +34,11 @@ export type HeaderLayout = {
   elements: HElem[]
   bgColor: string
   borderColor: string
+  // Standard field ids (name/addr/phone/email/web/tax/logo) the user has
+  // deliberately removed — without this, mergeLayout() would treat "removed
+  // on purpose" the same as "never placed" and silently re-add the element
+  // the next time storeInfo is saved.
+  removedIds?: string[]
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -57,37 +69,44 @@ function defaultLayout(si: StoreInfo): HElem[] {
   return els
 }
 
-// Maps standard element IDs → their live storeInfo value
-const FIELD_TEXT: Record<string, (si: StoreInfo) => string | undefined> = {
-  name:  si => si.storeName  ? si.storeName.toUpperCase()   : undefined,
-  addr:  si => si.address    || undefined,
-  phone: si => si.phone      ? 'Phone: ' + si.phone         : undefined,
-  email: si => si.email      || undefined,
-  web:   si => si.website    || undefined,
-  tax:   si => si.taxNumber  ? 'Tax #: ' + si.taxNumber     : undefined,
+// Maps standard element IDs → their live storeInfo value, and a friendly label
+const STANDARD_FIELDS: Record<string, { label: string; value: (si: StoreInfo) => string | undefined }> = {
+  name:  { label: 'Store Name',  value: si => si.storeName  ? si.storeName.toUpperCase()   : undefined },
+  addr:  { label: 'Address',     value: si => si.address    || undefined },
+  phone: { label: 'Phone',       value: si => si.phone      ? 'Phone: ' + si.phone         : undefined },
+  email: { label: 'Email',       value: si => si.email      || undefined },
+  web:   { label: 'Website',     value: si => si.website    || undefined },
+  tax:   { label: 'Tax Number',  value: si => si.taxNumber  ? 'Tax #: ' + si.taxNumber     : undefined },
 }
 
-// Merge a saved layout with current storeInfo:
-//  • Updates text/src of standard elements to match latest storeInfo
-//  • Adds any elements that exist in storeInfo but are missing from the saved layout
+// Merge a saved layout with the (last-saved) storeInfo:
+//  • Updates text/src of standard elements to match the latest storeInfo
+//  • Adds any elements that exist in storeInfo but are missing from the saved
+//    layout — UNLESS the user deliberately removed them (removedIds)
 //  • Removes standard elements whose storeInfo value is now empty
+//  • Resets a logo's crop only when the logo's URL actually changed — a
+//    stale crop fraction from a differently-sized old logo would otherwise
+//    silently mis-frame the new one
 function mergeLayout(saved: HeaderLayout, si: StoreInfo): HeaderLayout {
+  const removed = new Set(saved.removedIds || [])
+
   // 1. Update existing standard elements
   let els = saved.elements.map(e => {
-    if (e.kind === 'text' && FIELD_TEXT[e.id]) {
-      const txt = FIELD_TEXT[e.id](si)
+    if (e.kind === 'text' && STANDARD_FIELDS[e.id]) {
+      const txt = STANDARD_FIELDS[e.id].value(si)
       return txt ? { ...e, text: txt } : null   // null = remove if field now empty
     }
     if (e.id === 'logo' && e.kind === 'logo') {
-      return si.logo ? { ...e, src: si.logo } : null
+      if (!si.logo) return null
+      return e.src === si.logo ? e : { ...e, src: si.logo, crop: null }
     }
     return e
   }).filter(Boolean) as HElem[]
 
-  // 2. Find which standard elements are still missing
+  // 2. Find which standard elements are still missing (and not deliberately removed)
   const existingIds = new Set(els.map(e => e.id))
   const defaults = defaultLayout(si)
-  const missing = defaults.filter(e => !existingIds.has(e.id))
+  const missing = defaults.filter(e => !existingIds.has(e.id) && !removed.has(e.id))
 
   // 3. Position missing elements below all current elements
   const bottomY = els.reduce((m, e) => Math.max(m, e.y + e.h), 0)
@@ -98,17 +117,24 @@ function mergeLayout(saved: HeaderLayout, si: StoreInfo): HeaderLayout {
 }
 
 // ── Cropped Image (CSS background trick — no natural-dim needed) ─────────────
+// background-position percentages are relative to (container size -
+// background size), NOT to the crop rectangle directly, so the offset has to
+// be crop.x / (1 - crop.w) — not crop.x / crop.w. Getting this wrong shows
+// blank space instead of the cropped region for any crop that isn't anchored
+// at the image's top-left corner.
 
 function CroppedImg({ src, crop, w, h }: { src: string; crop?: Crop | null; w: number; h: number }) {
   if (!crop || crop.w <= 0 || crop.h <= 0)
     return <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', pointerEvents: 'none' }} />
+  const posX = crop.w >= 1 ? 0 : (crop.x / (1 - crop.w)) * 100
+  const posY = crop.h >= 1 ? 0 : (crop.y / (1 - crop.h)) * 100
   return (
     <div style={{
       width: '100%', height: '100%',
       backgroundImage: `url("${src}")`,
       backgroundRepeat: 'no-repeat',
       backgroundSize: `${100 / crop.w}% ${100 / crop.h}%`,
-      backgroundPosition: `${(-crop.x / crop.w) * 100}% ${(-crop.y / crop.h) * 100}%`,
+      backgroundPosition: `${posX}% ${posY}%`,
     }} />
   )
 }
@@ -199,7 +225,9 @@ function CropModal({ src, initial, onApply, onClose }: {
     <div style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}>
       <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 14, padding: 24, maxWidth: '95vw' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 18 }}>Crop Logo</h3>
+          <h3 style={{ margin: 0, color: 'var(--text)', fontSize: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <PiCropDuotone size={18} /> Crop Logo
+          </h3>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => onApply(null)} className="secondary" style={{ fontSize: 13, padding: '5px 14px' }}>Remove Crop</button>
             <button onClick={apply} style={{ fontSize: 13, padding: '5px 14px' }}>Apply</button>
@@ -256,11 +284,7 @@ const HPOS: Record<Handle, React.CSSProperties> = {
   sw:{bottom:-5,left:-5}, s:{bottom:-5,left:'50%',transform:'translateX(-50%)'}, se:{bottom:-5,right:-5},
 }
 
-const STORAGE_KEY = 'invoiceHeaderLayout'
-
-export function loadHeaderLayout(): HeaderLayout | null {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '') } catch { return null }
-}
+const btnStyle = { fontSize: 13, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6 } as const
 
 export default function InvoiceHeaderDesigner({
   storeInfo,
@@ -269,16 +293,10 @@ export default function InvoiceHeaderDesigner({
 }: {
   storeInfo: StoreInfo
   headerLayout?: string
-  onSave?: (json: string) => Promise<void>
+  onSave: (json: string) => Promise<void>
 }) {
   const initLayout = (): HeaderLayout => {
-    // Priority: DB value → localStorage → default
-    // Always merge with current storeInfo so new/changed fields appear automatically
     try { if (headerLayout) return mergeLayout(JSON.parse(headerLayout), storeInfo) } catch {}
-    try {
-      const s = localStorage.getItem(STORAGE_KEY)
-      if (s) return mergeLayout(JSON.parse(s), storeInfo)
-    } catch {}
     return { elements: defaultLayout(storeInfo), bgColor: '#ffffff', borderColor: '#333333' }
   }
 
@@ -289,6 +307,8 @@ export default function InvoiceHeaderDesigner({
   const [savedMsg, setSavedMsg]   = useState('')
   const [saving, setSaving]       = useState(false)
   const [scale, setScale]         = useState(1)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [addFieldOpen, setAddFieldOpen] = useState(false)
 
   const dragging = useRef<{ id: string; ox: number; oy: number } | null>(null)
   const resizing = useRef<{ id: string; handle: Handle; sx: number; sy: number; e0: HElem } | null>(null)
@@ -296,7 +316,10 @@ export default function InvoiceHeaderDesigner({
   const canvasRef = useRef<HTMLDivElement>(null)
   const wrapRef   = useRef<HTMLDivElement>(null)
 
-  // Re-merge whenever storeInfo fields change (user edits store info above and it propagates instantly)
+  // Re-merge whenever storeInfo fields change. The caller is expected to
+  // pass the last-SAVED storeInfo (not an in-progress edit draft) — merging
+  // on every keystroke of an unsaved form would silently rewrite/lose header
+  // elements as fields pass through empty intermediate states while typing.
   useEffect(() => {
     setLayout(prev => mergeLayout(prev, storeInfo))
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -375,14 +398,47 @@ export default function InvoiceHeaderDesigner({
     setSelected(id); setEditingId(id)
   }
 
-  const deleteSelected = () => { if (!selected) return; setElems(es => es.filter(e => e.id !== selected)); setSelected(null) }
+  // Standard fields not currently on the canvas — either never placed, or
+  // deliberately removed earlier. Selecting one from the dropdown re-adds it
+  // (and un-marks it as removed, so it starts syncing with storeInfo again).
+  const missingFields = Object.entries(STANDARD_FIELDS).filter(([id, f]) => {
+    if (elems.some(e => e.id === id)) return false
+    return f.value(storeInfo) !== undefined
+  })
+  const canAddLogo = !!storeInfo.logo && !elems.some(e => e.id === 'logo')
+
+  const addField = (id: string) => {
+    const bottomY = elems.reduce((m, e) => Math.max(m, e.y + e.h), 0)
+    let newEl: HElem
+    if (id === 'logo') {
+      newEl = { id: 'logo', kind: 'logo', x: 20, y: bottomY + 12, w: 120, h: 100, src: storeInfo.logo, crop: null }
+    } else {
+      const f = STANDARD_FIELDS[id]
+      const text = f.value(storeInfo)!
+      newEl = { id, kind: 'text', x: 80, y: bottomY + 12, w: 634, h: 26, text, fontSize: id === 'name' ? 26 : 13, bold: id === 'name', italic: false, color: id === 'name' ? '#111111' : '#555555', align: 'center' }
+    }
+    setLayout(l => ({ ...l, elements: [...l.elements, newEl], removedIds: (l.removedIds || []).filter(x => x !== id) }))
+    setSelected(newEl.id)
+    setAddFieldOpen(false)
+  }
+
+  const deleteSelected = () => {
+    if (!selected) return
+    setLayout(l => ({
+      ...l,
+      elements: l.elements.filter(e => e.id !== selected),
+      removedIds: (STANDARD_FIELDS[selected] || selected === 'logo')
+        ? [...new Set([...(l.removedIds || []), selected])]
+        : l.removedIds,
+    }))
+    setSelected(null)
+  }
 
   const save = async () => {
     const json = JSON.stringify(layout)
     setSaving(true)
     try {
-      if (onSave) await onSave(json)
-      else localStorage.setItem(STORAGE_KEY, json)  // fallback when no DB callback
+      await onSave(json)
       setSavedMsg('Saved!'); setTimeout(() => setSavedMsg(''), 3000)
     } catch {
       setSavedMsg('Save failed'); setTimeout(() => setSavedMsg(''), 3000)
@@ -391,7 +447,7 @@ export default function InvoiceHeaderDesigner({
     }
   }
 
-  const reset = () => { setLayout({ elements: defaultLayout(storeInfo), bgColor: '#ffffff', borderColor: '#333333' }); setSelected(null) }
+  const reset = () => { setLayout({ elements: defaultLayout(storeInfo), bgColor: '#ffffff', borderColor: '#333333' }); setSelected(null); setConfirmReset(false) }
 
   const bringForward = () => {
     if (!selected) return
@@ -406,16 +462,38 @@ export default function InvoiceHeaderDesigner({
 
   return (
     <div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 12, padding: '8px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12.5, color: 'var(--text-muted)' }}>
+        <PiInfoDuotone size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+        <span>Reflects your last <strong>saved</strong> store information (Profile tab) — save changes there first, then design the header. This layout applies to A4/A5 printed invoices; thermal receipts (58mm/80mm) use a simplified text header.</span>
+      </div>
+
       {/* ── Main toolbar ── */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
-        <button onClick={addText} style={{ fontSize: 13, padding: '6px 14px' }}>+ Add Text</button>
-        <button onClick={deleteSelected} disabled={!selected} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>Delete</button>
-        <button onClick={bringForward} disabled={!selected} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>↑ Forward</button>
-        <button onClick={sendBackward} disabled={!selected} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>↓ Backward</button>
+        <button onClick={addText} style={btnStyle}><PiTextAaDuotone size={15} /> Add Text</button>
+        <div style={{ position: 'relative' }} onBlur={() => setTimeout(() => setAddFieldOpen(false), 150)} tabIndex={-1}>
+          <button onClick={() => setAddFieldOpen(o => !o)} disabled={missingFields.length === 0 && !canAddLogo} className="secondary" style={btnStyle}>
+            <PiPlusCircleDuotone size={15} /> Add Field
+          </button>
+          {addFieldOpen && (missingFields.length > 0 || canAddLogo) && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, minWidth: 160, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 8, boxShadow: '0 8px 24px var(--overlay)', zIndex: 100, overflow: 'hidden' }}>
+              {canAddLogo && (
+                <button onMouseDown={() => addField('logo')} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>Logo</button>
+              )}
+              {missingFields.map(([id, f]) => (
+                <button key={id} onMouseDown={() => addField(id)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>{f.label}</button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button onClick={deleteSelected} disabled={!selected} className="secondary" style={{ ...btnStyle, color: selected ? 'var(--danger)' : undefined }}><PiTrashDuotone size={15} /> Delete</button>
+        <button onClick={bringForward} disabled={!selected} className="secondary" style={btnStyle}><PiCaretUpDuotone size={15} /> Forward</button>
+        <button onClick={sendBackward} disabled={!selected} className="secondary" style={btnStyle}><PiCaretDownDuotone size={15} /> Backward</button>
         <span style={{ width: 1, height: 22, background: 'var(--border-strong)', margin: '0 2px', flexShrink: 0 }} />
         {/* Background color */}
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
-          BG
+          <PiPaletteDuotone size={15} /> BG
           <input type="color" value={layout.bgColor}
             onChange={e => setLayout(l => ({ ...l, bgColor: e.target.value }))}
             style={{ width: 28, height: 28, padding: 1, border: '1px solid var(--border-strong)', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
@@ -428,12 +506,12 @@ export default function InvoiceHeaderDesigner({
             style={{ width: 28, height: 28, padding: 1, border: '1px solid var(--border-strong)', borderRadius: 4, cursor: 'pointer', background: 'transparent' }} />
         </label>
         <span style={{ width: 1, height: 22, background: 'var(--border-strong)', margin: '0 2px', flexShrink: 0 }} />
-        <button onClick={reset} className="secondary" style={{ fontSize: 13, padding: '6px 14px' }}>Reset to Default</button>
+        <button onClick={() => setConfirmReset(true)} className="secondary" style={{ ...btnStyle, color: 'var(--danger)' }}><PiArrowClockwiseDuotone size={15} /> Reset to Default</button>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {savedMsg && <span style={{ color: savedMsg === 'Save failed' ? 'var(--danger)' : 'var(--success)', fontSize: 13, fontWeight: 600 }}>{savedMsg}</span>}
           <button onClick={save} disabled={saving}
-            style={{ padding: '7px 20px', background: 'var(--accent)', color: 'var(--accent-contrast)', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.8 : 1 }}>
-            {saving ? 'Saving...' : 'Save Layout'}
+            style={{ padding: '7px 20px', background: 'var(--accent)', color: 'var(--accent-contrast)', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.8 : 1, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <PiFloppyDiskDuotone size={16} /> {saving ? 'Saving...' : 'Save Layout'}
           </button>
         </div>
       </div>
@@ -458,20 +536,25 @@ export default function InvoiceHeaderDesigner({
             <span style={{ color: 'var(--text-faint)', fontSize: 11 }}>px</span>
 
             {/* Bold / Italic */}
-            {([['bold', 'B', 'bold'], ['italic', 'I', 'italic']] as [keyof HElem, string, string][]).map(([k, label, style]) => (
-              <button key={label} onClick={() => updateElem(sel.id, { [k]: !sel[k] })}
-                style={{ fontWeight: 700, fontStyle: style === 'italic' ? 'italic' : 'normal', fontSize: 13, padding: '3px 10px', background: sel[k] ? 'var(--accent)' : 'var(--bg-sunken)', color: sel[k] ? 'var(--accent-contrast)' : 'var(--text-muted)', border: '1px solid var(--border-strong)', borderRadius: 6, cursor: 'pointer' }}>
-                {label}
-              </button>
-            ))}
+            <button onClick={() => updateElem(sel.id, { bold: !sel.bold })}
+              style={{ fontWeight: 700, fontSize: 13, padding: '3px 10px', background: sel.bold ? 'var(--accent)' : 'var(--bg-sunken)', color: sel.bold ? 'var(--accent-contrast)' : 'var(--text-muted)', border: '1px solid var(--border-strong)', borderRadius: 6, cursor: 'pointer' }}>
+              B
+            </button>
+            <button onClick={() => updateElem(sel.id, { italic: !sel.italic })}
+              style={{ display: 'flex', fontSize: 13, padding: '3px 10px', background: sel.italic ? 'var(--accent)' : 'var(--bg-sunken)', color: sel.italic ? 'var(--accent-contrast)' : 'var(--text-muted)', border: '1px solid var(--border-strong)', borderRadius: 6, cursor: 'pointer' }}>
+              <PiTextItalicDuotone size={14} />
+            </button>
 
             {/* Alignment */}
-            {(['left', 'center', 'right'] as Align[]).map(a => (
+            {([
+              ['left', <PiTextAlignLeftDuotone size={14} key="l" />],
+              ['center', <PiTextAlignCenterDuotone size={14} key="c" />],
+              ['right', <PiTextAlignRightDuotone size={14} key="r" />],
+            ] as [Align, React.ReactNode][]).map(([a, icon]) => (
               <button key={a} onClick={() => updateElem(sel.id, { align: a })}
-                style={{ fontSize: 13, padding: '3px 9px', background: sel.align === a ? 'var(--accent)' : 'var(--bg-sunken)', color: sel.align === a ? 'var(--accent-contrast)' : 'var(--text-muted)', border: '1px solid var(--border-strong)', borderRadius: 6, cursor: 'pointer' }}
+                style={{ display: 'flex', fontSize: 13, padding: '3px 9px', background: sel.align === a ? 'var(--accent)' : 'var(--bg-sunken)', color: sel.align === a ? 'var(--accent-contrast)' : 'var(--text-muted)', border: '1px solid var(--border-strong)', borderRadius: 6, cursor: 'pointer' }}
                 title={`Align ${a}`}>
-                {a === 'left' ? '≡' : a === 'center' ? '☰' : '≡'}
-                <span style={{ fontSize: 10, marginLeft: 2 }}>{a[0].toUpperCase()}</span>
+                {icon}
               </button>
             ))}
 
@@ -486,7 +569,7 @@ export default function InvoiceHeaderDesigner({
 
           {sel.kind === 'logo' && <>
             <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 700, marginRight: 2 }}>LOGO</span>
-            <button style={{ fontSize: 12, padding: '3px 12px' }} onClick={() => setCropElem(sel)}>Crop</button>
+            <button style={{ fontSize: 12, padding: '3px 12px', display: 'flex', alignItems: 'center', gap: 5 }} onClick={() => setCropElem(sel)}><PiCropDuotone size={13} /> Crop</button>
             {sel.crop && (
               <button className="secondary" style={{ fontSize: 12, padding: '3px 10px' }} onClick={() => updateElem(sel.id, { crop: null })}>Clear Crop</button>
             )}
@@ -595,6 +678,31 @@ export default function InvoiceHeaderDesigner({
           onApply={crop => { updateElem(cropElem.id, { crop }); setCropElem(null) }}
           onClose={() => setCropElem(null)}
         />
+      )}
+
+      {/* Reset confirmation */}
+      {confirmReset && (
+        <div style={{ position: 'fixed', inset: 0, background: 'var(--overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, padding: 16 }}
+          onClick={() => setConfirmReset(false)}
+        >
+          <div className="card" style={{ maxWidth: 380, width: '100%', marginBottom: 0 }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'var(--danger-bg)', color: 'var(--danger)', flexShrink: 0 }}>
+                <PiWarningDuotone size={17} />
+              </span>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>Reset to default layout?</h3>
+            </div>
+            <p style={{ margin: '0 0 16px', color: 'var(--text-muted)', fontSize: 13.5, lineHeight: 1.5 }}>
+              This discards all custom positioning, text, colors, and crops on this canvas. It won't take effect on your invoices until you click Save Layout afterward.
+            </p>
+            <div className="form-actions">
+              <button className="secondary" onClick={() => setConfirmReset(false)}>Cancel</button>
+              <button onClick={reset} style={{ background: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <PiArrowClockwiseDuotone size={15} /> Reset
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

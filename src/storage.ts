@@ -1,6 +1,7 @@
 import { auth } from './firebase';
 import { supabase } from './supabase';
 import * as supabaseStorage from './supabaseStorage';
+import { getCachedStoreId } from './auth/BranchContext';
 
 export type Item = {
 	id: string
@@ -27,6 +28,7 @@ export type Purchase = {
 	paymentType?: 'debit' | 'credit'
 	creditDeadline?: string
 	isPaid?: boolean
+	branchId?: string | null
 }
 
 export type Sale = {
@@ -48,6 +50,7 @@ export type Sale = {
 	isPaid?: boolean
 	creditAmount?: number
 	paidAmount?: number
+	branchId?: string | null
 	storeInfo?: {
 		storeName: string
 		phone: string
@@ -80,6 +83,7 @@ export type Expense = {
 	expiresThisMonth?: boolean
 	expenseMonth?: string
 	createdAt?: string
+	branchId?: string | null
 }
 
 export type Employee = {
@@ -106,6 +110,7 @@ export type Invoice = {
 	billDiscount: number
 	createdAt: string
 	date: string
+	branchId?: string | null
 	storeInfo?: {
 		storeName: string
 		phone: string
@@ -134,6 +139,35 @@ export type Asset = {
 	purchasePrice: number
 	description?: string
 	createdAt?: string
+	branchId?: string | null
+}
+
+export type Branch = {
+	id: string
+	name: string
+	address?: string
+	phone?: string
+	isActive: boolean
+	createdAt?: string
+}
+
+export type StockTransferStatus = 'pending' | 'approved' | 'rejected' | 'received'
+
+export type StockTransfer = {
+	id: string
+	itemId: string
+	quantity: number
+	fromBranchId: string
+	toBranchId: string
+	status: StockTransferStatus
+	requestedBy: string
+	requestedByName?: string
+	approvedBy?: string
+	approvedAt?: string
+	receivedAt?: string
+	rejectedReason?: string
+	notes?: string
+	createdAt: string
 }
 
 function getUserId(): string {
@@ -141,7 +175,12 @@ function getUserId(): string {
 		console.warn('No authenticated user found. Please log in.');
 		throw new Error('User not authenticated');
 	}
-	return auth.currentUser.uid;
+	// For a store owner this is just their own uid. For a staff account it's
+	// the owner's uid instead, resolved by BranchProvider from staff_members
+	// — every table's user_id column already means "which store", so this is
+	// the one place that needed to change for the rest of the app (all
+	// ~15 pages funnel through here) to become branch/staff-aware.
+	return getCachedStoreId() || auth.currentUser.uid;
 }
 
 export const db = {
@@ -210,6 +249,7 @@ export const db = {
 				creditDeadline: purchase.credit_deadline,
 				isPaid: purchase.is_paid || false,
 				supplierAddress: (purchase as any).supplier_address,
+				branchId: (purchase as any).branch_id ?? null,
 			}));
 		} catch (error) {
 			console.error('Error listing purchases:', error);
@@ -219,7 +259,7 @@ export const db = {
 			return [];
 		}
 	},
-	async createPurchase(data: { itemId: string, qty: number, costPrice?: number, supplier?: string, supplierPhone?: string, note?: string, purchasedAt?: string, date?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string }): Promise<Purchase> {
+	async createPurchase(data: { itemId: string, qty: number, costPrice?: number, supplier?: string, supplierPhone?: string, note?: string, purchasedAt?: string, date?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string, branchId?: string | null }): Promise<Purchase> {
 		const userId = getUserId();
 		const purchase: any = {
 			item_id: data.itemId,
@@ -230,7 +270,8 @@ export const db = {
 			supplier_phone: data.supplierPhone,
 			note: data.note,
 			payment_type: data.paymentType || 'debit',
-			credit_deadline: data.paymentType === 'credit' ? (data.creditDeadline || null) : null
+			credit_deadline: data.paymentType === 'credit' ? (data.creditDeadline || null) : null,
+			branch_id: data.branchId ?? null,
 		};
 
 		const id = await supabaseStorage.addPurchase(userId, purchase);
@@ -251,12 +292,14 @@ export const db = {
 			note: data.note,
 			date: purchase.date,
 			paymentType: data.paymentType || 'debit',
-			creditDeadline: data.creditDeadline
+			creditDeadline: data.creditDeadline,
+			branchId: data.branchId ?? null,
 		};
 	},
 	async updatePurchase(id: string, data: Partial<Omit<Purchase, 'id'>>): Promise<void> {
 		const mapped: any = { ...data }
 		if ('isPaid' in mapped) { mapped.is_paid = mapped.isPaid; delete mapped.isPaid }
+		if ('branchId' in mapped) { mapped.branch_id = mapped.branchId; delete mapped.branchId }
 		if ('itemId' in mapped) { mapped.item_id = mapped.itemId; delete mapped.itemId }
 		if ('costPrice' in mapped) { mapped.cost_price = mapped.costPrice; delete mapped.costPrice }
 		if ('supplierPhone' in mapped) { mapped.supplier_phone = mapped.supplierPhone; delete mapped.supplierPhone }
@@ -309,6 +352,7 @@ export const db = {
 				isPaid: sale.is_paid || false,
 				creditAmount: sale.credit_amount ?? undefined,
 			paidAmount: (sale as any).paid_amount ?? 0,
+			branchId: (sale as any).branch_id ?? null,
 			}));
 		} catch (error) {
 			console.error('Error listing sales:', error);
@@ -374,7 +418,7 @@ export const db = {
 			return [];
 		}
 	},
-	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string, paidAmount?: number }): Promise<Sale> {
+	async createSale(data: { itemId: string, quantity: number, date?: string, actualPrice?: number, originalPrice?: number, itemDiscount?: number, billDiscount?: number, customerName?: string, customerPhone?: string, invoiceNo?: string, paymentType?: 'debit' | 'credit', creditDeadline?: string, paidAmount?: number, branchId?: string | null }): Promise<Sale> {
 		const userId = getUserId();
 		const storeInfo = await this.getStoreInfo();
 		const sale: any = {
@@ -392,9 +436,10 @@ export const db = {
 			credit_deadline: data.paymentType === 'credit' ? (data.creditDeadline || null) : null,
 			paid_amount: data.paidAmount || 0,
 			is_paid: false,
+			branch_id: data.branchId ?? null,
 		};
 		const id = await supabaseStorage.addSale(userId, sale);
-		return { id, itemId: data.itemId, quantity: data.quantity, date: sale.date, actualPrice: data.actualPrice, originalPrice: data.originalPrice, itemDiscount: data.itemDiscount, billDiscount: data.billDiscount, customerName: data.customerName, customerPhone: data.customerPhone, invoiceNo: data.invoiceNo, paymentType: data.paymentType || 'debit', creditDeadline: data.creditDeadline, paidAmount: data.paidAmount || 0, isPaid: false, storeInfo };
+		return { id, itemId: data.itemId, quantity: data.quantity, date: sale.date, actualPrice: data.actualPrice, originalPrice: data.originalPrice, itemDiscount: data.itemDiscount, billDiscount: data.billDiscount, customerName: data.customerName, customerPhone: data.customerPhone, invoiceNo: data.invoiceNo, paymentType: data.paymentType || 'debit', creditDeadline: data.creditDeadline, paidAmount: data.paidAmount || 0, isPaid: false, branchId: data.branchId ?? null, storeInfo };
 	},
 	async updateSale(id: string, data: Partial<Omit<Sale, 'id'>>): Promise<void> {
 		const mapped: any = {}
@@ -403,16 +448,17 @@ export const db = {
 		if ('creditDeadline' in data) mapped.credit_deadline = data.creditDeadline
 		if ('creditAmount' in data) mapped.credit_amount = data.creditAmount
 		if ('paidAmount' in data) mapped.paid_amount = data.paidAmount
+		if ('branchId' in data) mapped.branch_id = (data as any).branchId
 		await supabaseStorage.updateSale(id, mapped)
 	},
 	async deleteSale(id: string): Promise<void> {
 		await supabaseStorage.deleteSale(id);
 	},
 
-	async inventory(): Promise<Array<{ itemId: string, itemName: string, itemSku: string, stock: number }>> {
+	async inventory(branchId?: string | null, mainBranchId?: string | null): Promise<Array<{ itemId: string, itemName: string, itemSku: string, stock: number }>> {
 		try {
 			const userId = getUserId();
-			return await supabaseStorage.getInventory(userId);
+			return await supabaseStorage.getInventory(userId, branchId, mainBranchId);
 		} catch (error) {
 			console.error('Error getting inventory:', error);
 			return [];
@@ -483,13 +529,14 @@ export const db = {
 				date: e.date,
 				expiresThisMonth: e.expires_this_month ?? false,
 				expenseMonth: e.expense_month,
+				branchId: (e as any).branch_id ?? null,
 			}));
 		} catch (error) {
 			console.error('Error listing expenses:', error);
 			return [];
 		}
 	},
-	async createExpense(data: { type: string, amount: number, description?: string, date?: string, expiresThisMonth?: boolean, expenseMonth?: string }): Promise<Expense> {
+	async createExpense(data: { type: string, amount: number, description?: string, date?: string, expiresThisMonth?: boolean, expenseMonth?: string, branchId?: string | null }): Promise<Expense> {
 		const userId = getUserId();
 		const expense = {
 			type: data.type,
@@ -498,9 +545,10 @@ export const db = {
 			date: data.date || new Date().toISOString(),
 			expires_this_month: data.expiresThisMonth ?? false,
 			expense_month: data.expenseMonth || new Date().toISOString().slice(0, 7),
+			branch_id: data.branchId ?? null,
 		};
 		const id = await supabaseStorage.addExpense(userId, expense);
-		return { id, type: expense.type, amount: expense.amount, description: expense.description, date: expense.date, expiresThisMonth: data.expiresThisMonth, expenseMonth: expense.expense_month };
+		return { id, type: expense.type, amount: expense.amount, description: expense.description, date: expense.date, expiresThisMonth: data.expiresThisMonth, expenseMonth: expense.expense_month, branchId: data.branchId ?? null };
 	},
 	async updateExpense(id: string, data: Partial<Omit<Expense, 'id'>>): Promise<void> {
 		const mapped: any = { ...data }
@@ -511,6 +559,10 @@ export const db = {
 		if ('expenseMonth' in data) {
 			mapped.expense_month = data.expenseMonth
 			delete mapped.expenseMonth
+		}
+		if ('branchId' in data) {
+			mapped.branch_id = (data as any).branchId
+			delete mapped.branchId
 		}
 		await supabaseStorage.updateExpense(id, mapped);
 	},
@@ -549,7 +601,7 @@ export const db = {
 		await supabaseStorage.deleteEmployee(id);
 	},
 
-	async createInvoice(data: { invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: any[], total: number, billDiscount: number, date?: string }): Promise<Invoice> {
+	async createInvoice(data: { invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: any[], total: number, billDiscount: number, date?: string, branchId?: string | null }): Promise<Invoice> {
 		const userId = getUserId();
 		const storeInfo = await this.getStoreInfo();
 		const dateStr = data.date || new Date().toISOString();
@@ -563,9 +615,10 @@ export const db = {
 			bill_discount: data.billDiscount,
 			date: dateStr,
 			created_at: dateStr,
+			branch_id: data.branchId ?? null,
 		};
 		const id = await supabaseStorage.addInvoice(userId, invoice);
-		return { id, invoiceNo: data.invoiceNo, customer: data.customer, phone: data.phone, customerAddress: data.customerAddress, lines: data.lines, total: data.total, billDiscount: data.billDiscount, date: dateStr, createdAt: new Date(dateStr).toLocaleString(), storeInfo };
+		return { id, invoiceNo: data.invoiceNo, customer: data.customer, phone: data.phone, customerAddress: data.customerAddress, lines: data.lines, total: data.total, billDiscount: data.billDiscount, date: dateStr, createdAt: new Date(dateStr).toLocaleString(), branchId: data.branchId ?? null, storeInfo };
 	},
 	async listInvoices(): Promise<Invoice[]> {
 		try {
@@ -582,6 +635,7 @@ export const db = {
 				billDiscount: r.bill_discount ?? r.billDiscount ?? 0,
 				date: r.date ?? r.created_at ?? '',
 				createdAt: r.created_at ? new Date(r.created_at).toLocaleString() : '',
+				branchId: r.branch_id ?? null,
 				storeInfo: r.storeInfo,
 			}));
 		} catch (error) {
@@ -630,13 +684,14 @@ export const db = {
 				purchasePrice: a.purchase_price,
 				description: a.description,
 				createdAt: a.created_at,
+				branchId: (a as any).branch_id ?? null,
 			}))
 		} catch (error) {
 			console.error('Error listing assets:', error)
 			return []
 		}
 	},
-	async createAsset(data: { name: string; category: string; purchaseDate: string; purchasePrice: number; description?: string }): Promise<Asset> {
+	async createAsset(data: { name: string; category: string; purchaseDate: string; purchasePrice: number; description?: string; branchId?: string | null }): Promise<Asset> {
 		const userId = getUserId()
 		const id = await supabaseStorage.addAsset(userId, {
 			name: data.name,
@@ -644,6 +699,7 @@ export const db = {
 			purchase_date: data.purchaseDate,
 			purchase_price: data.purchasePrice,
 			description: data.description,
+			branch_id: data.branchId ?? null,
 		})
 		return { id, ...data }
 	},
@@ -651,6 +707,7 @@ export const db = {
 		const mapped: any = {}
 		if (data.name !== undefined) mapped.name = data.name
 		if (data.category !== undefined) mapped.category = data.category
+		if (data.branchId !== undefined) mapped.branch_id = data.branchId
 		if (data.purchaseDate !== undefined) mapped.purchase_date = data.purchaseDate
 		if (data.purchasePrice !== undefined) mapped.purchase_price = data.purchasePrice
 		if (data.description !== undefined) mapped.description = data.description
@@ -658,6 +715,69 @@ export const db = {
 	},
 	async deleteAsset(id: string): Promise<void> {
 		await supabaseStorage.deleteAsset(id)
+	},
+
+	async listBranches(): Promise<Branch[]> {
+		try {
+			const userId = getUserId();
+			const rows = await supabaseStorage.listBranches(userId);
+			return rows.map(b => ({ id: b.id, name: b.name, address: b.address, phone: b.phone, isActive: b.is_active, createdAt: b.created_at }));
+		} catch (error) {
+			console.error('Error listing branches:', error);
+			return [];
+		}
+	},
+	async createBranch(data: { name: string; address?: string; phone?: string }): Promise<Branch> {
+		const userId = getUserId();
+		const id = await supabaseStorage.addBranch(userId, { name: data.name, address: data.address, phone: data.phone });
+		return { id, name: data.name, address: data.address, phone: data.phone, isActive: true };
+	},
+	async updateBranch(id: string, data: Partial<Omit<Branch, 'id'>>): Promise<void> {
+		const mapped: any = {};
+		if (data.name !== undefined) mapped.name = data.name;
+		if (data.address !== undefined) mapped.address = data.address;
+		if (data.phone !== undefined) mapped.phone = data.phone;
+		if (data.isActive !== undefined) mapped.is_active = data.isActive;
+		await supabaseStorage.updateBranch(id, mapped);
+	},
+	async deleteBranch(id: string): Promise<void> {
+		await supabaseStorage.deleteBranch(id);
+	},
+
+	async listStockTransfers(): Promise<StockTransfer[]> {
+		try {
+			const userId = getUserId();
+			const rows = await supabaseStorage.listStockTransfers(userId);
+			return rows.map(r => ({
+				id: r.id, itemId: r.item_id, quantity: r.quantity,
+				fromBranchId: r.from_branch_id, toBranchId: r.to_branch_id, status: r.status,
+				requestedBy: r.requested_by, requestedByName: r.requested_by_name,
+				approvedBy: r.approved_by, approvedAt: r.approved_at, receivedAt: r.received_at,
+				rejectedReason: r.rejected_reason, notes: r.notes, createdAt: r.created_at,
+			}));
+		} catch (error) {
+			console.error('Error listing stock transfers:', error);
+			return [];
+		}
+	},
+	async createStockTransfer(data: { itemId: string; quantity: number; fromBranchId: string; toBranchId: string; notes?: string }): Promise<void> {
+		if (!auth.currentUser) throw new Error('User not authenticated');
+		const userId = getUserId();
+		await supabaseStorage.createStockTransfer(userId, auth.currentUser.uid, {
+			itemId: data.itemId, quantity: data.quantity,
+			fromBranchId: data.fromBranchId, toBranchId: data.toBranchId,
+			requestedByName: auth.currentUser.displayName || auth.currentUser.email || undefined,
+			notes: data.notes,
+		});
+	},
+	async approveStockTransfer(id: string): Promise<void> {
+		await supabaseStorage.setStockTransferStatus(id, 'approved');
+	},
+	async rejectStockTransfer(id: string, reason?: string): Promise<void> {
+		await supabaseStorage.setStockTransferStatus(id, 'rejected', reason);
+	},
+	async receiveStockTransfer(id: string): Promise<void> {
+		await supabaseStorage.setStockTransferStatus(id, 'received');
 	},
 
 	async clearAllData(): Promise<void> {

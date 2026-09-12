@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
-import { useItems, usePurchases, useSales, useInventory } from '../hooks/useDataQueries'
+import { useBranch } from '../auth/BranchContext'
+import { useItems, usePurchases, useSales, useInventory, useStockTransfers } from '../hooks/useDataQueries'
 import ThemeToggle from './ThemeToggle'
 import {
 	PiMagnifyingGlassDuotone, PiArrowsOutDuotone, PiArrowsInDuotone, PiBellDuotone,
@@ -9,6 +10,7 @@ import {
 	PiSquaresFourDuotone, PiStackDuotone, PiCubeDuotone, PiShoppingBagDuotone, PiShoppingCartDuotone,
 	PiReceiptDuotone, PiChartLineUpDuotone, PiCalendarDotsDuotone, PiBarcodeDuotone, PiUsersDuotone,
 	PiWalletDuotone, PiStorefrontDuotone, PiArchiveDuotone, PiGearDuotone,
+	PiBuildingsDuotone, PiCaretDownDuotone, PiArrowsLeftRightDuotone, PiTruckDuotone,
 } from 'react-icons/pi'
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)
@@ -37,9 +39,11 @@ function getDaysUntil(d: string) {
 
 export default function Header() {
 	const { user, logout } = useAuth()
+	const { branches, currentBranchId, setCurrentBranchId, myBranchId, role } = useBranch()
 	const navigate = useNavigate()
 	const [menuOpen, setMenuOpen] = useState(false)
 	const [notifOpen, setNotifOpen] = useState(false)
+	const [branchMenuOpen, setBranchMenuOpen] = useState(false)
 	const [searchOpen, setSearchOpen] = useState(false)
 	const [query, setQuery] = useState('')
 	const [isFullscreen, setIsFullscreen] = useState(false)
@@ -49,6 +53,7 @@ export default function Header() {
 	const { data: purchases = [] } = usePurchases()
 	const { data: sales = [] } = useSales()
 	const { data: inventory = [] } = useInventory()
+	const { data: stockTransfers = [] } = useStockTransfers()
 
 	const label = user?.displayName || user?.email || 'Account'
 	const initial = label.charAt(0).toUpperCase()
@@ -96,7 +101,17 @@ export default function Header() {
 	const lowStockCount = inventory.filter((i: any) => i.stock < 5).length
 	const overduePurchaseCredits = purchases.filter((p: any) => p.paymentType === 'credit' && !p.isPaid && p.creditDeadline && getDaysUntil(p.creditDeadline) < 0).length
 	const overdueSaleCredits = sales.filter((s: any) => s.paymentType === 'credit' && !s.isPaid && s.creditDeadline && getDaysUntil(s.creditDeadline) < 0).length
-	const alertCount = lowStockCount + overduePurchaseCredits + overdueSaleCredits
+
+	// Transfers needing this person's attention: pending ones only count for
+	// whoever can actually approve them (owner, or a manager of either branch
+	// involved) — a plain staff member never sees "needs approval" for a step
+	// they have no authority over.
+	const transfersPendingApproval = stockTransfers.filter(t => t.status === 'pending' && (
+		role === 'owner' || (role === 'manager' && (myBranchId === t.fromBranchId || myBranchId === t.toBranchId))
+	)).length
+	const transfersReadyToReceive = stockTransfers.filter(t => t.status === 'approved' && (!myBranchId || myBranchId === t.toBranchId)).length
+
+	const alertCount = lowStockCount + overduePurchaseCredits + overdueSaleCredits + transfersPendingApproval + transfersReadyToReceive
 
 	const goTo = (to: string) => {
 		setSearchOpen(false)
@@ -104,6 +119,10 @@ export default function Header() {
 		searchRef.current?.blur()
 		navigate(to)
 	}
+
+	const currentBranchLabel = currentBranchId === 'all'
+		? 'All Branches'
+		: (branches.find(b => b.id === currentBranchId)?.name || 'Branch')
 
 	return (
 		<div
@@ -173,6 +192,39 @@ export default function Header() {
 
 			{/* ── Right cluster ── */}
 			<div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+				{/* ── Branch switcher ── */}
+				<div tabIndex={-1} onBlur={() => setTimeout(() => setBranchMenuOpen(false), 150)} style={{ position: 'relative' }}>
+					<button
+						className="secondary"
+						onClick={() => { if (!myBranchId) setBranchMenuOpen(o => !o) }}
+						title={myBranchId ? 'Your assigned branch' : 'Switch branch'}
+						style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, padding: '7px 10px', borderRadius: 8, whiteSpace: 'nowrap', cursor: myBranchId ? 'default' : 'pointer' }}
+					>
+						<PiBuildingsDuotone size={14} />
+						{currentBranchLabel}
+						{!myBranchId && <PiCaretDownDuotone size={11} />}
+					</button>
+					{branchMenuOpen && !myBranchId && (
+						<div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 8, minWidth: 200, background: 'var(--bg-elevated)', border: '1px solid var(--border-strong)', borderRadius: 10, boxShadow: '0 8px 24px var(--overlay)', zIndex: 1000, overflow: 'hidden' }}>
+							<button
+								onMouseDown={() => { setCurrentBranchId('all'); setBranchMenuOpen(false) }}
+								style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px', background: currentBranchId === 'all' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, fontWeight: currentBranchId === 'all' ? 700 : 400, cursor: 'pointer' }}
+								onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+								onMouseLeave={e => (e.currentTarget.style.background = currentBranchId === 'all' ? 'var(--bg-hover)' : 'transparent')}
+							>All Branches</button>
+							{branches.map(b => (
+								<button
+									key={b.id}
+									onMouseDown={() => { setCurrentBranchId(b.id); setBranchMenuOpen(false) }}
+									style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px', background: currentBranchId === b.id ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, fontWeight: currentBranchId === b.id ? 700 : 400, cursor: 'pointer' }}
+									onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+									onMouseLeave={e => (e.currentTarget.style.background = currentBranchId === b.id ? 'var(--bg-hover)' : 'transparent')}
+								>{b.name}</button>
+							))}
+						</div>
+					)}
+				</div>
+
 				<span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--text-muted)', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 8, whiteSpace: 'nowrap' }}>
 					<PiCalendarBlankDuotone />
 					{today}
@@ -230,6 +282,24 @@ export default function Header() {
 										>
 											<PiInvoiceDuotone style={{ color: 'var(--warning)', flexShrink: 0 }} />
 											<span>{overdueSaleCredits} sales credit{overdueSaleCredits > 1 ? 's' : ''} overdue</span>
+										</button>
+									)}
+									{transfersPendingApproval > 0 && (
+										<button onMouseDown={() => goTo('/inventory')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+											onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+											onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+										>
+											<PiArrowsLeftRightDuotone style={{ color: 'var(--warning)', flexShrink: 0 }} />
+											<span>{transfersPendingApproval} stock transfer{transfersPendingApproval > 1 ? 's' : ''} awaiting your approval</span>
+										</button>
+									)}
+									{transfersReadyToReceive > 0 && (
+										<button onMouseDown={() => goTo('/inventory')} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+											onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+											onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+										>
+											<PiTruckDuotone style={{ color: 'var(--success)', flexShrink: 0 }} />
+											<span>{transfersReadyToReceive} stock transfer{transfersReadyToReceive > 1 ? 's' : ''} ready to receive</span>
 										</button>
 									)}
 								</div>

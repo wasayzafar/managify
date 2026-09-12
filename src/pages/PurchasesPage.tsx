@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { db, Item, Purchase, StoreInfo } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import { usePagination } from '../hooks/usePagination'
+import { useBranch } from '../auth/BranchContext'
+import { matchesBranch } from '../utils/branchFilter'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { loadCurrency, formatCurrency } from '../utils/currency'
@@ -51,6 +53,8 @@ export default function PurchasesPage() {
 	const [isMobilePhone, setIsMobilePhone] = useState(false)
 	type ImeiPair = { imei1: string; imei2: string; warrantyTill: string }
 	const [imeiPairs, setImeiPairs] = useState<ImeiPair[]>([])
+	const { currentBranchId, mainBranchId } = useBranch()
+	const writeBranchId = currentBranchId === 'all' ? mainBranchId : currentBranchId
 
 	// Match SKUs case-insensitively and ignore stray whitespace — otherwise a
 	// scanned/typed SKU that differs only in case or padding from an existing
@@ -145,7 +149,8 @@ export default function PurchasesPage() {
 				note: note || '',
 				purchasedAt,
 				paymentType,
-				creditDeadline: paymentType === 'credit' ? creditDeadline : ''
+				creditDeadline: paymentType === 'credit' ? creditDeadline : '',
+				branchId: writeBranchId,
 			})
 			// Save IMEIs if mobile phone purchase
 			if (isMobilePhone && imeiPairs.length > 0) {
@@ -301,23 +306,30 @@ export default function PurchasesPage() {
 		}
 	}
 
+	// Scoped to the currently selected branch (or every branch, for "All
+	// Branches") — the base every other derived value narrows further.
+	const branchRows = useMemo(() => {
+		if (currentBranchId === 'all') return rows
+		return rows.filter(r => matchesBranch(r.branchId, currentBranchId, mainBranchId))
+	}, [rows, currentBranchId, mainBranchId])
+
 	const stats = useMemo(() => {
-		const totalPurchases = rows.length
-		const totalSpend = rows.reduce((s, r) => s + (r.quantity || r.qty || 0) * (r.costPrice || 0), 0)
-		const creditRows = rows.filter(r => r.paymentType === 'credit')
+		const totalPurchases = branchRows.length
+		const totalSpend = branchRows.reduce((s, r) => s + (r.quantity || r.qty || 0) * (r.costPrice || 0), 0)
+		const creditRows = branchRows.filter(r => r.paymentType === 'credit')
 		const creditTotal = creditRows.reduce((s, r) => s + (r.quantity || r.qty || 0) * (r.costPrice || 0), 0)
 		return { totalPurchases, totalSpend, creditTotal, creditCount: creditRows.length }
-	}, [rows])
+	}, [branchRows])
 
 	const filteredRows = useMemo(() => {
 		const term = searchTerm.trim().toLowerCase()
-		return rows.filter(r => {
+		return branchRows.filter(r => {
 			if (paymentFilter !== 'all' && r.paymentType !== paymentFilter) return false
 			if (!term) return true
 			const item = items.find(i => i.id === r.itemId)
 			return (item?.sku || '').toLowerCase().includes(term) || (item?.name || '').toLowerCase().includes(term) || (r.supplier || '').toLowerCase().includes(term)
 		})
-	}, [rows, items, paymentFilter, searchTerm])
+	}, [branchRows, items, paymentFilter, searchTerm])
 
 	const pagination = usePagination({ data: filteredRows, itemsPerPage })
 	useEffect(() => { pagination.goToPage(1) }, [searchTerm, paymentFilter, itemsPerPage])

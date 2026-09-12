@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { matchesBranch } from './utils/branchFilter'
 
 export interface Item {
   id: string
@@ -24,6 +25,7 @@ export interface Purchase {
   payment_type?: string
   credit_deadline?: string
   is_paid?: boolean
+  branch_id?: string | null
 }
 
 export interface Sale {
@@ -44,6 +46,7 @@ export interface Sale {
   is_paid?: boolean
   credit_amount?: number
   paid_amount?: number
+  branch_id?: string | null
 }
 
 export interface StoreInfo {
@@ -69,6 +72,7 @@ export interface Expense {
   expires_this_month?: boolean
   expense_month?: string
   user_id: string
+  branch_id?: string | null
 }
 
 export interface Employee {
@@ -95,6 +99,7 @@ export interface Invoice {
   created_at: string
   date: string
   user_id: string
+  branch_id?: string | null
 }
 
 export interface Supplier {
@@ -116,6 +121,7 @@ export interface Asset {
   description?: string
   user_id: string
   created_at?: string
+  branch_id?: string | null
 }
 
 // Items
@@ -501,27 +507,63 @@ export const deleteSupplier = async (id: string): Promise<void> => {
 }
 
 // Inventory calculation
-export const getInventory = async (userId: string): Promise<Array<{ itemId: string; itemName: string; itemSku: string; stock: number }>> => {
-  const [items, purchases, sales] = await Promise.all([
+export const getInventory = async (
+  userId: string,
+  targetBranchId?: string | null,
+  mainBranchId?: string | null
+): Promise<Array<{ itemId: string; itemName: string; itemSku: string; stock: number }>> => {
+  const [items, purchases, sales, transfers] = await Promise.all([
     listItems(userId),
     listPurchases(userId),
-    listSales(userId)
+    listSales(userId),
+    listStockTransfers(userId),
   ])
 
+  // Stock is an aggregate (purchased minus sold), so — unlike a raw list —
+  // it can't be branch-filtered after the fact by the caller; it has to be
+  // filtered before summing.
+  const purchasesInScope = targetBranchId
+    ? purchases.filter(p => matchesBranch(p.branch_id, targetBranchId, mainBranchId))
+    : purchases
+  const salesInScope = targetBranchId
+    ? sales.filter(s => matchesBranch(s.branch_id, targetBranchId, mainBranchId))
+    : sales
+
+  // A transfer leaves the source branch's countable stock once APPROVED
+  // (physically gone, even mid-transit) and only lands at the destination
+  // once RECEIVED — so there's a deliberate gap where it's counted nowhere,
+  // matching goods actually in a truck. Viewing "all branches" nets to zero
+  // for any transfer still in that gap, which is correct (nothing left the
+  // store as a whole).
+  const transfersOutInScope = targetBranchId
+    ? transfers.filter(t => (t.status === 'approved' || t.status === 'received') && matchesBranch(t.from_branch_id, targetBranchId, mainBranchId))
+    : []
+  const transfersInInScope = targetBranchId
+    ? transfers.filter(t => t.status === 'received' && matchesBranch(t.to_branch_id, targetBranchId, mainBranchId))
+    : []
+
   return items.map(item => {
-    const totalPurchased = purchases
+    const totalPurchased = purchasesInScope
       .filter(p => p.item_id === item.id)
       .reduce((sum, p) => sum + p.quantity, 0)
-    
-    const totalSold = sales
+
+    const totalSold = salesInScope
       .filter(s => s.item_id === item.id)
       .reduce((sum, s) => sum + s.quantity, 0)
+
+    const totalTransferredOut = transfersOutInScope
+      .filter(t => t.item_id === item.id)
+      .reduce((sum, t) => sum + t.quantity, 0)
+
+    const totalTransferredIn = transfersInInScope
+      .filter(t => t.item_id === item.id)
+      .reduce((sum, t) => sum + t.quantity, 0)
 
     return {
       itemId: item.id,
       itemName: item.name,
       itemSku: item.sku,
-      stock: totalPurchased - totalSold
+      stock: totalPurchased - totalSold - totalTransferredOut + totalTransferredIn
     }
   })
 }
@@ -560,6 +602,112 @@ export const deleteAsset = async (id: string): Promise<void> => {
     .from('assets')
     .delete()
     .eq('id', id)
+  if (error) throw error
+}
+
+// Branches
+export interface BranchRow {
+  id: string
+  store_id: string
+  name: string
+  address?: string
+  phone?: string
+  is_active: boolean
+  created_at?: string
+}
+
+export const listBranches = async (storeId: string): Promise<BranchRow[]> => {
+  const { data, error } = await supabase
+    .from('branches')
+    .select('*')
+    .eq('store_id', storeId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data || []
+}
+
+export const addBranch = async (storeId: string, branch: Omit<BranchRow, 'id' | 'store_id' | 'is_active' | 'created_at'>): Promise<string> => {
+  const { data, error } = await supabase
+    .from('branches')
+    .insert({ ...branch, store_id: storeId })
+    .select()
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+export const updateBranch = async (id: string, branch: Partial<Omit<BranchRow, 'id' | 'store_id'>>): Promise<void> => {
+  const { error } = await supabase
+    .from('branches')
+    .update(branch)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const deleteBranch = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('branches')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+// Stock transfers (branch-to-branch, with manager/owner approval)
+export interface StockTransferRow {
+  id: string
+  store_id: string
+  item_id: string
+  quantity: number
+  from_branch_id: string
+  to_branch_id: string
+  status: 'pending' | 'approved' | 'rejected' | 'received'
+  requested_by: string
+  requested_by_name?: string
+  approved_by?: string
+  approved_at?: string
+  received_at?: string
+  rejected_reason?: string
+  notes?: string
+  created_at: string
+}
+
+export const listStockTransfers = async (storeId: string): Promise<StockTransferRow[]> => {
+  const { data, error } = await supabase
+    .from('stock_transfers')
+    .select('*')
+    .eq('store_id', storeId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data || []
+}
+
+export const createStockTransfer = async (
+  storeId: string,
+  requestedBy: string,
+  data: { itemId: string; quantity: number; fromBranchId: string; toBranchId: string; requestedByName?: string; notes?: string }
+): Promise<string> => {
+  const { data: row, error } = await supabase
+    .from('stock_transfers')
+    .insert({
+      store_id: storeId,
+      item_id: data.itemId,
+      quantity: data.quantity,
+      from_branch_id: data.fromBranchId,
+      to_branch_id: data.toBranchId,
+      requested_by: requestedBy,
+      requested_by_name: data.requestedByName,
+      notes: data.notes,
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return row.id
+}
+
+export const setStockTransferStatus = async (id: string, status: 'approved' | 'rejected' | 'received', rejectedReason?: string): Promise<void> => {
+  const patch: Record<string, any> = { status }
+  if (status === 'rejected' && rejectedReason) patch.rejected_reason = rejectedReason
+  const { error } = await supabase.from('stock_transfers').update(patch).eq('id', id)
   if (error) throw error
 }
 

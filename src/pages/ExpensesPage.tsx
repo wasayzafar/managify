@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { db, Expense, StoreInfo } from '../storage'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import { exportExpensesToExcel } from '../utils/exportCSV'
+import { useBranch } from '../auth/BranchContext'
+import { matchesBranch } from '../utils/branchFilter'
 import { StatCard } from '../ui/StatCard'
 import jsPDF from 'jspdf'
 import {
@@ -67,6 +69,8 @@ export default function ExpensesPage() {
 	// Delete confirmation
 	const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null)
 	const [deleting, setDeleting] = useState(false)
+	const { currentBranchId, mainBranchId } = useBranch()
+	const writeBranchId = currentBranchId === 'all' ? mainBranchId : currentBranchId
 
 	useEffect(() => { loadAll() }, [])
 
@@ -115,6 +119,7 @@ export default function ExpensesPage() {
 				amount,
 				description: subForm.description,
 				expenseMonth: month,
+				branchId: writeBranchId,
 			})
 			setExpenses(await db.listExpenses())
 			setSubForm(emptySubForm)
@@ -160,12 +165,18 @@ export default function ExpensesPage() {
 		}
 	}
 
+	// Scoped to the currently selected branch (or every branch, for "All
+	// Branches") — everything below derives from this, not the raw list.
+	const branchExpenses = currentBranchId === 'all'
+		? expenses
+		: expenses.filter(e => matchesBranch(e.branchId, currentBranchId, mainBranchId))
+
 	// Merge created months with months that have expenses
-	const expenseMonthSet = new Set(expenses.map(e => e.expenseMonth || 'other'))
+	const expenseMonthSet = new Set(branchExpenses.map(e => e.expenseMonth || 'other'))
 	const allMonths = [...new Set([...createdMonths, ...expenseMonthSet])]
 		.sort((a, b) => (a === 'other' ? 1 : b === 'other' ? -1 : a < b ? 1 : a > b ? -1 : 0))
 
-	const grouped = expenses.reduce((acc, exp) => {
+	const grouped = branchExpenses.reduce((acc, exp) => {
 		const key = exp.expenseMonth || 'other'
 		if (!acc[key]) acc[key] = []
 		acc[key].push(exp)
@@ -174,16 +185,16 @@ export default function ExpensesPage() {
 
 	const thisMonthKey = currentMonth()
 	const thisYearPrefix = thisMonthKey.slice(0, 4)
-	const monthTotal = (expenses.filter(e => (e.expenseMonth || '') === thisMonthKey)).reduce((s, e) => s + e.amount, 0)
-	const monthCount = expenses.filter(e => (e.expenseMonth || '') === thisMonthKey).length
-	const yearTotal = expenses.filter(e => (e.expenseMonth || '').startsWith(thisYearPrefix)).reduce((s, e) => s + e.amount, 0)
-	const allTimeTotal = expenses.reduce((s, e) => s + e.amount, 0)
-	const activeMonths = new Set(expenses.map(e => e.expenseMonth).filter(Boolean)).size
+	const monthTotal = (branchExpenses.filter(e => (e.expenseMonth || '') === thisMonthKey)).reduce((s, e) => s + e.amount, 0)
+	const monthCount = branchExpenses.filter(e => (e.expenseMonth || '') === thisMonthKey).length
+	const yearTotal = branchExpenses.filter(e => (e.expenseMonth || '').startsWith(thisYearPrefix)).reduce((s, e) => s + e.amount, 0)
+	const allTimeTotal = branchExpenses.reduce((s, e) => s + e.amount, 0)
+	const activeMonths = new Set(branchExpenses.map(e => e.expenseMonth).filter(Boolean)).size
 	const monthlyAverage = activeMonths > 0 ? allTimeTotal / activeMonths : 0
-	const retiredCount = expenses.filter(e => RETIRED_TYPES.includes(e.type)).length
+	const retiredCount = branchExpenses.filter(e => RETIRED_TYPES.includes(e.type)).length
 
 	function handleExcelExport() {
-		exportExpensesToExcel(expenses.map(e => ({
+		exportExpensesToExcel(branchExpenses.map(e => ({
 			month: e.expenseMonth ? monthLabel(e.expenseMonth) : '—',
 			type: e.type,
 			amount: e.amount,
@@ -254,7 +265,7 @@ export default function ExpensesPage() {
 		})
 
 		y += 3; pdf.setFont('helvetica', 'bold'); pdf.setFontSize(9)
-		pdf.text(`Total: ${expenses.length} expenses`, margin, y)
+		pdf.text(`Total: ${branchExpenses.length} expenses`, margin, y)
 		pdf.text(`Total Amount: ${pdfCurrency(total)}`, pageW - margin, y, { align: 'right' })
 		const totalPages = (pdf as any).internal.getNumberOfPages()
 		for (let i = 1; i <= totalPages; i++) {
@@ -279,7 +290,7 @@ export default function ExpensesPage() {
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
 				<div>
 					<h1 style={{ margin: '0 0 4px 0', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>Expenses</h1>
-					<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13.5 }}>{expenses.length} expense entr{expenses.length === 1 ? 'y' : 'ies'} across {activeMonths} month{activeMonths === 1 ? '' : 's'}</p>
+					<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13.5 }}>{branchExpenses.length} expense entr{branchExpenses.length === 1 ? 'y' : 'ies'} across {activeMonths} month{activeMonths === 1 ? '' : 's'}</p>
 				</div>
 				<div style={{ display: 'flex', gap: 8 }}>
 					<button className="secondary" onClick={handleExcelExport} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 500 }}>
@@ -296,7 +307,7 @@ export default function ExpensesPage() {
 				<StatCard icon={<PiWalletDuotone />} tint="warning" label="This month" value={formatCurrency(monthTotal, currency)} caption={`${monthCount} entr${monthCount === 1 ? 'y' : 'ies'} · ${monthLabel(thisMonthKey)}`} />
 				<StatCard icon={<PiReceiptDuotone />} tint="accent" label="This year" value={formatCurrency(yearTotal, currency)} caption="Year to date" />
 				<StatCard icon={<PiCalculatorDuotone />} tint="neutral" label="Monthly average" value={formatCurrency(monthlyAverage, currency)} caption={activeMonths > 0 ? `Across ${activeMonths} active month${activeMonths === 1 ? '' : 's'}` : 'No data yet'} />
-				<StatCard icon={<PiWalletDuotone />} tint="neutral" label="All-time total" value={formatCurrency(allTimeTotal, currency)} caption={`${expenses.length} total entries`} />
+				<StatCard icon={<PiWalletDuotone />} tint="neutral" label="All-time total" value={formatCurrency(allTimeTotal, currency)} caption={`${branchExpenses.length} total entries`} />
 			</div>
 
 			{retiredCount > 0 && (

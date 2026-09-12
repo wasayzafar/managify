@@ -3,12 +3,13 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useDataPrefetch } from '../hooks/useDataPrefetch'
 import { SEO } from '../components/SEO'
 import { useAuth } from '../auth/useAuth'
+import { useBranch } from '../auth/BranchContext'
 import Header from './Header'
 import {
 	PiSquaresFourDuotone, PiStackDuotone, PiCubeDuotone, PiShoppingBagDuotone, PiShoppingCartDuotone,
 	PiReceiptDuotone, PiChartLineUpDuotone, PiCalendarBlankDuotone, PiInvoiceDuotone, PiUsersDuotone,
 	PiWalletDuotone, PiStorefrontDuotone, PiArchiveDuotone, PiGearDuotone, PiShieldCheckDuotone,
-	PiCrownDuotone, PiRocketDuotone,
+	PiCrownDuotone, PiRocketDuotone, PiBuildingsDuotone, PiUserGearDuotone,
 } from 'react-icons/pi'
 
 const ADMIN_EMAILS = ['nativeedgestudio.space@gmail.com', 'nativeedge.studio@gmail.com']
@@ -20,6 +21,7 @@ export default function App() {
 	const { prefetchPageData } = useDataPrefetch()
 	const { user } = useAuth()
 	const isAdmin = ADMIN_EMAILS.includes(user?.email ?? '')
+	const { role } = useBranch()
 
 	// Prefetch data based on current route
 	React.useEffect(() => {
@@ -121,6 +123,18 @@ export default function App() {
 						<PiArchiveDuotone />
 						<span>Assets</span>
 					</Link>
+					{role === 'owner' && (
+						<Link className={loc.pathname.startsWith('/branches') ? 'active' : ''} to="/branches">
+							<PiBuildingsDuotone />
+							<span>Branches</span>
+						</Link>
+					)}
+					{role === 'owner' && (
+						<Link className={loc.pathname.startsWith('/staff') ? 'active' : ''} to="/staff">
+							<PiUserGearDuotone />
+							<span>Staff</span>
+						</Link>
+					)}
 					<Link className={loc.pathname.startsWith('/settings') ? 'active' : ''} to="/settings">
 						<PiGearDuotone />
 						<span>Settings</span>

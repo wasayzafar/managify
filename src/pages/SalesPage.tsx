@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { InvoiceHeader, ThermalHeader, InvoiceFooter, preloadBrandingLogos } from '../utils/invoiceHeader'
 import { db, Sale, Item, StoreInfo } from '../storage'
+import { useBranch } from '../auth/BranchContext'
+import { matchesBranch } from '../utils/branchFilter'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
@@ -8,6 +10,7 @@ import { getCachedImage, preloadImageAsBase64 } from '../utils/imageCache'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 
 export default function SalesPage() {
+	const { currentBranchId, mainBranchId } = useBranch()
 	const [invoices, setInvoices] = useState<any[]>([])
 	const [allSales, setAllSales] = useState<Sale[]>([])
 	const [items, setItems] = useState<Item[]>([])
@@ -45,7 +48,15 @@ export default function SalesPage() {
 
 	useEffect(() => { loadData() }, [])
 
-	const filteredInvoices = invoices.filter(inv => {
+	// Every sale/return lookup below joins against a specific invoice's own
+	// invoiceNo (branch-scoped by construction), so only the invoice list
+	// itself needs to be branch-filtered here — nothing downstream can leak
+	// across branches through that join.
+	const branchInvoices = currentBranchId === 'all'
+		? invoices
+		: invoices.filter(inv => matchesBranch(inv.branchId, currentBranchId, mainBranchId))
+
+	const filteredInvoices = branchInvoices.filter(inv => {
 		if (searchTerm && !inv.invoiceNo?.toLowerCase().includes(searchTerm.toLowerCase()) && !inv.customer?.toLowerCase().includes(searchTerm.toLowerCase())) return false
 		if (itemSearch.trim()) {
 			const term = itemSearch.trim().toLowerCase()

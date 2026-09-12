@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/useAuth';
+import { BranchProvider } from './auth/BranchContext';
 import { supabase } from './supabase';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
@@ -23,6 +24,8 @@ import ExpensesPage from './pages/ExpensesPage';
 import SuppliersPage from './pages/SuppliersPage';
 import SettingsPage from './pages/SettingsPage'
 import AssetsPage from './pages/AssetsPage';
+import BranchesPage from './pages/BranchesPage';
+import StaffPage from './pages/StaffPage';
 import AdminPage from './pages/AdminPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -49,7 +52,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   );
 
-  return <>{children}</>;
+  return <BranchProvider>{children}</BranchProvider>;
 }
 
 export function AppRouter() {
@@ -81,6 +84,8 @@ export function AppRouter() {
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="assets" element={<AssetsPage />} />
+          <Route path="branches" element={<BranchesPage />} />
+          <Route path="staff" element={<StaffPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>

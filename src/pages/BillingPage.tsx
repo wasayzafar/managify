@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, Result } from '@zxing/library'
 import { db, StoreInfo } from '../storage'
+import { useBranch } from '../auth/BranchContext'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
@@ -16,6 +17,8 @@ import {
  type CartLine = { id: string, sku: string, name: string, itemId?: string, qty: number, price: number, discount?: number, originalPrice?: number, imei1?: string, imei2?: string, warrantyTill?: string }
 //test
 export default function BillingPage() {
+	const { currentBranchId, mainBranchId } = useBranch()
+	const writeBranchId = currentBranchId === 'all' ? mainBranchId : currentBranchId
 	const [customer, setCustomer] = useState('')
 	const [customerPhone, setCustomerPhone] = useState('')
 	const [customerAddress, setCustomerAddress] = useState('')
@@ -312,6 +315,7 @@ export default function BillingPage() {
 					paymentType,
 					creditDeadline: paymentType === 'credit' ? creditDeadline : undefined,
 					paidAmount: paymentType === 'credit' ? downPayment : 0,
+					branchId: writeBranchId,
 				})
 			}
 			// Mark IMEIs as sold in the imeis table
@@ -330,7 +334,8 @@ export default function BillingPage() {
 				lines: cart,
 				total,
 				billDiscount,
-				date: finalDate
+				date: finalDate,
+				branchId: writeBranchId,
 			})
 
 			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, paymentType, creditDeadline: paymentType === 'credit' ? creditDeadline : undefined, downPayment: paymentType === 'credit' ? downPayment : 0, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined }

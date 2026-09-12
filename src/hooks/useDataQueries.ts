@@ -13,6 +13,7 @@ export const queryKeys = {
   employees: ['employees'] as const,
   invoices: ['invoices'] as const,
   suppliers: ['suppliers'] as const,
+  stockTransfers: ['stockTransfers'] as const,
 }
 
 // Items queries
@@ -85,12 +86,29 @@ export const useSalesByDateRange = (startDate: string, endDate: string) => {
   })
 }
 
-// Inventory query
-export const useInventory = () => {
+// Inventory query — stock is an aggregate (purchased minus sold), so unlike
+// the other resources it can't be branch-filtered client-side after the
+// fact; branchId/mainBranchId are baked into the query itself and the cache
+// key, so switching branches actually refetches rather than reusing another
+// branch's totals. Pass nothing (as the header's low-stock badge does) to
+// get the all-branches total, matching the pre-branch-feature behavior.
+export const useInventory = (branchId?: string | null, mainBranchId?: string | null) => {
   return useQuery({
-    queryKey: queryKeys.inventory,
-    queryFn: () => db.inventory(),
+    queryKey: [...queryKeys.inventory, branchId ?? 'all'],
+    queryFn: () => db.inventory(branchId, mainBranchId),
     staleTime: 1 * 60 * 1000, // 1 minute
+    cacheTime: 5 * 60 * 1000,
+  })
+}
+
+// Stock transfers (branch-to-branch, pending manager/owner approval) —
+// short staleTime since the notification bell and the inventory transfer
+// panel both need to reflect an approval/receipt from another device quickly.
+export const useStockTransfers = () => {
+  return useQuery({
+    queryKey: queryKeys.stockTransfers,
+    queryFn: () => db.listStockTransfers(),
+    staleTime: 30 * 1000,
     cacheTime: 5 * 60 * 1000,
   })
 }

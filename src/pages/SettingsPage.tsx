@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db, StoreInfo } from '../storage'
 import { useAuth } from '../auth/useAuth'
+import { useBranch } from '../auth/BranchContext'
 import InvoiceHeaderDesigner from '../components/InvoiceHeaderDesigner'
 import {
 	PiStorefrontDuotone, PiPhoneDuotone, PiMapPinLineDuotone, PiEnvelopeSimpleDuotone,
@@ -10,7 +11,18 @@ import {
 	PiFileDuotone, PiRectangleDuotone, PiShoppingCartDuotone, PiReceiptDuotone,
 	PiDeviceMobileCameraDuotone, PiTrashDuotone, PiBroomDuotone, PiSignOutDuotone,
 	PiCheckCircleDuotone, PiWarningCircleDuotone, PiWarningDuotone,
+	PiUserCircleDuotone, PiSlidersDuotone, PiUsersDuotone, PiBuildingsDuotone,
+	PiArrowRightDuotone, PiUserPlusDuotone,
 } from 'react-icons/pi'
+
+type SettingsSection = 'profile' | 'invoices' | 'general' | 'staff'
+
+const SECTIONS: { key: SettingsSection; label: string; icon: JSX.Element }[] = [
+	{ key: 'profile', label: 'Profile', icon: <PiUserCircleDuotone size={16} /> },
+	{ key: 'invoices', label: 'Invoices', icon: <PiReceiptDuotone size={16} /> },
+	{ key: 'general', label: 'General', icon: <PiSlidersDuotone size={16} /> },
+	{ key: 'staff', label: 'Staff', icon: <PiUsersDuotone size={16} /> },
+]
 
 const CURRENCIES: { code: string; label: string }[] = [
 	{ code: 'PKR', label: 'PKR — Pakistani Rupee' },
@@ -51,7 +63,7 @@ function Toggle({ checked, onChange, label, description }: { checked: boolean; o
 }
 
 export default function SettingsPage() {
-	const [storeInfo, setStoreInfo] = useState<StoreInfo>({
+	const defaultStoreInfo: StoreInfo = {
 		storeName: 'Managify',
 		phone: '',
 		address: '',
@@ -60,7 +72,15 @@ export default function SettingsPage() {
 		taxNumber: '',
 		logo: '',
 		currency: 'PKR'
-	})
+	}
+	const [storeInfo, setStoreInfo] = useState<StoreInfo>(defaultStoreInfo)
+	// Last-SAVED store info, kept separate from the live-editing `storeInfo`
+	// draft above. The Invoice Header Designer merges its layout against
+	// whatever storeInfo it's given every time a field changes — if it were
+	// fed the draft directly, every keystroke while editing Store Info would
+	// re-run that merge (including on empty intermediate values while
+	// clearing a field to retype it), corrupting the header layout mid-edit.
+	const [savedInfo, setSavedInfo] = useState<StoreInfo>(defaultStoreInfo)
 	const [isEditing, setIsEditing] = useState(false)
 	const [formError, setFormError] = useState('')
 	const [message, setMessage] = useState('')
@@ -92,14 +112,18 @@ export default function SettingsPage() {
 	const [resetting, setResetting] = useState(false)
 	const [clearStorageModalOpen, setClearStorageModalOpen] = useState(false)
 	const [clearingStorage, setClearingStorage] = useState(false)
+	const [section, setSection] = useState<SettingsSection>('profile')
 	const { logout } = useAuth()
+	const { branches, role } = useBranch()
 	const navigate = useNavigate()
+	const visibleSections = SECTIONS.filter(s => s.key !== 'staff' || role === 'owner')
 
 	useEffect(() => {
 		const loadStoreInfo = async () => {
 			try {
 				const info = await db.getStoreInfo()
 				setStoreInfo(info)
+				setSavedInfo(info)
 			} catch (error) {
 				console.error('Error loading store info:', error)
 			}
@@ -119,6 +143,7 @@ export default function SettingsPage() {
 		if (!storeInfo.address?.trim()) { setFormError('Address is required.'); return }
 		try {
 			await db.updateStoreInfo(storeInfo)
+			setSavedInfo(storeInfo)
 			setIsEditing(false)
 			notify('Store information saved successfully!')
 		} catch (error) {
@@ -130,6 +155,7 @@ export default function SettingsPage() {
 		try {
 			const info = await db.getStoreInfo()
 			setStoreInfo(info)
+			setSavedInfo(info)
 			setIsEditing(false)
 			setFormError('')
 			setMessage('')
@@ -251,6 +277,25 @@ export default function SettingsPage() {
 				</div>
 			</div>
 
+			{/* ── Section tabs ── */}
+			<div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1px solid var(--border)' }}>
+				{visibleSections.map(s => (
+					<button
+						key={s.key}
+						onClick={() => setSection(s.key)}
+						style={{
+							display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', marginBottom: -1,
+							background: 'transparent', border: 'none',
+							borderBottom: section === s.key ? '2px solid var(--accent)' : '2px solid transparent',
+							color: section === s.key ? 'var(--accent)' : 'var(--text-muted)',
+							fontWeight: section === s.key ? 700 : 500, fontSize: 13.5, cursor: 'pointer',
+						}}
+					>{s.icon} {s.label}</button>
+				))}
+			</div>
+
+			{section === 'profile' && (
+			<>
 			{/* ── Store Information ── */}
 			<div className="card">
 				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 4 }}>
@@ -437,7 +482,11 @@ export default function SettingsPage() {
 					</div>
 				)}
 			</div>
+			</>
+			)}
 
+			{section === 'invoices' && (
+			<>
 			{/* ── Invoice Header Designer ── */}
 			<div className="card">
 				<div style={{ marginBottom: 16 }}>
@@ -447,10 +496,12 @@ export default function SettingsPage() {
 					</p>
 				</div>
 				<InvoiceHeaderDesigner
-					storeInfo={storeInfo}
-					headerLayout={storeInfo.headerLayout}
+					storeInfo={savedInfo}
+					headerLayout={savedInfo.headerLayout}
 					onSave={async (json) => {
 						await db.updateHeaderLayout(json)
+						setSavedInfo(prev => ({ ...prev, headerLayout: json }))
+						setStoreInfo(prev => ({ ...prev, headerLayout: json }))
 						notify('Header layout saved to database!')
 					}}
 				/>
@@ -533,23 +584,6 @@ export default function SettingsPage() {
 				)}
 			</div>
 
-			{/* ── E-commerce Settings ── */}
-			<div className="card">
-				<h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700 }}>
-					<PiShoppingCartDuotone size={16} style={{ color: 'var(--text-muted)' }} /> E-commerce Settings
-				</h3>
-				<Toggle
-					checked={ecommerceMode}
-					onChange={(next) => {
-						setEcommerceMode(next)
-						localStorage.setItem('ecommerceMode', next.toString())
-						notify('E-commerce mode ' + (next ? 'enabled' : 'disabled') + '. Customer address field is now ' + (next ? 'visible' : 'hidden') + ' on billing.')
-					}}
-					label="Enable E-commerce Mode"
-					description="When enabled, a customer delivery address field appears on the Billing page and prints on the invoice."
-				/>
-			</div>
-
 			{/* ── Billing Settings ── */}
 			<div className="card">
 				<h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700 }}>
@@ -584,6 +618,27 @@ export default function SettingsPage() {
 					}}
 					label="Show Promotional Footer on Invoices"
 					description='When enabled, invoices show the Managify and NativeEdge Studio logos plus a "Want this POS system?" contact line at the bottom. When disabled, that branding and promotional content is removed — only "Thank you for your business" and your store’s own contact info remain.'
+				/>
+			</div>
+			</>
+			)}
+
+			{section === 'general' && (
+			<>
+			{/* ── E-commerce Settings ── */}
+			<div className="card">
+				<h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700 }}>
+					<PiShoppingCartDuotone size={16} style={{ color: 'var(--text-muted)' }} /> E-commerce Settings
+				</h3>
+				<Toggle
+					checked={ecommerceMode}
+					onChange={(next) => {
+						setEcommerceMode(next)
+						localStorage.setItem('ecommerceMode', next.toString())
+						notify('E-commerce mode ' + (next ? 'enabled' : 'disabled') + '. Customer address field is now ' + (next ? 'visible' : 'hidden') + ' on billing.')
+					}}
+					label="Enable E-commerce Mode"
+					description="When enabled, a customer delivery address field appears on the Billing page and prints on the invoice."
 				/>
 			</div>
 
@@ -630,6 +685,46 @@ export default function SettingsPage() {
 					</button>
 				</div>
 			</div>
+			</>
+			)}
+
+			{section === 'staff' && role === 'owner' && (
+			<>
+			{/* ── Branches ── */}
+			<div className="card">
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+					<div>
+						<h3 style={{ margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700 }}>
+							<PiBuildingsDuotone size={16} style={{ color: 'var(--text-muted)' }} /> Branches
+						</h3>
+						<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13 }}>
+							{branches.length} location{branches.length === 1 ? '' : 's'} on record.
+						</p>
+					</div>
+					<button className="secondary" onClick={() => navigate('/branches')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+						Manage Branches <PiArrowRightDuotone size={14} />
+					</button>
+				</div>
+			</div>
+
+			{/* ── Staff accounts ── */}
+			<div className="card">
+				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+					<div>
+						<h3 style={{ margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 700 }}>
+							<PiUserPlusDuotone size={16} style={{ color: 'var(--text-muted)' }} /> Staff Accounts
+						</h3>
+						<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13 }}>
+							Invite a manager or staff member with their own login, scoped to one branch.
+						</p>
+					</div>
+					<button className="secondary" onClick={() => navigate('/staff')} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+						Manage Staff <PiArrowRightDuotone size={14} />
+					</button>
+				</div>
+			</div>
+			</>
+			)}
 
 			{/* ── Toast ── */}
 			{message && (
