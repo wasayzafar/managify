@@ -14,6 +14,7 @@ export const queryKeys = {
   invoices: ['invoices'] as const,
   suppliers: ['suppliers'] as const,
   stockTransfers: ['stockTransfers'] as const,
+  taxRates: ['taxRates'] as const,
 }
 
 // Items queries
@@ -110,6 +111,16 @@ export const useStockTransfers = () => {
     queryFn: () => db.listStockTransfers(),
     staleTime: 30 * 1000,
     cacheTime: 5 * 60 * 1000,
+  })
+}
+
+// Tax rates — long staleTime since these change rarely (owner-managed config).
+export const useTaxRates = () => {
+  return useQuery({
+    queryKey: queryKeys.taxRates,
+    queryFn: () => db.listTaxRates(),
+    staleTime: 10 * 60 * 1000,
+    cacheTime: 30 * 60 * 1000,
   })
 }
 

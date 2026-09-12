@@ -2,6 +2,7 @@
 import { BrowserMultiFormatReader, Result } from '@zxing/library'
 import { db, StoreInfo } from '../storage'
 import { useBranch } from '../auth/BranchContext'
+import { useTaxRates } from '../hooks/useDataQueries'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { getThermalPrintStyles, isThermalPrinting, getPrintWindowSize, getPrintPageCSS, getPrintOrientation, getPrintSize } from '../utils/thermalPrintStyles'
@@ -40,10 +41,14 @@ export default function BillingPage() {
 	const [priceInput, setPriceInput] = useState('')
 	const [cart, setCart] = useState<CartLine[]>([])
 	const [billDiscount, setBillDiscount] = useState(0)
+	const [taxRateId, setTaxRateId] = useState('')
+	const { data: taxRates = [] } = useTaxRates()
+	const activeSalesTaxes = useMemo(() => taxRates.filter(t => t.isActive && (t.appliesTo === 'sales' || t.appliesTo === 'both')), [taxRates])
+	const selectedTax = activeSalesTaxes.find(t => t.id === taxRateId)
 	const [paymentType, setPaymentType] = useState<'debit' | 'credit'>('debit')
 	const [creditDeadline, setCreditDeadline] = useState('')
 	const [downPayment, setDownPayment] = useState(0)
-	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any, serviceFrom?: string, serviceTo?: string } | null>(null)
+	const [lastInvoice, setLastInvoice] = useState<{ invoiceNo: string, customer: string, phone?: string, customerAddress?: string, lines: CartLine[], total: number, billDiscount: number, createdAt: string, storeInfo?: any, serviceFrom?: string, serviceTo?: string, taxName?: string, taxPercent?: number, taxAmount?: number } | null>(null)
 	const [savedInvoices, setSavedInvoices] = useState<any[]>([])
 	const [finalizing, setFinalizing] = useState(false)
 	const [showCustomerDropdown, setShowCustomerDropdown] = useState(false)
@@ -63,10 +68,12 @@ export default function BillingPage() {
 		const lineDiscount = (lineTotal * (b.discount || 0)) / 100
 		return a + lineTotal - lineDiscount
 	}, 0), [cart])
-	const total = useMemo(() => {
+	const afterDiscount = useMemo(() => {
 		const billDiscountAmount = (subtotal * billDiscount) / 100
 		return subtotal - billDiscountAmount
 	}, [subtotal, billDiscount])
+	const taxAmount = useMemo(() => selectedTax ? (afterDiscount * selectedTax.rate) / 100 : 0, [afterDiscount, selectedTax])
+	const total = useMemo(() => afterDiscount + taxAmount, [afterDiscount, taxAmount])
 
 	const customerSuggestions = useMemo(() => {
 		const seen = new Set<string>()
@@ -300,7 +307,8 @@ export default function BillingPage() {
 				const billDiscountAmount = (lineSubtotal * billDiscount) / 100
 				const finalAmount = lineSubtotal - billDiscountAmount
 				const actualUnitPrice = finalAmount / l.qty
-				
+				const lineTaxAmount = selectedTax ? (finalAmount * selectedTax.rate) / 100 : 0
+
 				await db.createSale({
 					itemId,
 					quantity: l.qty,
@@ -316,6 +324,10 @@ export default function BillingPage() {
 					creditDeadline: paymentType === 'credit' ? creditDeadline : undefined,
 					paidAmount: paymentType === 'credit' ? downPayment : 0,
 					branchId: writeBranchId,
+					taxRateId: selectedTax?.id ?? null,
+					taxName: selectedTax?.name ?? null,
+					taxPercent: selectedTax?.rate ?? null,
+					taxAmount: selectedTax ? lineTaxAmount : null,
 				})
 			}
 			// Mark IMEIs as sold in the imeis table
@@ -336,9 +348,13 @@ export default function BillingPage() {
 				billDiscount,
 				date: finalDate,
 				branchId: writeBranchId,
+				taxRateId: selectedTax?.id ?? null,
+				taxName: selectedTax?.name ?? null,
+				taxPercent: selectedTax?.rate ?? null,
+				taxAmount: selectedTax ? taxAmount : null,
 			})
 
-			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, paymentType, creditDeadline: paymentType === 'credit' ? creditDeadline : undefined, downPayment: paymentType === 'credit' ? downPayment : 0, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined }
+			const snapshot = { invoiceNo, customer, phone: customerPhone, customerAddress, lines: cart, total, billDiscount, paymentType, creditDeadline: paymentType === 'credit' ? creditDeadline : undefined, downPayment: paymentType === 'credit' ? downPayment : 0, createdAt: new Date(finalDate).toLocaleString(), storeInfo, serviceFrom: serviceFrom || undefined, serviceTo: serviceTo || undefined, taxName: selectedTax?.name, taxPercent: selectedTax?.rate, taxAmount: selectedTax ? taxAmount : undefined }
 			setLastInvoice(snapshot)
 			setCart([])
 			setInvoiceNo(`INV-${Date.now().toString().slice(-6)}`)
@@ -348,6 +364,7 @@ export default function BillingPage() {
 			setPaymentType('debit')
 			setCreditDeadline('')
 			setDownPayment(0)
+			setTaxRateId('')
 			await loadSavedInvoices()
 			alert('Bill created and saved successfully')
 		} catch (error) {
@@ -664,6 +681,18 @@ export default function BillingPage() {
 					</div>
 					<span>{formatCurrency((subtotal * billDiscount) / 100, storeInfo.currency)}</span>
 				</div>
+				{activeSalesTaxes.length > 0 && (
+					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontSize: 13.5 }}>
+						<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+							<strong>Tax</strong>
+							<select value={taxRateId} onChange={e => setTaxRateId(e.target.value)} style={{ width: 'auto', padding: '4px 8px', fontSize: 13 }}>
+								<option value="">None</option>
+								{activeSalesTaxes.map(t => <option key={t.id} value={t.id}>{t.name} ({t.rate}%)</option>)}
+							</select>
+						</div>
+						<span>{formatCurrency(taxAmount, storeInfo.currency)}</span>
+					</div>
+				)}
 				<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--accent)', color: 'var(--accent-contrast)', borderRadius: 8, padding: '12px 16px', marginTop: 8, fontSize: 15 }}>
 					<strong>Total</strong>
 					<strong>{formatCurrency(total, storeInfo.currency)}</strong>
@@ -777,6 +806,8 @@ export default function BillingPage() {
 									const invSubtotal = (lastInvoice.lines || []).reduce((s: number, l: any) => { const t = (l.qty || 0) * (l.price || 0); return s + t - (t * (l.discount || 0) / 100) }, 0)
 									const bd = lastInvoice.billDiscount || 0
 									const discountAmt = (invSubtotal * bd) / 100
+									const taxAmt = lastInvoice.taxPercent ? ((invSubtotal - discountAmt) * lastInvoice.taxPercent) / 100 : 0
+									const grandTotal = invSubtotal - discountAmt + taxAmt
 									return (
 										<div style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>
 											<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
@@ -789,19 +820,25 @@ export default function BillingPage() {
 													<span>{formatCurrency(discountAmt, storeInfo.currency)}</span>
 												</div>
 											)}
+											{taxAmt > 0 && (
+												<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}>
+													<span>{(lastInvoice.taxName || 'TAX').toUpperCase()} ({lastInvoice.taxPercent}%)</span>
+													<span>{formatCurrency(taxAmt, storeInfo.currency)}</span>
+												</div>
+											)}
 											<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '2px', marginTop: '2px' }}>
 												<span>TOTAL AMOUNT</span>
-												<span>{formatCurrency(invSubtotal - discountAmt, storeInfo.currency)}</span>
+												<span>{formatCurrency(grandTotal, storeInfo.currency)}</span>
 											</div>
 											<div style={{ borderTop: '1px dashed #000', marginTop: '3px', paddingTop: '3px' }}>
 												{(lastInvoice as any).paymentType === 'credit' ? (<>
 													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span style={{ fontWeight: 'bold' }}>PAYMENT TYPE</span><span>CREDIT</span></div>
 							<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span>AMOUNT PAID</span><span>{formatCurrency((lastInvoice as any).downPayment || 0, storeInfo.currency)}</span></div>
-							<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>BALANCE DUE</span><span>{formatCurrency((invSubtotal - discountAmt) - ((lastInvoice as any).downPayment || 0), storeInfo.currency)}</span></div>
+							<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>BALANCE DUE</span><span>{formatCurrency(grandTotal - ((lastInvoice as any).downPayment || 0), storeInfo.currency)}</span></div>
 													{(lastInvoice as any).creditDeadline && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span>DUE DATE</span><span>{new Date((lastInvoice as any).creditDeadline).toLocaleDateString()}</span></div>}
 												</>) : showCashPaidLabel ? (<>
 													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px' }}><span style={{ fontWeight: 'bold' }}>PAYMENT TYPE</span><span>CASH</span></div>
-													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>AMOUNT PAID</span><span>{formatCurrency(invSubtotal - discountAmt, storeInfo.currency)}</span></div>
+													<div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '7px', fontWeight: 'bold' }}><span>AMOUNT PAID</span><span>{formatCurrency(grandTotal, storeInfo.currency)}</span></div>
 												</>) : null}
 											</div>
 										</div>
@@ -877,6 +914,8 @@ export default function BillingPage() {
 									const invSubtotal = (lastInvoice.lines || []).reduce((s: number, l: any) => { const t = (l.qty || 0) * (l.price || 0); return s + t - (t * (l.discount || 0) / 100) }, 0)
 									const bd = lastInvoice.billDiscount || 0
 									const discountAmt = (invSubtotal * bd) / 100
+									const taxAmt = lastInvoice.taxPercent ? ((invSubtotal - discountAmt) * lastInvoice.taxPercent) / 100 : 0
+									const grandTotal = invSubtotal - discountAmt + taxAmt
 									return (<>
 										<tr style={{ background: '#f9f9f9' }}>
 											<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>SUBTOTAL</td>
@@ -888,37 +927,37 @@ export default function BillingPage() {
 												<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency(discountAmt, storeInfo.currency)}</td>
 											</tr>
 										)}
-									</>)
-								})()}
-								{(() => {
-									const invSubtotalFinal = (lastInvoice.lines || []).reduce((s: number, l: any) => { const t = (l.qty || 0) * (l.price || 0); return s + t - (t * (l.discount || 0) / 100) }, 0)
-									const bdFinal = lastInvoice.billDiscount || 0
-									return (
+										{taxAmt > 0 && (
+											<tr>
+												<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>{lastInvoice.taxName || 'TAX'} ({lastInvoice.taxPercent}%)</td>
+												<td style={{ border: '1px solid #ddd', padding: '12px', textAlign: 'right', fontSize: '14px' }}>{formatCurrency(taxAmt, storeInfo.currency)}</td>
+											</tr>
+										)}
 										<tr style={{ background: '#f9f9f9' }}>
 											<td colSpan={5} style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>TOTAL AMOUNT</td>
-											<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{formatCurrency(invSubtotalFinal * (1 - bdFinal / 100), storeInfo.currency)}</td>
+											<td style={{ border: '1px solid #ddd', padding: '15px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}>{formatCurrency(grandTotal, storeInfo.currency)}</td>
 										</tr>
-									)
+										{(lastInvoice as any).paymentType === 'credit' ? (<>
+											<tr style={{ background: '#fffbf0' }}>
+												<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#92400e' }}>PAYMENT TYPE</td>
+												<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#92400e' }}>CREDIT SALE</td>
+											</tr>
+											<tr style={{ background: '#fffbf0' }}>
+												<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px' }}>AMOUNT PAID</td>
+											<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px' }}>{formatCurrency((lastInvoice as any).downPayment || 0, storeInfo.currency)}</td>
+											</tr>
+											<tr style={{ background: '#fef2f2' }}>
+												<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>BALANCE DUE{(lastInvoice as any).creditDeadline ? ` (by ${new Date((lastInvoice as any).creditDeadline).toLocaleDateString()})` : ''}</td>
+											<td style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>{formatCurrency(grandTotal - ((lastInvoice as any).downPayment || 0), storeInfo.currency)}</td>
+											</tr>
+										</>) : showCashPaidLabel ? (
+											<tr style={{ background: '#f0fdf4' }}>
+												<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>PAYMENT TYPE</td>
+												<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>CASH - PAID IN FULL</td>
+											</tr>
+										) : null}
+									</>)
 								})()}
-								{(lastInvoice as any).paymentType === 'credit' ? (<>
-									<tr style={{ background: '#fffbf0' }}>
-										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#92400e' }}>PAYMENT TYPE</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#92400e' }}>CREDIT SALE</td>
-									</tr>
-									<tr style={{ background: '#fffbf0' }}>
-										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px' }}>AMOUNT PAID</td>
-									<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px' }}>{formatCurrency((lastInvoice as any).downPayment || 0, storeInfo.currency)}</td>
-									</tr>
-									<tr style={{ background: '#fef2f2' }}>
-										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>BALANCE DUE{(lastInvoice as any).creditDeadline ? ` (by ${new Date((lastInvoice as any).creditDeadline).toLocaleDateString()})` : ''}</td>
-									<td style={{ border: '1px solid #ddd', padding: '12px 15px', textAlign: 'right', fontSize: '15px', fontWeight: 'bold', color: '#dc2626' }}>{(() => { const t = (lastInvoice.lines||[]).reduce((s:number,l:any)=>{const x=(l.qty||0)*(l.price||0);return s+x-(x*(l.discount||0)/100)},0); const tot = t*(1-(lastInvoice.billDiscount||0)/100); return formatCurrency(tot - ((lastInvoice as any).downPayment || 0), storeInfo.currency) })()}</td>
-									</tr>
-								</>) : showCashPaidLabel ? (
-									<tr style={{ background: '#f0fdf4' }}>
-										<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>PAYMENT TYPE</td>
-										<td style={{ border: '1px solid #ddd', padding: '10px 15px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold', color: '#166534' }}>CASH - PAID IN FULL</td>
-									</tr>
-								) : null}
 							</tfoot>
 						</table>
 

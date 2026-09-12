@@ -9,7 +9,7 @@ import {
 	PiSquaresFourDuotone, PiStackDuotone, PiCubeDuotone, PiShoppingBagDuotone, PiShoppingCartDuotone,
 	PiReceiptDuotone, PiChartLineUpDuotone, PiCalendarBlankDuotone, PiInvoiceDuotone, PiUsersDuotone,
 	PiWalletDuotone, PiStorefrontDuotone, PiArchiveDuotone, PiGearDuotone, PiShieldCheckDuotone,
-	PiCrownDuotone, PiRocketDuotone, PiBuildingsDuotone, PiUserGearDuotone,
+	PiCrownDuotone, PiRocketDuotone, PiBuildingsDuotone, PiUserGearDuotone, PiPercentDuotone,
 } from 'react-icons/pi'
 
 const ADMIN_EMAILS = ['nativeedgestudio.space@gmail.com', 'nativeedge.studio@gmail.com']
@@ -133,6 +133,12 @@ export default function App() {
 						<Link className={loc.pathname.startsWith('/staff') ? 'active' : ''} to="/staff">
 							<PiUserGearDuotone />
 							<span>Staff</span>
+						</Link>
+					)}
+					{role === 'owner' && (
+						<Link className={loc.pathname.startsWith('/taxes') ? 'active' : ''} to="/taxes">
+							<PiPercentDuotone />
+							<span>Taxes</span>
 						</Link>
 					)}
 					<Link className={loc.pathname.startsWith('/settings') ? 'active' : ''} to="/settings">

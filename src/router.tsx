@@ -26,6 +26,7 @@ import SettingsPage from './pages/SettingsPage'
 import AssetsPage from './pages/AssetsPage';
 import BranchesPage from './pages/BranchesPage';
 import StaffPage from './pages/StaffPage';
+import TaxesPage from './pages/TaxesPage';
 import AdminPage from './pages/AdminPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -86,6 +87,7 @@ export function AppRouter() {
           <Route path="assets" element={<AssetsPage />} />
           <Route path="branches" element={<BranchesPage />} />
           <Route path="staff" element={<StaffPage />} />
+          <Route path="taxes" element={<TaxesPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>

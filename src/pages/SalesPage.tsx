@@ -568,6 +568,7 @@ export default function SalesPage() {
 										const sub = invSubtotal(selectedInvoice)
 										const bd = selectedInvoice.billDiscount || 0
 										const discAmt = (sub * bd) / 100
+										const taxAmt = selectedInvoice.taxAmount || 0
 										return (<>
 											<tr>
 												<td colSpan={6} style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-muted)', borderTop: '1px solid var(--border-strong)' }}>Subtotal</td>
@@ -579,9 +580,15 @@ export default function SalesPage() {
 													<td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--warning)' }}>−{formatCurrency(discAmt, storeInfo.currency)}</td>
 												</tr>
 											)}
+											{taxAmt > 0 && (
+												<tr>
+													<td colSpan={6} style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-muted)' }}>{selectedInvoice.taxName || 'Tax'} ({selectedInvoice.taxPercent}%)</td>
+													<td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(taxAmt, storeInfo.currency)}</td>
+												</tr>
+											)}
 											<tr style={{ background: 'var(--bg-hover)' }}>
 												<td colSpan={6} style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 15 }}>TOTAL</td>
-												<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 15, color: 'var(--success)' }}>{formatCurrency(selectedInvoice.total || (sub - discAmt), storeInfo.currency)}</td>
+												<td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 15, color: 'var(--success)' }}>{formatCurrency(selectedInvoice.total || (sub - discAmt + taxAmt), storeInfo.currency)}</td>
 											</tr>
 										</>)
 									})()}
@@ -597,7 +604,8 @@ export default function SalesPage() {
 							const sub = invSubtotal(selectedInvoice)
 							const bd = selectedInvoice.billDiscount || 0
 							const da = (sub * bd) / 100
-							const grandTotal = selectedInvoice.total || (sub - da)
+							const taxAmt = selectedInvoice.taxAmount || 0
+							const grandTotal = selectedInvoice.total || (sub - da + taxAmt)
 							return (
 							<div style={{ position: 'fixed', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
 								<div id={`inv-print-${selectedInvoice.id}`} style={{ ...getThermalPrintStyles().container, padding: 20, width: 640, background: 'white', color: 'black' }}>
@@ -653,6 +661,7 @@ export default function SalesPage() {
 											<div style={{ borderTop: '1px solid #000', paddingTop: 3 }}>
 												<div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal</span><span>{formatCurrency(sub, storeInfo.currency)}</span></div>
 												{bd > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Discount ({bd}%)</span><span>-{formatCurrency(da, storeInfo.currency)}</span></div>}
+												{taxAmt > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{selectedInvoice.taxName || 'Tax'} ({selectedInvoice.taxPercent}%)</span><span>{formatCurrency(taxAmt, storeInfo.currency)}</span></div>}
 												<div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid #000', marginTop: 2, paddingTop: 2 }}><span>TOTAL</span><span>{formatCurrency(grandTotal, storeInfo.currency)}</span></div>
 											</div>
 											<InvoiceFooter storeInfo={storeInfo} thermal />
@@ -728,6 +737,12 @@ export default function SalesPage() {
 														<tr>
 															<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 13 }}>BILL DISCOUNT ({bd}%)</td>
 															<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>−{formatCurrency(da, storeInfo.currency)}</td>
+														</tr>
+													)}
+													{taxAmt > 0 && (
+														<tr>
+															<td colSpan={5} style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontWeight: 700, fontSize: 13 }}>{selectedInvoice.taxName || 'TAX'} ({selectedInvoice.taxPercent}%)</td>
+															<td style={{ border: '1px solid #ddd', padding: '10px 12px', textAlign: 'right', fontSize: 13 }}>{formatCurrency(taxAmt, storeInfo.currency)}</td>
 														</tr>
 													)}
 													<tr style={{ background: '#2263ff' }}>

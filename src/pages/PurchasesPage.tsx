@@ -3,6 +3,7 @@ import { db, Item, Purchase, StoreInfo } from '../storage'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import { usePagination } from '../hooks/usePagination'
 import { useBranch } from '../auth/BranchContext'
+import { useTaxRates } from '../hooks/useDataQueries'
 import { matchesBranch } from '../utils/branchFilter'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -36,6 +37,8 @@ export default function PurchasesPage() {
 	const [note, setNote] = useState('')
 	const [paymentType, setPaymentType] = useState<'debit' | 'credit'>('debit')
 	const [creditDeadline, setCreditDeadline] = useState('')
+	const [taxRateId, setTaxRateId] = useState('')
+	const { data: taxRates = [] } = useTaxRates()
 	const [paymentFilter, setPaymentFilter] = useState<'all' | 'debit' | 'credit'>('all')
 	const [searchTerm, setSearchTerm] = useState('')
 	const [itemsPerPage, setItemsPerPage] = useState(10)
@@ -61,6 +64,10 @@ export default function PurchasesPage() {
 	// item's SKU silently creates a duplicate item instead of recognizing it.
 	const trimmedSku = sku.trim()
 	const existing = trimmedSku ? items.find(i => i.sku.trim().toLowerCase() === trimmedSku.toLowerCase()) : undefined
+
+	const activePurchaseTaxes = useMemo(() => taxRates.filter(t => t.isActive && (t.appliesTo === 'purchase' || t.appliesTo === 'both')), [taxRates])
+	const selectedTax = activePurchaseTaxes.find(t => t.id === taxRateId)
+	const purchaseTaxAmount = selectedTax ? (Number(qty || '0') * Number(costPrice || '0') * selectedTax.rate) / 100 : 0
 
 	// Close supplier dropdown on outside click
 	useEffect(() => {
@@ -151,6 +158,10 @@ export default function PurchasesPage() {
 				paymentType,
 				creditDeadline: paymentType === 'credit' ? creditDeadline : '',
 				branchId: writeBranchId,
+				taxRateId: selectedTax?.id ?? null,
+				taxName: selectedTax?.name ?? null,
+				taxPercent: selectedTax?.rate ?? null,
+				taxAmount: selectedTax ? purchaseTaxAmount : null,
 			})
 			// Save IMEIs if mobile phone purchase
 			if (isMobilePhone && imeiPairs.length > 0) {
@@ -171,7 +182,7 @@ export default function PurchasesPage() {
 			setSku(''); setQty('1'); setCostPrice(''); setSupplier(''); setSupplierPhone('')
 			setNote(''); setNewName(''); setNewPrice(''); setShowSupplierDropdown(false)
 			setPurchasedAt(new Date().toISOString().slice(0, 16))
-			setIsMobilePhone(false); setImeiPairs([])
+			setIsMobilePhone(false); setImeiPairs([]); setTaxRateId('')
 		} catch (err: any) {
 			console.error('Error creating purchase:', err)
 			setFormError('Could not save purchase. Please try again.')
@@ -386,6 +397,18 @@ export default function PurchasesPage() {
 						<label style={fieldLabelStyle}>Selling Price</label>
 						<input type="number" step="0.01" value={newPrice} onChange={e => setNewPrice(e.target.value)} placeholder="Selling Price" />
 					</div>
+					{activePurchaseTaxes.length > 0 && (
+						<div>
+							<label style={fieldLabelStyle}>Tax</label>
+							<select value={taxRateId} onChange={e => setTaxRateId(e.target.value)}>
+								<option value="">No tax</option>
+								{activePurchaseTaxes.map(t => <option key={t.id} value={t.id}>{t.name} ({t.rate}%)</option>)}
+							</select>
+							{selectedTax && (
+								<p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-faint)' }}>+{formatCurrency(purchaseTaxAmount, storeInfo.currency)} tax</p>
+							)}
+						</div>
+					)}
 					<div style={{ position: 'relative' }} data-supplier-dropdown>
 						<label style={fieldLabelStyle}>Vendor</label>
 						<div style={{ position: 'relative' }}>
@@ -766,12 +789,32 @@ export default function PurchasesPage() {
 									</tr>
 								</tbody>
 								<tfoot>
-									<tr style={{ background: '#f9f9f9' }}>
-										<td colSpan={4} style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 14 }}>TOTAL</td>
-										<td style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 14 }}>
-											{r.costPrice && (r.quantity || r.qty) ? formatCurrency(r.costPrice * (r.quantity || r.qty || 0), storeInfo.currency) : 'N/A'}
-										</td>
-									</tr>
+									{(() => {
+										const base = (r.costPrice || 0) * (r.quantity || r.qty || 0)
+										const tax = r.taxAmount || 0
+										if (!tax) return (
+											<tr style={{ background: '#f9f9f9' }}>
+												<td colSpan={4} style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 14 }}>TOTAL</td>
+												<td style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 14 }}>
+													{r.costPrice && (r.quantity || r.qty) ? formatCurrency(base, storeInfo.currency) : 'N/A'}
+												</td>
+											</tr>
+										)
+										return (<>
+											<tr>
+												<td colSpan={4} style={{ border: '1px solid #ddd', padding: '8px 12px', textAlign: 'right', fontSize: 13 }}>SUBTOTAL</td>
+												<td style={{ border: '1px solid #ddd', padding: '8px 12px', textAlign: 'right', fontSize: 13 }}>{formatCurrency(base, storeInfo.currency)}</td>
+											</tr>
+											<tr>
+												<td colSpan={4} style={{ border: '1px solid #ddd', padding: '8px 12px', textAlign: 'right', fontSize: 13 }}>{r.taxName || 'Tax'} ({r.taxPercent}%)</td>
+												<td style={{ border: '1px solid #ddd', padding: '8px 12px', textAlign: 'right', fontSize: 13 }}>{formatCurrency(tax, storeInfo.currency)}</td>
+											</tr>
+											<tr style={{ background: '#f9f9f9' }}>
+												<td colSpan={4} style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 14 }}>TOTAL</td>
+												<td style={{ border: '1px solid #ddd', padding: 12, textAlign: 'right', fontWeight: 'bold', fontSize: 14 }}>{formatCurrency(base + tax, storeInfo.currency)}</td>
+											</tr>
+										</>)
+									})()}
 								</tfoot>
 							</table>
 							<div style={{ textAlign: 'center', fontSize: 11, color: '#999', marginTop: 16 }}>

@@ -26,6 +26,10 @@ export interface Purchase {
   credit_deadline?: string
   is_paid?: boolean
   branch_id?: string | null
+  tax_rate_id?: string | null
+  tax_name?: string | null
+  tax_percent?: number | null
+  tax_amount?: number | null
 }
 
 export interface Sale {
@@ -47,6 +51,10 @@ export interface Sale {
   credit_amount?: number
   paid_amount?: number
   branch_id?: string | null
+  tax_rate_id?: string | null
+  tax_name?: string | null
+  tax_percent?: number | null
+  tax_amount?: number | null
 }
 
 export interface StoreInfo {
@@ -93,6 +101,7 @@ export interface Invoice {
   invoice_no: string
   customer: string
   phone?: string
+  customer_address?: string | null
   lines: any[]
   total: number
   bill_discount: number
@@ -100,6 +109,10 @@ export interface Invoice {
   date: string
   user_id: string
   branch_id?: string | null
+  tax_rate_id?: string | null
+  tax_name?: string | null
+  tax_percent?: number | null
+  tax_amount?: number | null
 }
 
 export interface Supplier {
@@ -708,6 +721,53 @@ export const setStockTransferStatus = async (id: string, status: 'approved' | 'r
   const patch: Record<string, any> = { status }
   if (status === 'rejected' && rejectedReason) patch.rejected_reason = rejectedReason
   const { error } = await supabase.from('stock_transfers').update(patch).eq('id', id)
+  if (error) throw error
+}
+
+// Tax rates
+export interface TaxRateRow {
+  id: string
+  store_id: string
+  name: string
+  rate: number
+  applies_to: 'purchase' | 'sales' | 'both'
+  is_active: boolean
+  created_at?: string
+}
+
+export const listTaxRates = async (storeId: string): Promise<TaxRateRow[]> => {
+  const { data, error } = await supabase
+    .from('tax_rates')
+    .select('*')
+    .eq('store_id', storeId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return data || []
+}
+
+export const addTaxRate = async (storeId: string, tax: Omit<TaxRateRow, 'id' | 'store_id' | 'is_active' | 'created_at'>): Promise<string> => {
+  const { data, error } = await supabase
+    .from('tax_rates')
+    .insert({ ...tax, store_id: storeId })
+    .select()
+    .single()
+  if (error) throw error
+  return data.id
+}
+
+export const updateTaxRate = async (id: string, tax: Partial<Omit<TaxRateRow, 'id' | 'store_id'>>): Promise<void> => {
+  const { error } = await supabase
+    .from('tax_rates')
+    .update(tax)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export const deleteTaxRate = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('tax_rates')
+    .delete()
+    .eq('id', id)
   if (error) throw error
 }
 
