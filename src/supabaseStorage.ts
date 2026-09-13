@@ -525,12 +525,26 @@ export const getInventory = async (
   targetBranchId?: string | null,
   mainBranchId?: string | null
 ): Promise<Array<{ itemId: string; itemName: string; itemSku: string; stock: number }>> => {
-  const [items, purchases, sales, transfers] = await Promise.all([
+  const [items, purchases, sales] = await Promise.all([
     listItems(userId),
     listPurchases(userId),
     listSales(userId),
-    listStockTransfers(userId),
   ])
+
+  // Stock transfers are an optional, additive refinement on top of the core
+  // purchased-minus-sold math — if the stock_transfers table doesn't exist
+  // yet (store hasn't run that migration) or the query fails for any other
+  // reason, treat it as "no transfers" rather than letting Promise.all's
+  // rejection take down the entire inventory list. This bundled into the
+  // same Promise.all as items/purchases/sales previously meant one missing
+  // table silently zeroed out inventory for every item, for every store
+  // that hadn't run the migration yet.
+  let transfers: StockTransferRow[] = []
+  try {
+    transfers = await listStockTransfers(userId)
+  } catch (err) {
+    console.error('Error loading stock transfers (continuing without them):', err)
+  }
 
   // Stock is an aggregate (purchased minus sold), so — unlike a raw list —
   // it can't be branch-filtered after the fact by the caller; it has to be
