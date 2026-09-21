@@ -1,18 +1,67 @@
-import React, { useState } from 'react'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import React, { useEffect, useState } from 'react'
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { useNavigate, Link } from 'react-router-dom'
 import { auth } from '../firebase'
 import {
-  FiMail, FiLock, FiLogIn, FiAlertCircle,
+  FiMail, FiLock, FiLogIn, FiAlertCircle, FiEye, FiEyeOff, FiSend, FiArrowLeft, FiCheckCircle,
   FiBarChart2, FiFileText, FiPackage, FiTrendingUp
 } from 'react-icons/fi'
+
+const RESEND_COOLDOWN_SECONDS = 30
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [mode, setMode] = useState<'signin' | 'reset'>('signin')
+  const [resetSentTo, setResetSentTo] = useState('')
+  const [cooldown, setCooldown] = useState(0)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const t = setTimeout(() => setCooldown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [cooldown])
+
+  const switchMode = (next: 'signin' | 'reset') => {
+    setError('')
+    setResetSentTo('')
+    setMode(next)
+  }
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (loading || cooldown > 0) return
+    setError('')
+    setLoading(true)
+    const target = email.trim()
+    try {
+      await sendPasswordResetEmail(auth, target)
+      setResetSentTo(target)
+      setCooldown(RESEND_COOLDOWN_SECONDS)
+    } catch (err: any) {
+      const code = err?.code || ''
+      if (code === 'auth/user-not-found') {
+        // Same outcome as a real account so this form can't be used to probe
+        // which emails are registered.
+        setResetSentTo(target)
+        setCooldown(RESEND_COOLDOWN_SECONDS)
+      } else if (code === 'auth/invalid-email') {
+        setError('Enter a valid email address.')
+      } else if (code === 'auth/too-many-requests') {
+        setError('Too many attempts. Please try again later.')
+      } else if (code === 'auth/network-request-failed') {
+        setError('Network error. Check your connection and try again.')
+      } else {
+        setError('Could not send the reset email. Please try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,8 +141,12 @@ const Login: React.FC = () => {
           </Link>
 
           <div style={s.formHeader}>
-            <h2 style={s.formTitle}>Welcome back</h2>
-            <p style={s.formSub}>Sign in to your account</p>
+            <h2 style={s.formTitle}>{mode === 'signin' ? 'Welcome back' : 'Reset your password'}</h2>
+            <p style={s.formSub}>
+              {mode === 'signin'
+                ? 'Sign in to your account'
+                : "Enter your email and we'll send you a link to set a new password."}
+            </p>
           </div>
 
           {error && (
@@ -103,7 +156,16 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleLogin} style={s.form}>
+          {resetSentTo && (
+            <div style={s.successBox}>
+              <FiCheckCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+              <span>
+                If an account exists for <strong>{resetSentTo}</strong>, a password reset link is on its way. Check your inbox and spam folder.
+              </span>
+            </div>
+          )}
+
+          <form onSubmit={mode === 'signin' ? handleLogin : handleReset} style={s.form}>
             <div style={s.fieldGroup}>
               <label style={s.label}>Email address</label>
               <div style={s.inputWrap}>
@@ -121,48 +183,78 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <div style={s.fieldGroup}>
-              <label style={s.label}>Password</label>
-              <div style={s.inputWrap}>
-                <span style={s.inputIcon}><FiLock size={16} /></span>
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  style={s.input}
-                  className="lp-input"
-                  autoComplete="current-password"
-                />
+            {mode === 'signin' && (
+              <div style={s.fieldGroup}>
+                <div style={s.labelRow}>
+                  <label style={s.label}>Password</label>
+                  <button type="button" onClick={() => switchMode('reset')} style={s.linkBtn}>
+                    Forgot password?
+                  </button>
+                </div>
+                <div style={s.inputWrap}>
+                  <span style={s.inputIcon}><FiLock size={16} /></span>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                    style={{ ...s.input, paddingRight: 46 }}
+                    className="lp-input"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    style={s.eyeBtn}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-pressed={showPassword}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <button
               type="submit"
-              disabled={loading}
-              style={{ ...s.submitBtn, opacity: loading ? 0.7 : 1 }}
+              disabled={loading || (mode === 'reset' && cooldown > 0)}
+              style={{ ...s.submitBtn, opacity: loading || (mode === 'reset' && cooldown > 0) ? 0.7 : 1 }}
             >
               {loading ? (
                 <span style={s.spinnerWrap}>
                   <span style={s.spinner} />
-                  Signing in…
+                  {mode === 'signin' ? 'Signing in…' : 'Sending…'}
                 </span>
-              ) : (
+              ) : mode === 'signin' ? (
                 <span style={s.btnInner}>
                   <FiLogIn size={16} />
                   Sign In
+                </span>
+              ) : (
+                <span style={s.btnInner}>
+                  <FiSend size={16} />
+                  {cooldown > 0 ? `Resend in ${cooldown}s` : resetSentTo ? 'Resend Link' : 'Send Reset Link'}
                 </span>
               )}
             </button>
           </form>
 
-          <p style={s.registerLink}>
-            Don't have an account?{' '}
-            <Link to="/contact" style={{ color: '#4d8fff', textDecoration: 'none', fontWeight: 600 }}>
-              Contact us
-            </Link>
-          </p>
+          {mode === 'reset' ? (
+            <p style={s.registerLink}>
+              <button type="button" onClick={() => switchMode('signin')} style={{ ...s.linkBtn, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
+                <FiArrowLeft size={14} /> Back to sign in
+              </button>
+            </p>
+          ) : (
+            <p style={s.registerLink}>
+              Don't have an account?{' '}
+              <Link to="/contact" style={{ color: '#4d8fff', textDecoration: 'none', fontWeight: 600 }}>
+                Contact us
+              </Link>
+            </p>
+          )}
 
           <p className="lp-footer">&copy; {new Date().getFullYear()} Managify. All rights reserved.</p>
         </div>
@@ -302,10 +394,55 @@ const s: Record<string, React.CSSProperties> = {
     color: '#fca5a5',
     marginBottom: 20,
   },
+  successBox: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 8,
+    background: 'rgba(34,197,94,0.1)',
+    border: '1px solid rgba(34,197,94,0.3)',
+    borderRadius: 8,
+    padding: '10px 14px',
+    fontSize: 13,
+    lineHeight: 1.5,
+    color: '#86efac',
+    marginBottom: 20,
+  },
   form: {
     display: 'flex',
     flexDirection: 'column',
     gap: 20,
+  },
+  labelRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  linkBtn: {
+    background: 'transparent',
+    border: 'none',
+    padding: '6px 0',
+    minHeight: 0,
+    minWidth: 0,
+    color: '#4d8fff',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: 6,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    minHeight: 40,
+    minWidth: 40,
+    color: '#6b7280',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
   },
   fieldGroup: {
     display: 'flex',

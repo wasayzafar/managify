@@ -4,6 +4,7 @@ import { db, StoreInfo } from '../storage'
 import { useAuth } from '../auth/useAuth'
 import { useBranch } from '../auth/BranchContext'
 import InvoiceHeaderDesigner from '../components/InvoiceHeaderDesigner'
+import AccountSecurity from '../components/AccountSecurity'
 import {
 	PiStorefrontDuotone, PiPhoneDuotone, PiMapPinLineDuotone, PiEnvelopeSimpleDuotone,
 	PiGlobeDuotone, PiIdentificationCardDuotone, PiCoinsDuotone, PiImageDuotone,
@@ -12,16 +13,17 @@ import {
 	PiDeviceMobileCameraDuotone, PiTrashDuotone, PiBroomDuotone, PiSignOutDuotone,
 	PiCheckCircleDuotone, PiWarningCircleDuotone, PiWarningDuotone,
 	PiUserCircleDuotone, PiSlidersDuotone, PiUsersDuotone, PiBuildingsDuotone,
-	PiArrowRightDuotone, PiUserPlusDuotone,
+	PiArrowRightDuotone, PiUserPlusDuotone, PiShieldCheckDuotone,
 } from 'react-icons/pi'
 
-type SettingsSection = 'profile' | 'invoices' | 'general' | 'staff'
+type SettingsSection = 'profile' | 'account' | 'invoices' | 'general' | 'staff'
 
-const SECTIONS: { key: SettingsSection; label: string; icon: JSX.Element }[] = [
+const SECTIONS: { key: SettingsSection; label: string; icon: JSX.Element; ownerOnly?: boolean }[] = [
 	{ key: 'profile', label: 'Profile', icon: <PiUserCircleDuotone size={16} /> },
+	{ key: 'account', label: 'Account', icon: <PiShieldCheckDuotone size={16} />, ownerOnly: true },
 	{ key: 'invoices', label: 'Invoices', icon: <PiReceiptDuotone size={16} /> },
 	{ key: 'general', label: 'General', icon: <PiSlidersDuotone size={16} /> },
-	{ key: 'staff', label: 'Staff', icon: <PiUsersDuotone size={16} /> },
+	{ key: 'staff', label: 'Staff', icon: <PiUsersDuotone size={16} />, ownerOnly: true },
 ]
 
 const CURRENCIES: { code: string; label: string }[] = [
@@ -116,7 +118,7 @@ export default function SettingsPage() {
 	const { logout } = useAuth()
 	const { branches, role } = useBranch()
 	const navigate = useNavigate()
-	const visibleSections = SECTIONS.filter(s => s.key !== 'staff' || role === 'owner')
+	const visibleSections = SECTIONS.filter(s => !s.ownerOnly || role === 'owner')
 
 	useEffect(() => {
 		const loadStoreInfo = async () => {
@@ -273,7 +275,7 @@ export default function SettingsPage() {
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
 				<div>
 					<h1 style={{ margin: '0 0 4px 0', fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>Settings</h1>
-					<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13.5 }}>Store profile, invoice formatting, feature toggles, and system data</p>
+					<p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13.5 }}>Store profile, login &amp; password, invoice formatting, feature toggles, and system data</p>
 				</div>
 			</div>
 
@@ -483,6 +485,10 @@ export default function SettingsPage() {
 				)}
 			</div>
 			</>
+			)}
+
+			{section === 'account' && role === 'owner' && (
+				<AccountSecurity onNotify={notify} />
 			)}
 
 			{section === 'invoices' && (
