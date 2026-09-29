@@ -4,6 +4,7 @@ import { auth } from '../firebase'
 import { supabase } from '../supabase'
 import { useAuth } from '../auth/useAuth'
 import { useBranch } from '../auth/BranchContext'
+import UpgradeModal from '../components/UpgradeModal'
 import {
 	PiUserPlusDuotone, PiEnvelopeSimpleDuotone, PiBuildingsDuotone, PiShieldCheckDuotone,
 	PiToggleLeftDuotone, PiToggleRightDuotone, PiTrashDuotone, PiWarningCircleDuotone,
@@ -32,7 +33,8 @@ const emptyForm = { email: '', branchId: '', role: 'staff' as Role }
 
 export default function StaffPage() {
 	const { user } = useAuth()
-	const { branches, storeId, role, loading: branchLoading } = useBranch()
+	const { branches, storeId, role, plan, loading: branchLoading } = useBranch()
+	const [upgradePromptOpen, setUpgradePromptOpen] = useState(false)
 	const [staff, setStaff] = useState<StaffMember[]>([])
 	const [loading, setLoading] = useState(true)
 	const [form, setForm] = useState(emptyForm)
@@ -88,6 +90,7 @@ export default function StaffPage() {
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault()
 		setFormError('')
+		if (plan !== 'max') { setUpgradePromptOpen(true); return }
 		const email = form.email.trim().toLowerCase()
 		if (!email) { setFormError('Enter an email address.'); return }
 		if (!form.branchId) { setFormError('Choose a branch.'); return }
@@ -242,13 +245,22 @@ export default function StaffPage() {
 							<PiWarningCircleDuotone size={15} /> {formError}
 						</div>
 					)}
+					{plan !== 'max' && (
+						<div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, color: 'var(--text-muted)', fontSize: 13 }}>
+							<PiWarningCircleDuotone size={15} /> Staff accounts are a Max plan feature — upgrade to invite your team.
+						</div>
+					)}
 					<div className="form-actions" style={{ marginTop: 12 }}>
 						<button type="submit" disabled={submitting} style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: submitting ? 0.6 : 1 }}>
-							<PiUserPlusDuotone size={15} /> {submitting ? 'Inviting…' : 'Invite Staff Member'}
+							<PiUserPlusDuotone size={15} /> {submitting ? 'Inviting…' : plan !== 'max' ? 'Upgrade to Invite Staff' : 'Invite Staff Member'}
 						</button>
 					</div>
 				</form>
 			</div>
+
+			{upgradePromptOpen && (
+				<UpgradeModal feature="Staff accounts" onClose={() => setUpgradePromptOpen(false)} />
+			)}
 
 			{/* ── Staff list ── */}
 			<div className="card">

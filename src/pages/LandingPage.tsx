@@ -186,6 +186,7 @@ export default function LandingPage() {
               <a href="#industries" style={s.navLink}>Industries</a>
               <a href="#custom" style={s.navLink}>Custom Solutions</a>
               <a href="#why" style={s.navLink}>Why Managify</a>
+              <Link to="/pricing" style={s.navLink}>Pricing</Link>
               <Link to="/contact" style={s.navLink}>Contact</Link>
             </div>
             <Link to="/login" style={s.navLogin}>Sign In</Link>
@@ -210,7 +211,7 @@ export default function LandingPage() {
             fast, browser-based system built for store owners who mean business.
           </p>
           <div style={s.heroCtas}>
-            <Link to="/login" style={s.ctaPrimary}>
+            <Link to="/pricing" style={s.ctaPrimary}>
               Get Started
               <FiArrowRight size={16} />
             </Link>

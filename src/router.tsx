@@ -28,6 +28,9 @@ import BranchesPage from './pages/BranchesPage';
 import StaffPage from './pages/StaffPage';
 import TaxesPage from './pages/TaxesPage';
 import AdminPage from './pages/AdminPage';
+import CheckoutTestPage from './pages/CheckoutTestPage';
+import PricingPage from './pages/PricingPage';
+import RegisterPage from './pages/RegisterPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -65,7 +68,8 @@ export function AppRouter() {
         <Route path="/founder" element={<FounderPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/register" element={<Navigate to="/contact" />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <App />
@@ -89,6 +93,7 @@ export function AppRouter() {
           <Route path="staff" element={<StaffPage />} />
           <Route path="taxes" element={<TaxesPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="checkout-test" element={<CheckoutTestPage />} />
         </Route>
       </Routes>
     </AuthProvider>

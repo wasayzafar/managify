@@ -15,6 +15,7 @@ import { useAuth } from './useAuth'
 import { supabase } from '../supabase'
 
 export type BranchRole = 'owner' | 'manager' | 'staff'
+export type StorePlan = 'pro' | 'max'
 
 export type Branch = {
 	id: string
@@ -28,6 +29,8 @@ interface BranchContextType {
 	loading: boolean
 	storeId: string | null
 	role: BranchRole
+	/** Store-wide subscription tier — same for the owner and every staff member. Defaults to 'max' while it loads so nothing is gated before we know for sure. */
+	plan: StorePlan
 	/** Fixed assigned branch for staff/manager; null for an owner (sees all branches). */
 	myBranchId: string | null
 	branches: Branch[]
@@ -57,6 +60,7 @@ export const BranchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 	const [loading, setLoading] = useState(true)
 	const [storeId, setStoreId] = useState<string | null>(null)
 	const [role, setRole] = useState<BranchRole>('owner')
+	const [plan, setPlan] = useState<StorePlan>('max')
 	const [myBranchId, setMyBranchId] = useState<string | null>(null)
 	const [branches, setBranches] = useState<Branch[]>([])
 	const [currentBranchId, setCurrentBranchIdState] = useState<string | 'all' | null>(null)
@@ -93,6 +97,7 @@ export const BranchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			setLoading(false)
 			setStoreId(null)
 			setRole('owner')
+			setPlan('max')
 			setMyBranchId(null)
 			setBranches([])
 			setCurrentBranchIdState(null)
@@ -111,11 +116,15 @@ export const BranchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			const resolvedRole: BranchRole = isActiveStaff ? ((staffRow!.role as BranchRole) || 'staff') : 'owner'
 			const resolvedMyBranchId: string | null = isActiveStaff ? staffRow!.branch_id : null
 
-			const list = await ensureMainBranch(resolvedStoreId)
+			const [list, { data: registryRow }] = await Promise.all([
+				ensureMainBranch(resolvedStoreId),
+				supabase.from('user_registry').select('plan').eq('uid', resolvedStoreId).maybeSingle(),
+			])
 
 			cachedStoreId = resolvedStoreId
 			setStoreId(resolvedStoreId)
 			setRole(resolvedRole)
+			setPlan((registryRow?.plan as StorePlan) || 'max')
 			setMyBranchId(resolvedMyBranchId)
 			setBranches(list)
 
@@ -169,7 +178,7 @@ export const BranchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 	const mainBranchId = branches[0]?.id ?? null
 
 	return (
-		<BranchContext.Provider value={{ loading, storeId, role, myBranchId, branches, mainBranchId, currentBranchId, setCurrentBranchId, refreshBranches }}>
+		<BranchContext.Provider value={{ loading, storeId, role, plan, myBranchId, branches, mainBranchId, currentBranchId, setCurrentBranchId, refreshBranches }}>
 			{children}
 		</BranchContext.Provider>
 	)

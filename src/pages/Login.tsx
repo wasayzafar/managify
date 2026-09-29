@@ -250,8 +250,8 @@ const Login: React.FC = () => {
           ) : (
             <p style={s.registerLink}>
               Don't have an account?{' '}
-              <Link to="/contact" style={{ color: '#4d8fff', textDecoration: 'none', fontWeight: 600 }}>
-                Contact us
+              <Link to="/pricing" style={{ color: '#4d8fff', textDecoration: 'none', fontWeight: 600 }}>
+                Sign up
               </Link>
             </p>
           )}

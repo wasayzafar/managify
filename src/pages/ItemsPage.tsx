@@ -2,12 +2,15 @@ import { FormEvent, useMemo, useState, useEffect } from 'react'
 import { db, Item } from '../storage'
 import { supabase } from '../supabase'
 import { auth } from '../firebase'
+import { useBranch } from '../auth/BranchContext'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import { useItems, usePurchases } from '../hooks/useDataQueries'
 import { usePagination } from '../hooks/usePagination'
 import { loadCurrency, formatCurrency } from '../utils/currency'
 import { exportItemsToShopifyCSV } from '../utils/exportCSV'
 import { StatCard } from '../ui/StatCard'
+import UpgradeModal from '../components/UpgradeModal'
+import BarcodeLabelModal from '../components/BarcodeLabelModal'
 import {
 	PiCubeDuotone, PiTagDuotone, PiChartLineUpDuotone, PiWarningCircleDuotone,
 	PiStorefrontDuotone, PiBarcodeDuotone, PiPlusDuotone, PiPencilDuotone, PiTrashDuotone,
@@ -31,6 +34,9 @@ export default function ItemsPage() {
 	const [openRowMenu, setOpenRowMenu] = useState<string | null>(null)
 	const [deleteTarget, setDeleteTarget] = useState<Item | null>(null)
 	const [deleting, setDeleting] = useState(false)
+	const [barcodeTarget, setBarcodeTarget] = useState<Item | null>(null)
+	const [upgradePromptOpen, setUpgradePromptOpen] = useState(false)
+	const { plan } = useBranch()
 
 	useEffect(() => {
 		loadCurrency().then(curr => setCurrency(curr))
@@ -331,6 +337,12 @@ export default function ItemsPage() {
 															onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
 														><PiPencilDuotone size={14} /> Edit</button>
 														<button
+															onMouseDown={() => { plan === 'max' ? setBarcodeTarget(i) : setUpgradePromptOpen(true); setOpenRowMenu(null) }}
+															style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
+															onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+															onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+														><PiBarcodeDuotone size={14} /> Generate Barcode</button>
+														<button
 															onMouseDown={() => { setDeleteTarget(i); setOpenRowMenu(null) }}
 															style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--danger)', fontSize: 13, cursor: 'pointer' }}
 															onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
@@ -379,6 +391,18 @@ export default function ItemsPage() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{barcodeTarget && (
+				<BarcodeLabelModal
+					item={{ sku: barcodeTarget.sku, name: barcodeTarget.name, price: barcodeTarget.price }}
+					currency={currency}
+					onClose={() => setBarcodeTarget(null)}
+				/>
+			)}
+
+			{upgradePromptOpen && (
+				<UpgradeModal feature="Barcode generation" onClose={() => setUpgradePromptOpen(false)} />
 			)}
 		</div>
 	)

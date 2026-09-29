@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { db, Branch } from '../storage'
 import { useBranch } from '../auth/BranchContext'
+import UpgradeModal from '../components/UpgradeModal'
 import {
 	PiBuildingsDuotone, PiMapPinLineDuotone, PiPhoneDuotone, PiPlusDuotone,
 	PiPencilDuotone, PiTrashDuotone, PiWarningCircleDuotone, PiWarningDuotone,
@@ -12,10 +13,12 @@ const fieldLabelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color
 const emptyForm = { name: '', address: '', phone: '' }
 
 export default function BranchesPage() {
-	const { branches, mainBranchId, refreshBranches, loading: branchContextLoading, role } = useBranch()
+	const { branches, mainBranchId, refreshBranches, loading: branchContextLoading, role, plan } = useBranch()
 	const [form, setForm] = useState(emptyForm)
 	const [formError, setFormError] = useState('')
 	const [submitting, setSubmitting] = useState(false)
+	const [upgradePromptOpen, setUpgradePromptOpen] = useState(false)
+	const branchLimitReached = plan === 'pro' && branches.length >= 1
 	const [editingId, setEditingId] = useState<string | null>(null)
 	const [editForm, setEditForm] = useState(emptyForm)
 	const [editError, setEditError] = useState('')
@@ -25,6 +28,7 @@ export default function BranchesPage() {
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault()
 		setFormError('')
+		if (branchLimitReached) { setUpgradePromptOpen(true); return }
 		const name = form.name.trim()
 		if (!name) { setFormError('Enter a branch name.'); return }
 		setSubmitting(true)
@@ -134,13 +138,22 @@ export default function BranchesPage() {
 							<PiWarningCircleDuotone size={15} /> {formError}
 						</div>
 					)}
+					{branchLimitReached && (
+						<div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, color: 'var(--text-muted)', fontSize: 13 }}>
+							<PiWarningCircleDuotone size={15} /> The Pro plan is limited to one branch — upgrade to Max to add more.
+						</div>
+					)}
 					<div className="form-actions" style={{ marginTop: 12 }}>
 						<button type="submit" disabled={submitting} style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: submitting ? 0.6 : 1 }}>
-							<PiPlusDuotone size={15} /> {submitting ? 'Adding…' : 'Add Branch'}
+							<PiPlusDuotone size={15} /> {submitting ? 'Adding…' : branchLimitReached ? 'Upgrade to Add Branch' : 'Add Branch'}
 						</button>
 					</div>
 				</form>
 			</div>
+
+			{upgradePromptOpen && (
+				<UpgradeModal feature="Multiple branches" onClose={() => setUpgradePromptOpen(false)} />
+			)}
 
 			{/* ── Branch list ── */}
 			<div className="card">
