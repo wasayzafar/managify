@@ -139,7 +139,7 @@ export default function FounderPage() {
         </section>
 
         {/* Projects */}
-        <section style={{ ...s.section, background: '#080d14' }}>
+        <section style={{ ...s.section, background: '#f3f5f8' }}>
           <div style={s.inner} className="pub-section-inner">
             <h2 style={s.sectionTitle}>Projects</h2>
             <div style={s.projectGrid} className="pub-project-grid">
@@ -186,26 +186,26 @@ export default function FounderPage() {
 
 const s: Record<string, React.CSSProperties> = {
   page: {
-    background: '#060a10',
-    color: '#e8eef5',
+    background: '#ffffff',
+    color: '#16202c',
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
   },
 
   nav: {
     position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-    background: 'rgba(6,10,16,0.88)', backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(12px)',
+    borderBottom: '1px solid rgba(0,0,0,0.06)',
   },
   navInner: {
     maxWidth: 1000, margin: '0 auto', padding: '0 32px',
     height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
   navBrand: { display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' },
-  navBrandName: { fontSize: 16, fontWeight: 700, color: '#e8eef5' },
+  navBrandName: { fontSize: 16, fontWeight: 700, color: '#16202c' },
   navContact: {
-    fontSize: 13, fontWeight: 600, color: '#e8eef5', textDecoration: 'none',
-    background: '#1a2940', border: '1px solid #243245', borderRadius: 7, padding: '6px 16px',
+    fontSize: 13, fontWeight: 600, color: '#16202c', textDecoration: 'none',
+    background: '#eef1f5', border: '1px solid #cbd3dd', borderRadius: 7, padding: '6px 16px',
   },
 
   hero: {
@@ -213,7 +213,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroBg: {
     position: 'absolute', inset: 0,
-    background: 'radial-gradient(ellipse 900px 500px at 50% 0%, rgba(34,99,255,0.1) 0%, transparent 70%)',
+    background: 'radial-gradient(ellipse 900px 500px at 50% 0%, rgba(34,99,255,0.07) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
   heroInner: {
@@ -225,13 +225,13 @@ const s: Record<string, React.CSSProperties> = {
   photoWrap: { position: 'relative', flexShrink: 0 },
   photo: {
     width: 180, height: 180, borderRadius: '50%',
-    objectFit: 'cover', border: '3px solid #1a2940',
+    objectFit: 'cover', border: '3px solid #eef1f5',
     position: 'relative', zIndex: 1,
-    boxShadow: '0 0 0 6px rgba(34,99,255,0.1)',
+    boxShadow: '0 0 0 6px rgba(34,99,255,0.08)',
   },
   photoGlow: {
     position: 'absolute', inset: -20, borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(34,99,255,0.2) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(34,99,255,0.14) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
 
@@ -242,20 +242,20 @@ const s: Record<string, React.CSSProperties> = {
   },
   name: {
     fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 800,
-    letterSpacing: '-2px', color: '#e8eef5', margin: '0 0 16px 0',
+    letterSpacing: '-2px', color: '#16202c', margin: '0 0 16px 0',
   },
   tagline: {
-    fontSize: 17, lineHeight: 1.7, color: '#8b949e', margin: '0 0 32px 0', maxWidth: 500,
+    fontSize: 17, lineHeight: 1.7, color: '#5b6675', margin: '0 0 32px 0', maxWidth: 500,
   },
   socialRow: { display: 'flex', gap: 10, flexWrap: 'wrap' as const },
   socialBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 7,
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: '#ffffff', border: '1px solid #e2e6ec',
     borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600,
-    color: '#c9d5e0', textDecoration: 'none',
+    color: '#334155', textDecoration: 'none',
   },
   socialBtnPrimary: {
-    background: 'rgba(34,99,255,0.12)', border: '1px solid rgba(34,99,255,0.3)', color: '#4d8fff',
+    background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.25)', color: '#2263ff',
   },
 
   section: { padding: '72px 0' },
@@ -263,53 +263,53 @@ const s: Record<string, React.CSSProperties> = {
   twoCol: {
   },
   sectionTitle: {
-    fontSize: 20, fontWeight: 700, color: '#e8eef5',
+    fontSize: 20, fontWeight: 700, color: '#16202c',
     margin: '0 0 20px 0', letterSpacing: '-0.5px',
   },
 
   bioCard: {
-    background: '#0d1521', border: '1px solid #1a2333',
-    borderRadius: 14, padding: '28px 24px',
+    background: '#ffffff', border: '1px solid #e2e6ec',
+    borderRadius: 14, padding: '28px 24px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
-  bioPara: { fontSize: 15, lineHeight: 1.75, color: '#8b949e', margin: '0 0 16px 0' },
-  inlineLink: { color: '#4d8fff', textDecoration: 'none', fontWeight: 600 },
+  bioPara: { fontSize: 15, lineHeight: 1.75, color: '#5b6675', margin: '0 0 16px 0' },
+  inlineLink: { color: '#2263ff', textDecoration: 'none', fontWeight: 600 },
 
   skillsCard: {
-    background: '#0d1521', border: '1px solid #1a2333',
-    borderRadius: 14, padding: '24px',
+    background: '#ffffff', border: '1px solid #e2e6ec',
+    borderRadius: 14, padding: '24px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
   skillGrid: { display: 'flex', flexWrap: 'wrap' as const, gap: 8 },
   skillPill: {
     display: 'inline-flex', alignItems: 'center', gap: 6,
-    background: '#0a111a', border: '1px solid #1a2333',
+    background: '#f3f5f8', border: '1px solid #e2e6ec',
     borderRadius: 99, padding: '5px 12px',
-    fontSize: 12, fontWeight: 600, color: '#8b949e',
+    fontSize: 12, fontWeight: 600, color: '#5b6675',
   },
 
   projectGrid: { marginTop: 8 },
   projectCard: {
     display: 'block', textDecoration: 'none',
-    background: '#0d1521', border: '1px solid #1a2333',
+    background: '#ffffff', border: '1px solid #e2e6ec',
     borderRadius: 14, padding: '28px 24px', cursor: 'pointer',
   },
   projectIcon: {
     width: 42, height: 42, borderRadius: 10,
-    background: 'rgba(34,99,255,0.12)', border: '1px solid rgba(34,99,255,0.2)',
+    background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.18)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    color: '#4d8fff', marginBottom: 16,
+    color: '#2263ff', marginBottom: 16,
   },
-  projectName: { fontSize: 17, fontWeight: 700, color: '#e8eef5', margin: '0 0 10px 0' },
-  projectDesc: { fontSize: 14, color: '#6b7280', lineHeight: 1.65, margin: '0 0 16px 0' },
-  projectLink: { fontSize: 13, color: '#4d8fff', fontWeight: 600 },
+  projectName: { fontSize: 17, fontWeight: 700, color: '#16202c', margin: '0 0 10px 0' },
+  projectDesc: { fontSize: 14, color: '#5b6675', lineHeight: 1.65, margin: '0 0 16px 0' },
+  projectLink: { fontSize: 13, color: '#2263ff', fontWeight: 600 },
 
   cta: {
     position: 'relative', overflow: 'hidden',
-    background: '#080d14', borderTop: '1px solid #1a2333',
+    background: '#f3f5f8', borderTop: '1px solid #e2e6ec',
     padding: '80px 32px', textAlign: 'center',
   },
   ctaGlow: {
     position: 'absolute', inset: 0,
-    background: 'radial-gradient(ellipse 700px 300px at 50% 50%, rgba(34,99,255,0.1) 0%, transparent 70%)',
+    background: 'radial-gradient(ellipse 700px 300px at 50% 50%, rgba(34,99,255,0.08) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
   ctaInner: {
@@ -317,10 +317,10 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
   },
   ctaTitle: {
-    fontSize: 32, fontWeight: 800, color: '#e8eef5',
+    fontSize: 32, fontWeight: 800, color: '#16202c',
     margin: 0, letterSpacing: '-1px',
   },
-  ctaSub: { fontSize: 16, color: '#8b949e', margin: 0, lineHeight: 1.6 },
+  ctaSub: { fontSize: 16, color: '#5b6675', margin: 0, lineHeight: 1.6 },
   ctaBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 8,
     background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)',
@@ -330,11 +330,11 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   footer: {
-    background: '#060a10', borderTop: '1px solid #1a2333', padding: '24px 32px',
+    background: '#ffffff', borderTop: '1px solid #e2e6ec', padding: '24px 32px',
   },
   footerInner: {
     maxWidth: 1000, margin: '0 auto',
     display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 8,
   },
-  footerText: { fontSize: 13, color: '#374151' },
+  footerText: { fontSize: 13, color: '#8b96a5' },
 }

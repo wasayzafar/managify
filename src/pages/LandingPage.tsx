@@ -230,10 +230,10 @@ export default function LandingPage() {
             </div>
             <div style={s.heroCardBody} className="pub-hero-card-body">
               {[
-                { label: 'Revenue Today', value: 'PKR 84,200', color: '#4ade80', change: '+12%' },
-                { label: 'Bills Created', value: '23', color: '#60a5fa', change: '+4' },
-                { label: 'Items Sold', value: '147', color: '#a78bfa', change: '+18' },
-                { label: 'Net Profit', value: 'PKR 31,500', color: '#34d399', change: '+8%' },
+                { label: 'Revenue Today', value: 'PKR 84,200', color: '#16a34a', change: '+12%' },
+                { label: 'Bills Created', value: '23', color: '#2563eb', change: '+4' },
+                { label: 'Items Sold', value: '147', color: '#7c3aed', change: '+18' },
+                { label: 'Net Profit', value: 'PKR 31,500', color: '#0d9488', change: '+8%' },
               ].map(stat => (
                 <div key={stat.label} style={s.heroStatCard}>
                   <div style={s.heroStatLabel}>{stat.label}</div>
@@ -281,7 +281,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── INDUSTRIES ── */}
-      <section id="industries" style={{ ...s.section, background: '#07111a' }} className="pub-section">
+      <section id="industries" style={{ ...s.section, background: '#f3f5f8' }} className="pub-section">
         <div style={s.sectionInner} className="pub-section-inner">
           <div style={s.sectionHead}>
             <p style={s.sectionEyebrow}>Who we serve</p>
@@ -293,7 +293,7 @@ export default function LandingPage() {
           <div style={s.industryGrid} className="pub-industry-grid">
             {industries.map(ind => (
               <div key={ind.name} style={s.industryCard}>
-                <div style={{ ...s.industryIcon, color: ind.color, background: `${ind.color}18`, border: `1px solid ${ind.color}30` }}>
+                <div style={{ ...s.industryIcon, color: ind.color, background: `${ind.color}20`, border: `1px solid ${ind.color}35` }}>
                   {typeof ind.icon === 'string'
                     ? <span style={{ fontSize: 22 }}>{ind.icon}</span>
                     : ind.icon}
@@ -302,7 +302,7 @@ export default function LandingPage() {
                 <p style={s.industryDesc}>{ind.desc}</p>
                 <div style={s.tagRow}>
                   {ind.tags.map(t => (
-                    <span key={t} style={{ ...s.tag, color: ind.color, borderColor: `${ind.color}40`, background: `${ind.color}10` }}>{t}</span>
+                    <span key={t} style={{ ...s.tag, color: ind.color, borderColor: `${ind.color}45`, background: `${ind.color}16` }}>{t}</span>
                   ))}
                 </div>
               </div>
@@ -312,7 +312,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CUSTOM SOLUTIONS ── */}
-      <section id="custom" style={{ ...s.section, background: '#060a10' }} className="pub-section">
+      <section id="custom" style={{ ...s.section, background: '#ffffff' }} className="pub-section">
         <div style={s.sectionInner} className="pub-section-inner">
           <div style={{ display: 'flex', gap: 80, alignItems: 'center', flexWrap: 'wrap' as const }} className="pub-custom-wrap">
             {/* Left column */}
@@ -336,7 +336,7 @@ export default function LandingPage() {
                   WhatsApp
                 </a>
               </div>
-              <p style={{ marginTop: 20, fontSize: 13, color: '#4a5568' }}>
+              <p style={{ marginTop: 20, fontSize: 13, color: '#8b96a5' }}>
                 Usually respond within 24 hours · Free consultation
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHY ── */}
-      <section id="why" style={{ ...s.section, background: '#080d14' }} className="pub-section">
+      <section id="why" style={{ ...s.section, background: '#f3f5f8' }} className="pub-section">
         <div style={s.sectionInner} className="pub-section-inner">
           <div style={s.sectionHead}>
             <p style={s.sectionEyebrow}>Why Managify</p>
@@ -399,10 +399,13 @@ export default function LandingPage() {
           </div>
           <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={s.footerPowered}>
             <img src="./nativeedge.png" alt="NativeEdge Studio" width={18} style={{ borderRadius: 4, verticalAlign: 'middle' }} />
-            {' '}Powered by <strong style={{ color: '#8b949e' }}>NativeEdge Studio</strong>
+            {' '}Powered by <strong style={{ color: '#5b6675' }}>NativeEdge Studio</strong>
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' as const }}>
-            <Link to="/contact" style={{ fontSize: 13, color: '#4a5568', textDecoration: 'none' }}>Contact</Link>
+            <Link to="/contact" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Contact</Link>
+            <Link to="/privacy" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Terms of Service</Link>
+            <Link to="/refund-policy" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Refund Policy</Link>
             <p style={s.footerCopy}>&copy; {new Date().getFullYear()} Managify. All rights reserved.</p>
           </div>
         </div>
@@ -414,8 +417,8 @@ export default function LandingPage() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 const s: Record<string, React.CSSProperties> = {
   page: {
-    background: '#060a10',
-    color: '#e8eef5',
+    background: '#ffffff',
+    color: '#16202c',
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
     overflowX: 'hidden',
@@ -426,9 +429,9 @@ const s: Record<string, React.CSSProperties> = {
     position: 'fixed',
     top: 0, left: 0, right: 0,
     zIndex: 100,
-    background: 'rgba(6,10,16,0.85)',
+    background: 'rgba(255,255,255,0.85)',
     backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    borderBottom: '1px solid rgba(0,0,0,0.06)',
   },
   navInner: {
     maxWidth: 1200,
@@ -448,7 +451,7 @@ const s: Record<string, React.CSSProperties> = {
   navBrandName: {
     fontSize: 18,
     fontWeight: 700,
-    color: '#e8eef5',
+    color: '#16202c',
     letterSpacing: '-0.3px',
   },
   navLinks: {
@@ -458,7 +461,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   navLink: {
     fontSize: 14,
-    color: '#8b949e',
+    color: '#5b6675',
     textDecoration: 'none',
     fontWeight: 500,
     transition: 'color 0.2s',
@@ -466,10 +469,10 @@ const s: Record<string, React.CSSProperties> = {
   navLogin: {
     fontSize: 14,
     fontWeight: 600,
-    color: '#e8eef5',
+    color: '#16202c',
     textDecoration: 'none',
-    background: '#1a2940',
-    border: '1px solid #243245',
+    background: '#eef1f5',
+    border: '1px solid #cbd3dd',
     borderRadius: 8,
     padding: '7px 18px',
   },
@@ -485,8 +488,8 @@ const s: Record<string, React.CSSProperties> = {
     position: 'absolute',
     inset: 0,
     background: `
-      radial-gradient(ellipse 800px 600px at 60% 10%, rgba(34,99,255,0.12) 0%, transparent 70%),
-      radial-gradient(ellipse 600px 400px at 10% 80%, rgba(34,99,255,0.07) 0%, transparent 70%)
+      radial-gradient(ellipse 800px 600px at 60% 10%, rgba(34,99,255,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 600px 400px at 10% 80%, rgba(34,99,255,0.05) 0%, transparent 70%)
     `,
     pointerEvents: 'none',
   },
@@ -503,13 +506,13 @@ const s: Record<string, React.CSSProperties> = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 7,
-    background: 'rgba(34,99,255,0.12)',
-    border: '1px solid rgba(34,99,255,0.3)',
+    background: 'rgba(34,99,255,0.08)',
+    border: '1px solid rgba(34,99,255,0.25)',
     borderRadius: 99,
     padding: '5px 14px',
     fontSize: 12,
     fontWeight: 600,
-    color: '#4d8fff',
+    color: '#2263ff',
     letterSpacing: '0.5px',
     marginBottom: 28,
     textTransform: 'uppercase',
@@ -519,18 +522,18 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     lineHeight: 1.1,
     letterSpacing: '-2px',
-    color: '#e8eef5',
+    color: '#16202c',
     margin: '0 0 24px 0',
   },
   heroAccent: {
-    background: 'linear-gradient(90deg, #2263ff, #60a5fa)',
+    background: 'linear-gradient(90deg, #2263ff, #1a4fd4)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
   heroSub: {
     fontSize: 18,
     lineHeight: 1.7,
-    color: '#8b949e',
+    color: '#5b6675',
     maxWidth: 600,
     margin: '0 0 40px 0',
   },
@@ -552,7 +555,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: '13px 28px',
     fontSize: 15,
     fontWeight: 600,
-    boxShadow: '0 4px 32px rgba(34,99,255,0.35)',
+    boxShadow: '0 4px 32px rgba(34,99,255,0.3)',
     transition: 'transform 0.15s, box-shadow 0.15s',
   },
   ctaSecondary: {
@@ -560,13 +563,13 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 8,
     background: 'transparent',
-    color: '#c9d5e0',
+    color: '#334155',
     textDecoration: 'none',
     borderRadius: 10,
     padding: '13px 28px',
     fontSize: 15,
     fontWeight: 600,
-    border: '1px solid #243245',
+    border: '1px solid #cbd3dd',
     transition: 'background 0.15s, color 0.15s',
   },
 
@@ -574,19 +577,19 @@ const s: Record<string, React.CSSProperties> = {
   heroCard: {
     width: '100%',
     maxWidth: 700,
-    background: '#0d1521',
-    border: '1px solid #1f2a36',
+    background: '#ffffff',
+    border: '1px solid #e2e6ec',
     borderRadius: 16,
     overflow: 'hidden',
-    boxShadow: '0 32px 64px rgba(0,0,0,0.5)',
+    boxShadow: '0 32px 64px rgba(15,23,42,0.12)',
   },
   heroCardHeader: {
     display: 'flex',
     alignItems: 'center',
     gap: 7,
     padding: '12px 16px',
-    background: '#0a1018',
-    borderBottom: '1px solid #1f2a36',
+    background: '#f3f5f8',
+    borderBottom: '1px solid #e2e6ec',
   },
   heroCardDot: {
     width: 10,
@@ -596,7 +599,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroCardTitle: {
     fontSize: 12,
-    color: '#4a5568',
+    color: '#8b96a5',
     marginLeft: 6,
     fontWeight: 500,
   },
@@ -605,11 +608,11 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroStatCard: {
     padding: '20px 18px',
-    borderRight: '1px solid #1a2333',
+    borderRight: '1px solid #e2e6ec',
   },
   heroStatLabel: {
     fontSize: 11,
-    color: '#4a5568',
+    color: '#8b96a5',
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
@@ -622,20 +625,20 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroStatChange: {
     fontSize: 11,
-    color: '#22c55e',
+    color: '#16a34a',
     fontWeight: 600,
   },
 
   // Stats strip
   statsStrip: {
-    background: '#0a111a',
-    borderTop: '1px solid #1a2333',
-    borderBottom: '1px solid #1a2333',
+    background: '#f3f5f8',
+    borderTop: '1px solid #e2e6ec',
+    borderBottom: '1px solid #e2e6ec',
   },
   statItem: {
     padding: '36px 24px',
     textAlign: 'center',
-    borderRight: '1px solid #1a2333',
+    borderRight: '1px solid #e2e6ec',
   },
   statValue: {
     fontSize: 40,
@@ -646,7 +649,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   statLabel: {
     fontSize: 13,
-    color: '#6b7280',
+    color: '#5b6675',
     fontWeight: 500,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
@@ -676,13 +679,13 @@ const s: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: 'clamp(28px, 4vw, 42px)',
     fontWeight: 800,
-    color: '#e8eef5',
+    color: '#16202c',
     margin: '0 0 16px 0',
     letterSpacing: '-1px',
   },
   sectionDesc: {
     fontSize: 17,
-    color: '#8b949e',
+    color: '#5b6675',
     maxWidth: 600,
     margin: '0 auto',
     lineHeight: 1.65,
@@ -692,33 +695,34 @@ const s: Record<string, React.CSSProperties> = {
   featureGrid: {
   },
   featureCard: {
-    background: '#0d1521',
-    border: '1px solid #1a2333',
+    background: '#ffffff',
+    border: '1px solid #e2e6ec',
     borderRadius: 14,
     padding: '28px 24px',
-    transition: 'border-color 0.2s, transform 0.2s',
+    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+    transition: 'border-color 0.2s, transform 0.2s, box-shadow 0.2s',
   },
   featureIconWrap: {
     width: 46,
     height: 46,
-    background: 'rgba(34,99,255,0.12)',
-    border: '1px solid rgba(34,99,255,0.2)',
+    background: 'rgba(34,99,255,0.08)',
+    border: '1px solid rgba(34,99,255,0.18)',
     borderRadius: 12,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#4d8fff',
+    color: '#2263ff',
     marginBottom: 18,
   },
   featureTitle: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#e8eef5',
+    color: '#16202c',
     margin: '0 0 10px 0',
   },
   featureDesc: {
     fontSize: 14,
-    color: '#8b949e',
+    color: '#5b6675',
     lineHeight: 1.65,
     margin: 0,
   },
@@ -730,11 +734,12 @@ const s: Record<string, React.CSSProperties> = {
     gap: 20,
   },
   industryCard: {
-    background: '#0d1521',
-    border: '1px solid #1a2333',
+    background: '#ffffff',
+    border: '1px solid #e2e6ec',
     borderRadius: 16,
     padding: '28px 24px',
-    transition: 'border-color 0.2s, transform 0.2s',
+    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+    transition: 'border-color 0.2s, transform 0.2s, box-shadow 0.2s',
   },
   industryIcon: {
     width: 50,
@@ -749,12 +754,12 @@ const s: Record<string, React.CSSProperties> = {
   industryName: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#e8eef5',
+    color: '#16202c',
     margin: '0 0 10px',
   },
   industryDesc: {
     fontSize: 14,
-    color: '#8b949e',
+    color: '#5b6675',
     lineHeight: 1.65,
     margin: '0 0 16px',
   },
@@ -774,32 +779,33 @@ const s: Record<string, React.CSSProperties> = {
 
   // Custom solutions
   customCard: {
-    background: '#0d1521',
-    border: '1px solid #1a2333',
+    background: '#ffffff',
+    border: '1px solid #e2e6ec',
     borderRadius: 12,
     padding: '18px 18px',
+    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
   customIcon: {
     width: 36,
     height: 36,
-    background: 'rgba(34,99,255,0.1)',
-    border: '1px solid rgba(34,99,255,0.2)',
+    background: 'rgba(34,99,255,0.08)',
+    border: '1px solid rgba(34,99,255,0.18)',
     borderRadius: 9,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#4d8fff',
+    color: '#2263ff',
     marginBottom: 12,
   },
   customTitle: {
     fontSize: 14,
     fontWeight: 700,
-    color: '#e8eef5',
+    color: '#16202c',
     marginBottom: 6,
   },
   customDesc: {
     fontSize: 13,
-    color: '#6b7280',
+    color: '#5b6675',
     lineHeight: 1.55,
   },
 
@@ -810,32 +816,33 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'flex-start',
     gap: 14,
-    background: '#0d1521',
-    border: '1px solid #1a2333',
+    background: '#ffffff',
+    border: '1px solid #e2e6ec',
     borderRadius: 12,
     padding: '20px 20px',
+    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
   whyIconWrap: {
     width: 36,
     height: 36,
-    background: 'rgba(34,99,255,0.1)',
+    background: 'rgba(34,99,255,0.08)',
     borderRadius: 9,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#4d8fff',
+    color: '#2263ff',
     flexShrink: 0,
     marginTop: 2,
   },
   whyTitle: {
     fontSize: 14,
     fontWeight: 700,
-    color: '#e8eef5',
+    color: '#16202c',
     marginBottom: 5,
   },
   whyDesc: {
     fontSize: 13,
-    color: '#6b7280',
+    color: '#5b6675',
     lineHeight: 1.55,
   },
 
@@ -843,16 +850,16 @@ const s: Record<string, React.CSSProperties> = {
   ctaBanner: {
     position: 'relative',
     overflow: 'hidden',
-    background: '#0a111a',
-    borderTop: '1px solid #1a2333',
-    borderBottom: '1px solid #1a2333',
+    background: '#f3f5f8',
+    borderTop: '1px solid #e2e6ec',
+    borderBottom: '1px solid #e2e6ec',
     padding: '96px 32px',
     textAlign: 'center',
   },
   ctaBannerGlow: {
     position: 'absolute',
     inset: 0,
-    background: 'radial-gradient(ellipse 800px 400px at 50% 50%, rgba(34,99,255,0.12) 0%, transparent 70%)',
+    background: 'radial-gradient(ellipse 800px 400px at 50% 50%, rgba(34,99,255,0.1) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
   ctaBannerInner: {
@@ -868,21 +875,21 @@ const s: Record<string, React.CSSProperties> = {
   ctaBannerTitle: {
     fontSize: 'clamp(26px, 4vw, 40px)',
     fontWeight: 800,
-    color: '#e8eef5',
+    color: '#16202c',
     margin: 0,
     letterSpacing: '-1px',
   },
   ctaBannerSub: {
     fontSize: 17,
-    color: '#8b949e',
+    color: '#5b6675',
     margin: 0,
     lineHeight: 1.6,
   },
 
   // Footer
   footer: {
-    background: '#060a10',
-    borderTop: '1px solid #1a2333',
+    background: '#ffffff',
+    borderTop: '1px solid #e2e6ec',
     padding: '40px 32px',
   },
   footerInner: {
@@ -902,11 +909,11 @@ const s: Record<string, React.CSSProperties> = {
   footerBrandName: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#e8eef5',
+    color: '#16202c',
   },
   footerPowered: {
     fontSize: 13,
-    color: '#374151',
+    color: '#8b96a5',
     margin: 0,
     textDecoration: 'none',
     display: 'flex',
@@ -915,7 +922,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   footerCopy: {
     fontSize: 13,
-    color: '#374151',
+    color: '#8b96a5',
     margin: 0,
   },
 }

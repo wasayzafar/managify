@@ -31,6 +31,9 @@ import AdminPage from './pages/AdminPage';
 import CheckoutTestPage from './pages/CheckoutTestPage';
 import PricingPage from './pages/PricingPage';
 import RegisterPage from './pages/RegisterPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import RefundPolicyPage from './pages/RefundPolicyPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -69,6 +72,9 @@ export function AppRouter() {
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/*" element={
           <ProtectedRoute>

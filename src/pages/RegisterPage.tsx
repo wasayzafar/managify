@@ -40,7 +40,7 @@ function PasswordField({ label, value, onChange }: { label: string; value: strin
 					type="button"
 					onClick={() => setShow(v => !v)}
 					aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-					style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#8b949e', padding: 4, display: 'flex', cursor: 'pointer' }}
+					style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#8b96a5', padding: 4, display: 'flex', cursor: 'pointer' }}
 				>
 					{show ? <PiEyeSlashDuotone size={16} /> : <PiEyeDuotone size={16} />}
 				</button>
@@ -82,8 +82,8 @@ export default function RegisterPage() {
 				</nav>
 				<div style={s.wrap}>
 					<div style={{ ...s.card, textAlign: 'center' }}>
-						<h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#e8eef5' }}>Pick a plan to get started</h2>
-						<p style={{ margin: '0 0 20px', color: '#8b949e', fontSize: 13.5, lineHeight: 1.5 }}>
+						<h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#16202c' }}>Pick a plan to get started</h2>
+						<p style={{ margin: '0 0 20px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.5 }}>
 							Registration happens right after checkout — choose Pro or Max first and we'll bring you back here.
 						</p>
 						<Link to="/pricing" style={s.ctaPrimary}>View Plans</Link>
@@ -161,16 +161,16 @@ export default function RegisterPage() {
 			<div style={s.wrap}>
 				<div style={s.card}>
 					<div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-						<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'rgba(34,197,94,0.12)', color: '#22c55e', flexShrink: 0 }}>
+						<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'rgba(22,163,74,0.1)', color: '#16a34a', flexShrink: 0 }}>
 							<PiCheckCircleDuotone size={18} />
 						</span>
-						<h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#e8eef5' }}>{trial ? 'Trial started' : 'Payment received'}</h2>
+						<h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#16202c' }}>{trial ? 'Trial started' : 'Payment received'}</h2>
 					</div>
 
 					{user ? (
 						<>
-							<p style={{ margin: '0 0 16px', color: '#8b949e', fontSize: 13.5, lineHeight: 1.6 }}>
-								Apply the <strong style={{ color: '#e8eef5' }}>{PLAN_NAMES[plan]}</strong> plan to your account ({user.email}).
+							<p style={{ margin: '0 0 16px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.6 }}>
+								Apply the <strong style={{ color: '#16202c' }}>{PLAN_NAMES[plan]}</strong> plan to your account ({user.email}).
 								{trial && <> Your {trial.replace(' free trial', '')} free trial has started — you won't be charged until it ends.</>}
 							</p>
 							{activateError && (
@@ -184,8 +184,8 @@ export default function RegisterPage() {
 						</>
 					) : (
 						<>
-							<p style={{ margin: '0 0 16px', color: '#8b949e', fontSize: 13.5, lineHeight: 1.6 }}>
-								Create your login for the <strong style={{ color: '#e8eef5' }}>{PLAN_NAMES[plan]}</strong> plan. We'll use the email from your Paddle receipt.
+							<p style={{ margin: '0 0 16px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.6 }}>
+								Create your login for the <strong style={{ color: '#16202c' }}>{PLAN_NAMES[plan]}</strong> plan. We'll use the email from your Paddle receipt.
 								{trial && <> Your {trial.replace(' free trial', '')} free trial has started — you won't be charged until it ends.</>}
 							</p>
 							<form onSubmit={handleSignup}>
@@ -211,30 +211,30 @@ export default function RegisterPage() {
 }
 
 const s: Record<string, React.CSSProperties> = {
-	page: { background: '#060a10', color: '#e8eef5', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', minHeight: '100vh' },
+	page: { background: '#ffffff', color: '#16202c', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', minHeight: '100vh' },
 	nav: {
 		position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-		background: 'rgba(6,10,16,0.85)', backdropFilter: 'blur(12px)',
-		borderBottom: '1px solid rgba(255,255,255,0.06)',
+		background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
+		borderBottom: '1px solid rgba(0,0,0,0.06)',
 		padding: '0 32px', height: 64, display: 'flex', alignItems: 'center',
 	},
 	navBrand: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-	navBrandName: { fontSize: 18, fontWeight: 700, color: '#e8eef5', letterSpacing: '-0.3px' },
+	navBrandName: { fontSize: 18, fontWeight: 700, color: '#16202c', letterSpacing: '-0.3px' },
 	wrap: { maxWidth: 420, margin: '0 auto', padding: '150px 20px 60px' },
 	card: {
-		background: '#0d1521', border: '1px solid #1f2a36', borderRadius: 16,
-		padding: 28, boxShadow: '0 20px 48px rgba(0,0,0,0.35)',
+		background: '#ffffff', border: '1px solid #e2e6ec', borderRadius: 16,
+		padding: 28, boxShadow: '0 20px 48px rgba(15,23,42,0.08)',
 	},
-	fieldLabel: { display: 'block', fontSize: 12, fontWeight: 600, color: '#8b949e', marginBottom: 6 },
+	fieldLabel: { display: 'block', fontSize: 12, fontWeight: 600, color: '#5b6675', marginBottom: 6 },
 	input: {
-		width: '100%', boxSizing: 'border-box', background: '#0a111a', border: '1px solid #1f2a36',
-		borderRadius: 8, padding: '10px 12px', color: '#e8eef5', fontSize: 14,
+		width: '100%', boxSizing: 'border-box', background: '#f3f5f8', border: '1px solid #cbd3dd',
+		borderRadius: 8, padding: '10px 12px', color: '#16202c', fontSize: 14,
 	},
-	errorRow: { display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14, color: '#f87171', fontSize: 13 },
+	errorRow: { display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14, color: '#dc2626', fontSize: 13 },
 	ctaPrimary: {
 		display: 'inline-flex', alignItems: 'center', gap: 8,
 		background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)', color: 'white',
 		border: 'none', borderRadius: 10, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
-		boxShadow: '0 4px 32px rgba(34,99,255,0.35)', textDecoration: 'none', cursor: 'pointer',
+		boxShadow: '0 4px 32px rgba(34,99,255,0.3)', textDecoration: 'none', cursor: 'pointer',
 	},
 }

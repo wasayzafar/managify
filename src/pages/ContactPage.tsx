@@ -222,7 +222,7 @@ export default function ContactPage() {
       {/* ── MAP STRIP ── */}
       <section style={s.mapStrip} className="pub-map-strip">
         <div style={s.mapInner}>
-          <FiMapPin size={16} style={{ color: '#4d8fff', flexShrink: 0 }} />
+          <FiMapPin size={16} style={{ color: '#2263ff', flexShrink: 0 }} />
           <span style={s.mapText}>
             Plot 6/3 Sheet No 21, Model Colony, Karachi, Pakistan
           </span>
@@ -242,7 +242,7 @@ export default function ContactPage() {
           </div>
           <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={s.footerPowered}>
             <img src="./nativeedge.png" alt="NativeEdge Studio" width={16} style={{ borderRadius: 3, verticalAlign: 'middle' }} />
-            {' '}Powered by <strong style={{ color: '#8b949e' }}>NativeEdge Studio</strong>
+            {' '}Powered by <strong style={{ color: '#5b6675' }}>NativeEdge Studio</strong>
           </a>
           <Link to="/founder" style={s.founderBtn}>About the Founder</Link>
           <p style={s.footerCopy}>&copy; {new Date().getFullYear()} Managify. All rights reserved.</p>
@@ -254,8 +254,8 @@ export default function ContactPage() {
 
 const s: Record<string, React.CSSProperties> = {
   page: {
-    background: '#060a10',
-    color: '#e8eef5',
+    background: '#ffffff',
+    color: '#16202c',
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
   },
@@ -264,21 +264,21 @@ const s: Record<string, React.CSSProperties> = {
     position: 'fixed',
     top: 0, left: 0, right: 0,
     zIndex: 100,
-    background: 'rgba(6,10,16,0.88)',
+    background: 'rgba(255,255,255,0.88)',
     backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    borderBottom: '1px solid rgba(0,0,0,0.06)',
   },
   navInner: {
     maxWidth: 1200, margin: '0 auto', padding: '0 32px',
     height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
   navBrand: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-  navBrandName: { fontSize: 18, fontWeight: 700, color: '#e8eef5', letterSpacing: '-0.3px' },
+  navBrandName: { fontSize: 18, fontWeight: 700, color: '#16202c', letterSpacing: '-0.3px' },
   navLinks: { display: 'flex', alignItems: 'center', gap: 28 },
-  navLink: { fontSize: 14, color: '#8b949e', textDecoration: 'none', fontWeight: 500 },
+  navLink: { fontSize: 14, color: '#5b6675', textDecoration: 'none', fontWeight: 500 },
   navLogin: {
-    fontSize: 14, fontWeight: 600, color: '#e8eef5', textDecoration: 'none',
-    background: '#1a2940', border: '1px solid #243245', borderRadius: 8, padding: '7px 18px',
+    fontSize: 14, fontWeight: 600, color: '#16202c', textDecoration: 'none',
+    background: '#eef1f5', border: '1px solid #cbd3dd', borderRadius: 8, padding: '7px 18px',
   },
 
   hero: {
@@ -289,7 +289,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroBg: {
     position: 'absolute', inset: 0,
-    background: 'radial-gradient(ellipse 700px 400px at 50% 0%, rgba(34,99,255,0.1) 0%, transparent 70%)',
+    background: 'radial-gradient(ellipse 700px 400px at 50% 0%, rgba(34,99,255,0.07) 0%, transparent 70%)',
     pointerEvents: 'none',
   },
   heroContent: {
@@ -303,10 +303,10 @@ const s: Record<string, React.CSSProperties> = {
   heroTitle: {
     fontSize: 'clamp(28px, 5vw, 52px)',
     fontWeight: 800, letterSpacing: '-1.5px',
-    color: '#e8eef5', margin: '0 0 20px 0',
+    color: '#16202c', margin: '0 0 20px 0',
   },
   heroSub: {
-    fontSize: 17, lineHeight: 1.7, color: '#8b949e', margin: 0,
+    fontSize: 17, lineHeight: 1.7, color: '#5b6675', margin: 0,
   },
 
   main: { padding: '64px 0 80px' },
@@ -316,63 +316,63 @@ const s: Record<string, React.CSSProperties> = {
 
   detailsCol: {},
   detailsCard: {
-    background: '#0d1521', border: '1px solid #1a2333',
-    borderRadius: 16, padding: '32px 28px',
+    background: '#ffffff', border: '1px solid #e2e6ec',
+    borderRadius: 16, padding: '32px 28px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
   studioBrand: {
     display: 'flex', alignItems: 'center', gap: 14,
     textDecoration: 'none', marginBottom: 24,
   },
-  studioName: { fontSize: 17, fontWeight: 700, color: '#e8eef5', marginBottom: 3 },
-  studioTagline: { fontSize: 12, color: '#4d8fff' },
-  detailsIntro: { fontSize: 14, color: '#6b7280', lineHeight: 1.7, margin: '0 0 28px 0' },
+  studioName: { fontSize: 17, fontWeight: 700, color: '#16202c', marginBottom: 3 },
+  studioTagline: { fontSize: 12, color: '#2263ff' },
+  detailsIntro: { fontSize: 14, color: '#5b6675', lineHeight: 1.7, margin: '0 0 28px 0' },
 
   contactList: { display: 'flex', flexDirection: 'column', gap: 6 },
   contactItem: {
     display: 'flex', alignItems: 'flex-start', gap: 16,
     textDecoration: 'none',
-    background: '#0a111a', border: '1px solid #1a2333',
+    background: '#f8fafc', border: '1px solid #e2e6ec',
     borderRadius: 12, padding: '16px 18px',
     transition: 'border-color 0.2s',
   },
   contactIcon: {
     width: 40, height: 40, borderRadius: 10,
-    background: 'rgba(34,99,255,0.12)', border: '1px solid rgba(34,99,255,0.2)',
+    background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.18)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    color: '#4d8fff', flexShrink: 0,
+    color: '#2263ff', flexShrink: 0,
   },
-  contactLabel: { fontSize: 11, fontWeight: 700, color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 },
-  contactValue: { fontSize: 14, color: '#c9d5e0', fontWeight: 500, lineHeight: 1.5 },
+  contactLabel: { fontSize: 11, fontWeight: 700, color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 },
+  contactValue: { fontSize: 14, color: '#334155', fontWeight: 500, lineHeight: 1.5 },
 
   formCol: {},
   formCard: {
-    background: '#0d1521', border: '1px solid #1a2333',
-    borderRadius: 16, padding: '36px 32px',
+    background: '#ffffff', border: '1px solid #e2e6ec',
+    borderRadius: 16, padding: '36px 32px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
-  formTitle: { fontSize: 22, fontWeight: 700, color: '#e8eef5', margin: '0 0 6px 0', letterSpacing: '-0.5px' },
-  formSub: { fontSize: 14, color: '#6b7280', margin: '0 0 28px 0' },
+  formTitle: { fontSize: 22, fontWeight: 700, color: '#16202c', margin: '0 0 6px 0', letterSpacing: '-0.5px' },
+  formSub: { fontSize: 14, color: '#5b6675', margin: '0 0 28px 0' },
 
   successBox: {
     display: 'flex', alignItems: 'center', gap: 10,
-    background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)',
+    background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.25)',
     borderRadius: 8, padding: '10px 14px',
-    fontSize: 13, color: '#86efac', marginBottom: 20,
+    fontSize: 13, color: '#16a34a', marginBottom: 20,
   },
   errorBox: {
     display: 'flex', alignItems: 'center', gap: 10,
-    background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+    background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)',
     borderRadius: 8, padding: '10px 14px',
-    fontSize: 13, color: '#fca5a5', marginBottom: 20,
+    fontSize: 13, color: '#dc2626', marginBottom: 20,
   },
 
   form: { display: 'flex', flexDirection: 'column', gap: 20 },
   row: {},
   fieldGroup: { display: 'flex', flexDirection: 'column', gap: 7 },
-  label: { fontSize: 13, fontWeight: 600, color: '#9ca3af', letterSpacing: '0.2px' },
+  label: { fontSize: 13, fontWeight: 600, color: '#5b6675', letterSpacing: '0.2px' },
   input: {
-    width: '100%', background: '#0a111a',
-    border: '1px solid #243245', borderRadius: 10,
-    color: '#e8eef5', fontSize: 14,
+    width: '100%', background: '#f3f5f8',
+    border: '1px solid #cbd3dd', borderRadius: 10,
+    color: '#16202c', fontSize: 14,
     padding: '11px 14px', outline: 'none',
     boxSizing: 'border-box', fontFamily: 'inherit',
   },
@@ -387,31 +387,31 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   mapStrip: {
-    background: '#080d14', borderTop: '1px solid #1a2333', borderBottom: '1px solid #1a2333',
+    background: '#f3f5f8', borderTop: '1px solid #e2e6ec', borderBottom: '1px solid #e2e6ec',
     padding: '18px 32px',
   },
   mapInner: {
     maxWidth: 1100, margin: '0 auto',
     display: 'flex', alignItems: 'center', gap: 12,
   },
-  mapText: { fontSize: 14, color: '#6b7280', flex: 1 },
+  mapText: { fontSize: 14, color: '#5b6675', flex: 1 },
   mapLink: {
     display: 'inline-flex', alignItems: 'center', gap: 5,
-    fontSize: 13, color: '#4d8fff', textDecoration: 'none', fontWeight: 600, flexShrink: 0,
+    fontSize: 13, color: '#2263ff', textDecoration: 'none', fontWeight: 600, flexShrink: 0,
   },
 
-  footer: { background: '#060a10', borderTop: '1px solid #1a2333', padding: '32px 32px' },
+  footer: { background: '#ffffff', borderTop: '1px solid #e2e6ec', padding: '32px 32px' },
   footerInner: {
     maxWidth: 1100, margin: '0 auto',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14,
   },
   footerBrand: { display: 'flex', alignItems: 'center', gap: 8 },
-  footerBrandName: { fontSize: 15, fontWeight: 700, color: '#e8eef5' },
-  footerPowered: { fontSize: 13, color: '#374151', margin: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 },
-  footerCopy: { fontSize: 13, color: '#374151', margin: 0 },
+  footerBrandName: { fontSize: 15, fontWeight: 700, color: '#16202c' },
+  footerPowered: { fontSize: 13, color: '#8b96a5', margin: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 },
+  footerCopy: { fontSize: 13, color: '#8b96a5', margin: 0 },
   founderBtn: {
-    fontSize: 11, color: '#374151', textDecoration: 'none',
-    border: '1px solid #1a2333', borderRadius: 6,
+    fontSize: 11, color: '#8b96a5', textDecoration: 'none',
+    border: '1px solid #e2e6ec', borderRadius: 6,
     padding: '3px 9px', fontWeight: 500,
   },
 }

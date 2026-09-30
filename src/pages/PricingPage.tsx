@@ -229,9 +229,9 @@ export default function PricingPage() {
 										</li>
 									))}
 									{plan.excluded.map(f => (
-										<li key={f} style={{ ...s.featureRow, color: '#4a5568' }}>
+										<li key={f} style={{ ...s.featureRow, color: '#8b96a5' }}>
 											<span style={s.xIconWrap}><PiXCircleDuotone size={14} /></span>
-											<span style={{ textDecoration: 'line-through', textDecorationColor: '#2a3441' }}>{f}</span>
+											<span style={{ textDecoration: 'line-through', textDecorationColor: '#cbd3dd' }}>{f}</span>
 										</li>
 									))}
 								</ul>
@@ -247,7 +247,11 @@ export default function PricingPage() {
 
 				<p style={s.footnote}>
 					A payment method is required to start your trial, but you won't be charged until it ends.
-					Payments securely processed by Paddle. Prices shown include tax where applicable.
+					Payments securely processed by Paddle. Prices shown include tax where applicable. By subscribing
+					you agree to our{' '}
+					<Link to="/terms" style={s.footnoteLink}>Terms of Service</Link>,{' '}
+					<Link to="/privacy" style={s.footnoteLink}>Privacy Policy</Link>, and{' '}
+					<Link to="/refund-policy" style={s.footnoteLink}>Refund Policy</Link>.
 				</p>
 			</section>
 		</div>
@@ -263,11 +267,11 @@ const CSS = `
 }
 .pp-card:hover {
 	transform: translateY(-4px);
-	border-color: #2c3b52;
-	box-shadow: 0 28px 60px rgba(0,0,0,0.45);
+	border-color: #cbd3dd;
+	box-shadow: 0 28px 60px rgba(15,23,42,0.14);
 }
 .pp-card.pp-card-featured:hover {
-	border-color: #3d7bff;
+	border-color: #2263ff;
 }
 
 .pp-cta-primary, .pp-cta-secondary, .pp-nav-login {
@@ -275,17 +279,17 @@ const CSS = `
 }
 .pp-cta-primary:hover:not(:disabled) {
 	transform: translateY(-1px);
-	box-shadow: 0 6px 40px rgba(34,99,255,0.5);
+	box-shadow: 0 6px 40px rgba(34,99,255,0.45);
 }
 .pp-cta-primary:active:not(:disabled) { transform: translateY(0); }
 .pp-cta-secondary:hover:not(:disabled) {
-	background: #131f30;
-	border-color: #2c3b52;
+	background: #f3f5f8;
+	border-color: #cbd3dd;
 }
-.pp-nav-login:hover { background: #223350; border-color: #2c3b52; }
+.pp-nav-login:hover { background: #e8ecf2; border-color: #cbd3dd; }
 
 .pp-cta-primary:focus-visible, .pp-cta-secondary:focus-visible, .pp-nav-login:focus-visible {
-	outline: 2px solid #4d8fff;
+	outline: 2px solid #2263ff;
 	outline-offset: 2px;
 }
 
@@ -298,30 +302,30 @@ const CSS = `
 
 const s: Record<string, React.CSSProperties> = {
 	page: {
-		background: '#060a10',
-		color: '#e8eef5',
+		background: '#ffffff',
+		color: '#16202c',
 		fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
 		minHeight: '100vh',
 	},
 	nav: {
 		position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-		background: 'rgba(6,10,16,0.85)', backdropFilter: 'blur(12px)',
-		borderBottom: '1px solid rgba(255,255,255,0.06)',
+		background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
+		borderBottom: '1px solid rgba(0,0,0,0.06)',
 	},
 	navInner: {
 		maxWidth: 1200, margin: '0 auto', padding: '0 32px', height: 64,
 		display: 'flex', alignItems: 'center', justifyContent: 'space-between',
 	},
 	navBrand: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-	navBrandName: { fontSize: 18, fontWeight: 700, color: '#e8eef5', letterSpacing: '-0.3px' },
+	navBrandName: { fontSize: 18, fontWeight: 700, color: '#16202c', letterSpacing: '-0.3px' },
 	navLogin: {
-		fontSize: 14, fontWeight: 600, color: '#e8eef5', textDecoration: 'none',
-		background: '#1a2940', border: '1px solid #243245', borderRadius: 8, padding: '7px 18px',
+		fontSize: 14, fontWeight: 600, color: '#16202c', textDecoration: 'none',
+		background: '#eef1f5', border: '1px solid #cbd3dd', borderRadius: 8, padding: '7px 18px',
 	},
 	hero: { position: 'relative', paddingTop: 150, paddingBottom: 56, overflow: 'hidden' },
 	heroBg: {
 		position: 'absolute', inset: 0,
-		background: 'radial-gradient(ellipse 800px 500px at 50% 0%, rgba(34,99,255,0.14) 0%, transparent 70%)',
+		background: 'radial-gradient(ellipse 800px 500px at 50% 0%, rgba(34,99,255,0.08) 0%, transparent 70%)',
 		pointerEvents: 'none',
 	},
 	heroContent: {
@@ -330,83 +334,84 @@ const s: Record<string, React.CSSProperties> = {
 	},
 	badge: {
 		display: 'inline-flex', alignItems: 'center', gap: 7,
-		background: 'rgba(34,99,255,0.12)', border: '1px solid rgba(34,99,255,0.3)',
+		background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.25)',
 		borderRadius: 99, padding: '5px 14px', fontSize: 12, fontWeight: 600,
-		color: '#4d8fff', letterSpacing: '0.5px', marginBottom: 24, textTransform: 'uppercase',
+		color: '#2263ff', letterSpacing: '0.5px', marginBottom: 24, textTransform: 'uppercase',
 	},
 	heroH1: {
 		fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 800, lineHeight: 1.15,
-		letterSpacing: '-1.5px', color: '#e8eef5', margin: '0 0 18px 0',
+		letterSpacing: '-1.5px', color: '#16202c', margin: '0 0 18px 0',
 	},
 	heroAccent: {
-		background: 'linear-gradient(90deg, #2263ff, #60a5fa)',
+		background: 'linear-gradient(90deg, #2263ff, #1a4fd4)',
 		WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
 	},
-	heroSub: { fontSize: 16, lineHeight: 1.7, color: '#8b949e', maxWidth: 520, margin: 0 },
+	heroSub: { fontSize: 16, lineHeight: 1.7, color: '#5b6675', maxWidth: 520, margin: 0 },
 
 	plansSection: { maxWidth: 980, margin: '0 auto', padding: '0 32px 100px', position: 'relative' },
 	checkoutErrorBanner: {
 		maxWidth: 700, margin: '0 auto 28px', padding: '12px 16px', borderRadius: 10,
-		background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.35)',
-		color: '#fca5a5', fontSize: 13.5, lineHeight: 1.5, textAlign: 'center',
+		background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)',
+		color: '#dc2626', fontSize: 13.5, lineHeight: 1.5, textAlign: 'center',
 	},
 	plansGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, alignItems: 'stretch' },
 	planCard: {
 		position: 'relative', display: 'flex', flexDirection: 'column',
-		background: 'linear-gradient(180deg, #0e1622 0%, #0d1521 100%)',
-		border: '1px solid #1f2a36', borderRadius: 18,
-		padding: 32, boxShadow: '0 20px 48px rgba(0,0,0,0.35)',
+		background: '#ffffff',
+		border: '1px solid #e2e6ec', borderRadius: 18,
+		padding: 32, boxShadow: '0 20px 48px rgba(15,23,42,0.08)',
 	},
-	planCardFeatured: { border: '1px solid #2b4a8f' },
+	planCardFeatured: { border: '1px solid #aec3f7' },
 	popularBadge: {
 		position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
 		display: 'inline-flex', alignItems: 'center', gap: 5,
 		background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)', color: '#fff',
 		fontSize: 11, fontWeight: 700, padding: '5px 14px', borderRadius: 999, letterSpacing: '0.4px',
-		boxShadow: '0 4px 20px rgba(34,99,255,0.45)', whiteSpace: 'nowrap',
+		boxShadow: '0 4px 20px rgba(34,99,255,0.35)', whiteSpace: 'nowrap',
 	},
 	planIconWrap: {
 		display: 'flex', alignItems: 'center', justifyContent: 'center',
-		width: 34, height: 34, borderRadius: 9, color: '#4d8fff',
-		background: 'rgba(34,99,255,0.12)', flexShrink: 0,
+		width: 34, height: 34, borderRadius: 9, color: '#2263ff',
+		background: 'rgba(34,99,255,0.08)', flexShrink: 0,
 	},
-	planName: { margin: 0, fontSize: 21, fontWeight: 700, color: '#e8eef5', letterSpacing: '-0.2px' },
-	planTagline: { margin: '0 0 24px', color: '#8b949e', fontSize: 13.5, lineHeight: 1.55, minHeight: 40 },
+	planName: { margin: 0, fontSize: 21, fontWeight: 700, color: '#16202c', letterSpacing: '-0.2px' },
+	planTagline: { margin: '0 0 24px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.55, minHeight: 40 },
 	priceBlock: { marginBottom: 24, minHeight: 78 },
-	planPrice: { fontSize: 36, fontWeight: 800, color: '#e8eef5', letterSpacing: '-0.5px' },
-	planInterval: { color: '#8b949e', fontSize: 14 },
-	billedNote: { color: '#5b6675', fontSize: 12, marginTop: 4 },
+	planPrice: { fontSize: 36, fontWeight: 800, color: '#16202c', letterSpacing: '-0.5px' },
+	planInterval: { color: '#5b6675', fontSize: 14 },
+	billedNote: { color: '#8b96a5', fontSize: 12, marginTop: 4 },
 	trialBadge: {
-		display: 'inline-flex', alignItems: 'center', gap: 5, color: '#22c55e',
+		display: 'inline-flex', alignItems: 'center', gap: 5, color: '#16a34a',
 		fontSize: 12.5, fontWeight: 700, marginBottom: 7,
 	},
-	thenLabel: { color: '#8b949e', fontSize: 14 },
-	planLoading: { display: 'flex', alignItems: 'center', gap: 6, color: '#8b949e', fontSize: 15, fontWeight: 600 },
-	divider: { height: 1, background: 'linear-gradient(90deg, transparent, #1f2a36, transparent)' },
-	featureRow: { display: 'flex', alignItems: 'flex-start', gap: 9, marginBottom: 12, fontSize: 13.5, color: '#c9d5e0', lineHeight: 1.4 },
+	thenLabel: { color: '#5b6675', fontSize: 14 },
+	planLoading: { display: 'flex', alignItems: 'center', gap: 6, color: '#5b6675', fontSize: 15, fontWeight: 600 },
+	divider: { height: 1, background: 'linear-gradient(90deg, transparent, #e2e6ec, transparent)' },
+	featureRow: { display: 'flex', alignItems: 'flex-start', gap: 9, marginBottom: 12, fontSize: 13.5, color: '#334155', lineHeight: 1.4 },
 	checkIconWrap: {
 		display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
-		width: 18, height: 18, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', color: '#22c55e',
+		width: 18, height: 18, borderRadius: '50%', background: 'rgba(22,163,74,0.1)', color: '#16a34a',
 	},
 	xIconWrap: {
 		display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
-		width: 18, height: 18, borderRadius: '50%', background: 'rgba(74,85,104,0.15)', color: '#4a5568',
+		width: 18, height: 18, borderRadius: '50%', background: 'rgba(139,150,165,0.15)', color: '#8b96a5',
 	},
 	trustRow: {
 		marginTop: 'auto', paddingTop: 24, display: 'flex', alignItems: 'center', gap: 7,
-		color: '#5b6675', fontSize: 12,
+		color: '#8b96a5', fontSize: 12,
 	},
-	footnote: { textAlign: 'center', color: '#4a5568', fontSize: 12.5, marginTop: 44, lineHeight: 1.6, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' },
+	footnote: { textAlign: 'center', color: '#8b96a5', fontSize: 12.5, marginTop: 44, lineHeight: 1.6, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' },
+	footnoteLink: { color: '#5b6675', textDecoration: 'underline' },
 
 	ctaPrimary: {
 		display: 'inline-flex', alignItems: 'center', gap: 8,
 		background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)', color: 'white',
 		border: 'none', borderRadius: 10, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
-		boxShadow: '0 4px 32px rgba(34,99,255,0.35)',
+		boxShadow: '0 4px 32px rgba(34,99,255,0.3)',
 	},
 	ctaSecondary: {
 		display: 'inline-flex', alignItems: 'center', gap: 8,
-		background: 'transparent', color: '#c9d5e0',
-		border: '1px solid #243245', borderRadius: 10, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
+		background: 'transparent', color: '#334155',
+		border: '1px solid #cbd3dd', borderRadius: 10, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
 	},
 }
