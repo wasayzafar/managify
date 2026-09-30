@@ -40,7 +40,7 @@ function PasswordField({ label, value, onChange }: { label: string; value: strin
 					type="button"
 					onClick={() => setShow(v => !v)}
 					aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-					style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#8b96a5', padding: 4, display: 'flex', cursor: 'pointer' }}
+					style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#94a3b8', padding: 4, display: 'flex', cursor: 'pointer' }}
 				>
 					{show ? <PiEyeSlashDuotone size={16} /> : <PiEyeDuotone size={16} />}
 				</button>
@@ -74,6 +74,7 @@ export default function RegisterPage() {
 	if (!isPlanKey(state.plan)) {
 		return (
 			<div style={s.page}>
+				<style>{RP_CSS}</style>
 				<nav style={s.nav}>
 					<Link to="/welcome" style={s.navBrand}>
 						<img src="./logo.png" alt="Managify" width={30} style={{ borderRadius: 7 }} />
@@ -82,11 +83,11 @@ export default function RegisterPage() {
 				</nav>
 				<div style={s.wrap}>
 					<div style={{ ...s.card, textAlign: 'center' }}>
-						<h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#16202c' }}>Pick a plan to get started</h2>
-						<p style={{ margin: '0 0 20px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.5 }}>
+						<h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#0f172a' }}>Pick a plan to get started</h2>
+						<p style={{ margin: '0 0 20px', color: '#475569', fontSize: 13.5, lineHeight: 1.5 }}>
 							Registration happens right after checkout — choose Pro or Max first and we'll bring you back here.
 						</p>
-						<Link to="/pricing" style={s.ctaPrimary}>View Plans</Link>
+						<Link to="/pricing" className="rp-cta" style={s.ctaPrimary}>View Plans</Link>
 					</div>
 				</div>
 			</div>
@@ -152,6 +153,7 @@ export default function RegisterPage() {
 
 	return (
 		<div style={s.page}>
+			<style>{RP_CSS}</style>
 			<nav style={s.nav}>
 				<Link to="/welcome" style={s.navBrand}>
 					<img src="./logo.png" alt="Managify" width={30} style={{ borderRadius: 7 }} />
@@ -161,16 +163,16 @@ export default function RegisterPage() {
 			<div style={s.wrap}>
 				<div style={s.card}>
 					<div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-						<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: 'rgba(22,163,74,0.1)', color: '#16a34a', flexShrink: 0 }}>
+						<span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, background: '#f0fdf4', color: '#16a34a', flexShrink: 0 }}>
 							<PiCheckCircleDuotone size={18} />
 						</span>
-						<h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#16202c' }}>{trial ? 'Trial started' : 'Payment received'}</h2>
+						<h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{trial ? 'Trial started' : 'Payment received'}</h2>
 					</div>
 
 					{user ? (
 						<>
-							<p style={{ margin: '0 0 16px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.6 }}>
-								Apply the <strong style={{ color: '#16202c' }}>{PLAN_NAMES[plan]}</strong> plan to your account ({user.email}).
+							<p style={{ margin: '0 0 16px', color: '#475569', fontSize: 13.5, lineHeight: 1.6 }}>
+								Apply the <strong style={{ color: '#0f172a' }}>{PLAN_NAMES[plan]}</strong> plan to your account ({user.email}).
 								{trial && <> Your {trial.replace(' free trial', '')} free trial has started — you won't be charged until it ends.</>}
 							</p>
 							{activateError && (
@@ -178,14 +180,14 @@ export default function RegisterPage() {
 									<PiWarningCircleDuotone size={15} style={{ flexShrink: 0, marginTop: 1 }} /> <span>{activateError}</span>
 								</div>
 							)}
-							<button onClick={activateForCurrentUser} disabled={activating} style={{ ...s.ctaPrimary, width: '100%', justifyContent: 'center', opacity: activating ? 0.7 : 1 }}>
+							<button onClick={activateForCurrentUser} disabled={activating} className="rp-cta" style={{ ...s.ctaPrimary, width: '100%', justifyContent: 'center', opacity: activating ? 0.7 : 1 }}>
 								{activating ? <><PiSpinnerGapBold size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> Activating…</> : `Activate ${PLAN_NAMES[plan]}`}
 							</button>
 						</>
 					) : (
 						<>
-							<p style={{ margin: '0 0 16px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.6 }}>
-								Create your login for the <strong style={{ color: '#16202c' }}>{PLAN_NAMES[plan]}</strong> plan. We'll use the email from your Paddle receipt.
+							<p style={{ margin: '0 0 16px', color: '#475569', fontSize: 13.5, lineHeight: 1.6 }}>
+								Create your login for the <strong style={{ color: '#0f172a' }}>{PLAN_NAMES[plan]}</strong> plan. We'll use the email from your Paddle receipt.
 								{trial && <> Your {trial.replace(' free trial', '')} free trial has started — you won't be charged until it ends.</>}
 							</p>
 							<form onSubmit={handleSignup}>
@@ -198,7 +200,7 @@ export default function RegisterPage() {
 										<PiWarningCircleDuotone size={15} style={{ flexShrink: 0, marginTop: 1 }} /> <span>{signupError}</span>
 									</div>
 								)}
-								<button type="submit" disabled={signupBusy} style={{ ...s.ctaPrimary, width: '100%', justifyContent: 'center', opacity: signupBusy ? 0.7 : 1 }}>
+								<button type="submit" disabled={signupBusy} className="rp-cta" style={{ ...s.ctaPrimary, width: '100%', justifyContent: 'center', opacity: signupBusy ? 0.7 : 1 }}>
 									{signupBusy ? <><PiSpinnerGapBold size={15} style={{ animation: 'spin 0.8s linear infinite' }} /> Creating account…</> : 'Create Account'}
 								</button>
 							</form>
@@ -210,8 +212,18 @@ export default function RegisterPage() {
 	)
 }
 
+const RP_CSS = `
+.rp-cta { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.rp-cta:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(34,99,255,0.3); }
+.rp-cta:active:not(:disabled) { transform: translateY(0); }
+.rp-cta:focus-visible { outline: 2px solid #2263ff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+	.rp-cta:hover:not(:disabled) { transform: none; }
+}
+`
+
 const s: Record<string, React.CSSProperties> = {
-	page: { background: '#ffffff', color: '#16202c', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', minHeight: '100vh' },
+	page: { background: '#ffffff', color: '#0f172a', fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif', minHeight: '100vh' },
 	nav: {
 		position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
 		background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)',
@@ -219,22 +231,22 @@ const s: Record<string, React.CSSProperties> = {
 		padding: '0 32px', height: 64, display: 'flex', alignItems: 'center',
 	},
 	navBrand: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-	navBrandName: { fontSize: 18, fontWeight: 700, color: '#16202c', letterSpacing: '-0.3px' },
+	navBrandName: { fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' },
 	wrap: { maxWidth: 420, margin: '0 auto', padding: '150px 20px 60px' },
 	card: {
-		background: '#ffffff', border: '1px solid #e2e6ec', borderRadius: 16,
-		padding: 28, boxShadow: '0 20px 48px rgba(15,23,42,0.08)',
+		background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12,
+		padding: 28,
 	},
-	fieldLabel: { display: 'block', fontSize: 12, fontWeight: 600, color: '#5b6675', marginBottom: 6 },
+	fieldLabel: { display: 'block', fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 },
 	input: {
-		width: '100%', boxSizing: 'border-box', background: '#f3f5f8', border: '1px solid #cbd3dd',
-		borderRadius: 8, padding: '10px 12px', color: '#16202c', fontSize: 14,
+		width: '100%', boxSizing: 'border-box', background: '#f8fafc', border: '1px solid #cbd5e1',
+		borderRadius: 8, padding: '10px 12px', color: '#0f172a', fontSize: 14,
 	},
 	errorRow: { display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 14, color: '#dc2626', fontSize: 13 },
 	ctaPrimary: {
 		display: 'inline-flex', alignItems: 'center', gap: 8,
-		background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)', color: 'white',
-		border: 'none', borderRadius: 10, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
-		boxShadow: '0 4px 32px rgba(34,99,255,0.3)', textDecoration: 'none', cursor: 'pointer',
+		background: '#2263ff', color: 'white',
+		border: 'none', borderRadius: 8, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
+		textDecoration: 'none', cursor: 'pointer',
 	},
 }

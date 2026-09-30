@@ -123,11 +123,9 @@ const Login: React.FC = () => {
 
           <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={s.leftFooter}>
             <img src="./nativeedge.png" alt="NativeEdge Studio" width={18} style={{ borderRadius: 4, verticalAlign: 'middle' }} />
-            {' '}Powered by <strong style={{ color: '#16202c' }}>NativeEdge Studio</strong>
+            {' '}Powered by <strong style={{ color: '#0f172a' }}>NativeEdge Studio</strong>
           </a>
         </div>
-        <div style={s.glow1} />
-        <div style={s.glow2} />
       </div>
 
       {/* ── Right form panel ── */}
@@ -137,7 +135,7 @@ const Login: React.FC = () => {
           {/* Mobile-only logo (hidden on desktop where left panel shows) */}
           <Link to="/welcome" className="lp-mobile-brand">
             <img src="./logo.png" alt="Managify" width={32} style={{ borderRadius: 7 }} />
-            <span style={{ fontSize: 20, fontWeight: 700, color: '#16202c', letterSpacing: '-0.3px' }}>Managify</span>
+            <span style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' }}>Managify</span>
           </Link>
 
           <div style={s.formHeader}>
@@ -281,7 +279,7 @@ const s: Record<string, React.CSSProperties> = {
   brandName: {
     fontSize: 22,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
     letterSpacing: '-0.3px',
   },
   heroText: {
@@ -294,17 +292,14 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 44,
     fontWeight: 800,
     lineHeight: 1.15,
-    color: '#16202c',
+    color: '#0f172a',
     margin: '0 0 20px 0',
     letterSpacing: '-1px',
-    background: 'linear-gradient(135deg, #16202c 30%, #2263ff 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
   },
   heroSub: {
     fontSize: 17,
     lineHeight: 1.65,
-    color: '#5b6675',
+    color: '#475569',
     margin: 0,
     maxWidth: 400,
   },
@@ -323,8 +318,8 @@ const s: Record<string, React.CSSProperties> = {
   featureIcon: {
     width: 32,
     height: 32,
-    background: 'rgba(34,99,255,0.1)',
-    border: '1px solid rgba(34,99,255,0.25)',
+    background: '#eff4ff',
+    border: '1px solid #dbe6fe',
     borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
@@ -339,33 +334,11 @@ const s: Record<string, React.CSSProperties> = {
   },
   leftFooter: {
     fontSize: 13,
-    color: '#5b6675',
+    color: '#475569',
     textDecoration: 'none',
     display: 'flex',
     alignItems: 'center',
     gap: 7,
-  },
-  glow1: {
-    position: 'absolute',
-    width: 500,
-    height: 500,
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(34,99,255,0.1) 0%, transparent 70%)',
-    top: -100,
-    right: -150,
-    pointerEvents: 'none',
-    zIndex: 1,
-  },
-  glow2: {
-    position: 'absolute',
-    width: 400,
-    height: 400,
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(34,99,255,0.06) 0%, transparent 70%)',
-    bottom: 0,
-    left: -100,
-    pointerEvents: 'none',
-    zIndex: 1,
   },
   formHeader: {
     marginBottom: 32,
@@ -373,13 +346,13 @@ const s: Record<string, React.CSSProperties> = {
   formTitle: {
     fontSize: 28,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
     margin: '0 0 6px 0',
     letterSpacing: '-0.5px',
   },
   formSub: {
     fontSize: 15,
-    color: '#5b6675',
+    color: '#475569',
     margin: 0,
   },
   errorBox: {
@@ -438,7 +411,7 @@ const s: Record<string, React.CSSProperties> = {
     padding: 0,
     minHeight: 40,
     minWidth: 40,
-    color: '#8b96a5',
+    color: '#94a3b8',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -452,7 +425,7 @@ const s: Record<string, React.CSSProperties> = {
   label: {
     fontSize: 13,
     fontWeight: 600,
-    color: '#5b6675',
+    color: '#475569',
     letterSpacing: '0.2px',
   },
   inputWrap: {
@@ -463,36 +436,36 @@ const s: Record<string, React.CSSProperties> = {
     left: 13,
     top: '50%',
     transform: 'translateY(-50%)',
-    color: '#8b96a5',
+    color: '#94a3b8',
     display: 'flex',
     alignItems: 'center',
     pointerEvents: 'none',
   },
   input: {
     width: '100%',
-    background: '#f3f5f8',
-    border: '1px solid #cbd3dd',
-    borderRadius: 10,
-    color: '#16202c',
+    background: '#f8fafc',
+    border: '1px solid #cbd5e1',
+    borderRadius: 8,
+    color: '#0f172a',
     fontSize: 15,
     padding: '12px 14px 12px 42px',
     outline: 'none',
     boxSizing: 'border-box',
-    transition: 'border-color 0.2s',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   },
   submitBtn: {
     width: '100%',
-    background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)',
+    background: '#2263ff',
     color: 'white',
     border: 'none',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: '14px',
     fontSize: 15,
     fontWeight: 600,
     cursor: 'pointer',
     marginTop: 4,
-    transition: 'opacity 0.2s',
-    boxShadow: '0 4px 24px rgba(34,99,255,0.3)',
+    transition: 'opacity 0.15s ease, box-shadow 0.15s ease',
+    boxShadow: '0 1px 2px rgba(15,23,42,0.08)',
   },
   btnInner: {
     display: 'flex',
@@ -518,7 +491,7 @@ const s: Record<string, React.CSSProperties> = {
   registerLink: {
     textAlign: 'center' as const,
     fontSize: 14,
-    color: '#5b6675',
+    color: '#475569',
     marginTop: 24,
     marginBottom: 0,
   },

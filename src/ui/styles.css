@@ -372,8 +372,8 @@ button.secondary { background: var(--secondary-btn-bg); color: var(--secondary-b
 .lp-left {
     position: relative;
     flex: 0 0 52%;
-    background: linear-gradient(135deg, #eef3fb 0%, #e6edfb 60%, #dde8fb 100%);
-    border-right: 1px solid #e2e6ec;
+    background: #f8fafc;
+    border-right: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -404,8 +404,12 @@ button.secondary { background: var(--secondary-btn-bg); color: var(--secondary-b
     position: absolute;
     bottom: 24px;
     font-size: 12px;
-    color: #8b96a5;
+    color: #475569;
     margin: 0;
+}
+.lp-input:focus {
+    border-color: #2263ff !important;
+    box-shadow: 0 0 0 3px rgba(34,99,255,0.12);
 }
 
 @media (max-width: 768px) {
@@ -427,6 +431,34 @@ button.secondary { background: var(--secondary-btn-bg); color: var(--secondary-b
 }
 @media (max-width: 400px) {
     .lp-right { padding: 36px 20px 32px; }
+}
+
+/* Public marketing pages — shared hover/focus states for cards, nav links, and CTA buttons */
+.pub-card { transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; }
+.pub-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(15,23,42,0.06); transform: translateY(-2px); }
+
+.pub-nav-link { transition: color 0.15s ease; }
+.pub-nav-link:hover { color: #0f172a; }
+
+.pub-nav-login { transition: background 0.15s ease, border-color 0.15s ease; }
+.pub-nav-login:hover { background: #e2e8f0; border-color: #cbd5e1; }
+
+.pub-cta-primary { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.pub-cta-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(34,99,255,0.25); }
+.pub-cta-primary:active { transform: translateY(0); }
+
+.pub-cta-secondary { transition: background 0.15s ease, border-color 0.15s ease; }
+.pub-cta-secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+.pub-nav-link:focus-visible, .pub-nav-login:focus-visible,
+.pub-cta-primary:focus-visible, .pub-cta-secondary:focus-visible {
+    outline: 2px solid #2263ff;
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pub-card, .pub-cta-primary, .pub-cta-secondary { transition: none; }
+    .pub-card:hover, .pub-cta-primary:hover { transform: none; }
 }
 
 /* Nav — hide feature text-links on small screens, tighten padding */

@@ -53,17 +53,15 @@ export default function FounderPage() {
               <img src="./logo.png" alt="Managify" width={28} style={{ borderRadius: 6 }} />
               <span style={s.navBrandName}>Managify</span>
             </Link>
-            <Link to="/contact" style={s.navContact}>Get in Touch</Link>
+            <Link to="/contact" className="pub-nav-login" style={s.navContact}>Get in Touch</Link>
           </div>
         </nav>
 
         {/* Hero */}
         <section style={s.hero}>
-          <div style={s.heroBg} />
           <div style={s.heroInner} className="pub-founder-hero-inner">
             <div style={s.photoWrap}>
               <img src="./me.jpg" alt="Wasay Zafar" style={s.photo} />
-              <div style={s.photoGlow} />
             </div>
 
             <div style={s.heroText}>
@@ -74,19 +72,19 @@ export default function FounderPage() {
               </p>
 
               <div style={s.socialRow} className="pub-social-row">
-                <a href="https://www.linkedin.com/in/wasay-zafar-50ba48213/" target="_blank" rel="noopener noreferrer" style={s.socialBtn}>
+                <a href="https://www.linkedin.com/in/wasay-zafar-50ba48213/" target="_blank" rel="noopener noreferrer" className="pub-card" style={s.socialBtn}>
                   <FiLinkedin size={16} />
                   LinkedIn
                 </a>
-                <a href="https://github.com/wasayzafar" target="_blank" rel="noopener noreferrer" style={s.socialBtn}>
+                <a href="https://github.com/wasayzafar" target="_blank" rel="noopener noreferrer" className="pub-card" style={s.socialBtn}>
                   <FiGithub size={16} />
                   GitHub
                 </a>
-                <a href="https://x.com/wasaygfx" target="_blank" rel="noopener noreferrer" style={s.socialBtn}>
+                <a href="https://x.com/wasaygfx" target="_blank" rel="noopener noreferrer" className="pub-card" style={s.socialBtn}>
                   <FiTwitter size={16} />
                   X / Twitter
                 </a>
-                <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={{ ...s.socialBtn, ...s.socialBtnPrimary }}>
+                <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" className="pub-card" style={{ ...s.socialBtn, ...s.socialBtnPrimary }}>
                   <FiGlobe size={16} />
                   NativeEdge Studio
                 </a>
@@ -139,7 +137,7 @@ export default function FounderPage() {
         </section>
 
         {/* Projects */}
-        <section style={{ ...s.section, background: '#f3f5f8' }}>
+        <section style={{ ...s.section, background: '#f8fafc' }}>
           <div style={s.inner} className="pub-section-inner">
             <h2 style={s.sectionTitle}>Projects</h2>
             <div style={s.projectGrid} className="pub-project-grid">
@@ -150,6 +148,7 @@ export default function FounderPage() {
                   target={p.external ? '_blank' : undefined}
                   rel={p.external ? 'noopener noreferrer' : undefined}
                   onClick={!p.external ? () => window.location.href = p.url : undefined}
+                  className="pub-card"
                   style={s.projectCard}
                 >
                   <div style={s.projectIcon}>{p.icon}</div>
@@ -164,11 +163,10 @@ export default function FounderPage() {
 
         {/* CTA */}
         <section style={s.cta}>
-          <div style={s.ctaGlow} />
           <div style={s.ctaInner}>
             <h2 style={s.ctaTitle}>Let's build something together</h2>
             <p style={s.ctaSub}>Have a project in mind? Reach out and let's discuss how I can help.</p>
-            <Link to="/contact" style={s.ctaBtn}>Get in Touch</Link>
+            <Link to="/contact" className="pub-cta-primary" style={s.ctaBtn}>Get in Touch</Link>
           </div>
         </section>
 
@@ -187,7 +185,7 @@ export default function FounderPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     background: '#ffffff',
-    color: '#16202c',
+    color: '#0f172a',
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
   },
@@ -202,19 +200,14 @@ const s: Record<string, React.CSSProperties> = {
     height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
   navBrand: { display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' },
-  navBrandName: { fontSize: 16, fontWeight: 700, color: '#16202c' },
+  navBrandName: { fontSize: 16, fontWeight: 700, color: '#0f172a' },
   navContact: {
-    fontSize: 13, fontWeight: 600, color: '#16202c', textDecoration: 'none',
-    background: '#eef1f5', border: '1px solid #cbd3dd', borderRadius: 7, padding: '6px 16px',
+    fontSize: 13, fontWeight: 600, color: '#0f172a', textDecoration: 'none',
+    background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 7, padding: '6px 16px',
   },
 
   hero: {
-    position: 'relative', paddingTop: 120, paddingBottom: 72, overflow: 'hidden',
-  },
-  heroBg: {
-    position: 'absolute', inset: 0,
-    background: 'radial-gradient(ellipse 900px 500px at 50% 0%, rgba(34,99,255,0.07) 0%, transparent 70%)',
-    pointerEvents: 'none',
+    position: 'relative', paddingTop: 120, paddingBottom: 72,
   },
   heroInner: {
     position: 'relative', zIndex: 1,
@@ -225,14 +218,7 @@ const s: Record<string, React.CSSProperties> = {
   photoWrap: { position: 'relative', flexShrink: 0 },
   photo: {
     width: 180, height: 180, borderRadius: '50%',
-    objectFit: 'cover', border: '3px solid #eef1f5',
-    position: 'relative', zIndex: 1,
-    boxShadow: '0 0 0 6px rgba(34,99,255,0.08)',
-  },
-  photoGlow: {
-    position: 'absolute', inset: -20, borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(34,99,255,0.14) 0%, transparent 70%)',
-    pointerEvents: 'none',
+    objectFit: 'cover', border: '3px solid #f1f5f9',
   },
 
   heroText: { flex: 1, minWidth: 280 },
@@ -242,20 +228,20 @@ const s: Record<string, React.CSSProperties> = {
   },
   name: {
     fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 800,
-    letterSpacing: '-2px', color: '#16202c', margin: '0 0 16px 0',
+    letterSpacing: '-2px', color: '#0f172a', margin: '0 0 16px 0',
   },
   tagline: {
-    fontSize: 17, lineHeight: 1.7, color: '#5b6675', margin: '0 0 32px 0', maxWidth: 500,
+    fontSize: 17, lineHeight: 1.7, color: '#475569', margin: '0 0 32px 0', maxWidth: 500,
   },
   socialRow: { display: 'flex', gap: 10, flexWrap: 'wrap' as const },
   socialBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 7,
-    background: '#ffffff', border: '1px solid #e2e6ec',
+    background: '#ffffff', border: '1px solid #e2e8f0',
     borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600,
     color: '#334155', textDecoration: 'none',
   },
   socialBtnPrimary: {
-    background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.25)', color: '#2263ff',
+    background: '#eff4ff', border: '1px solid #dbe6fe', color: '#2263ff',
   },
 
   section: { padding: '72px 0' },
@@ -263,78 +249,73 @@ const s: Record<string, React.CSSProperties> = {
   twoCol: {
   },
   sectionTitle: {
-    fontSize: 20, fontWeight: 700, color: '#16202c',
+    fontSize: 20, fontWeight: 700, color: '#0f172a',
     margin: '0 0 20px 0', letterSpacing: '-0.5px',
   },
 
   bioCard: {
-    background: '#ffffff', border: '1px solid #e2e6ec',
-    borderRadius: 14, padding: '28px 24px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+    background: '#ffffff', border: '1px solid #e2e8f0',
+    borderRadius: 12, padding: '28px 24px',
   },
-  bioPara: { fontSize: 15, lineHeight: 1.75, color: '#5b6675', margin: '0 0 16px 0' },
+  bioPara: { fontSize: 15, lineHeight: 1.75, color: '#475569', margin: '0 0 16px 0' },
   inlineLink: { color: '#2263ff', textDecoration: 'none', fontWeight: 600 },
 
   skillsCard: {
-    background: '#ffffff', border: '1px solid #e2e6ec',
-    borderRadius: 14, padding: '24px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+    background: '#ffffff', border: '1px solid #e2e8f0',
+    borderRadius: 12, padding: '24px',
   },
   skillGrid: { display: 'flex', flexWrap: 'wrap' as const, gap: 8 },
   skillPill: {
     display: 'inline-flex', alignItems: 'center', gap: 6,
-    background: '#f3f5f8', border: '1px solid #e2e6ec',
+    background: '#f8fafc', border: '1px solid #e2e8f0',
     borderRadius: 99, padding: '5px 12px',
-    fontSize: 12, fontWeight: 600, color: '#5b6675',
+    fontSize: 12, fontWeight: 600, color: '#475569',
   },
 
   projectGrid: { marginTop: 8 },
   projectCard: {
     display: 'block', textDecoration: 'none',
-    background: '#ffffff', border: '1px solid #e2e6ec',
-    borderRadius: 14, padding: '28px 24px', cursor: 'pointer',
+    background: '#ffffff', border: '1px solid #e2e8f0',
+    borderRadius: 12, padding: '28px 24px', cursor: 'pointer',
   },
   projectIcon: {
     width: 42, height: 42, borderRadius: 10,
-    background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.18)',
+    background: '#eff4ff', border: '1px solid #dbe6fe',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#2263ff', marginBottom: 16,
   },
-  projectName: { fontSize: 17, fontWeight: 700, color: '#16202c', margin: '0 0 10px 0' },
-  projectDesc: { fontSize: 14, color: '#5b6675', lineHeight: 1.65, margin: '0 0 16px 0' },
+  projectName: { fontSize: 17, fontWeight: 700, color: '#0f172a', margin: '0 0 10px 0' },
+  projectDesc: { fontSize: 14, color: '#475569', lineHeight: 1.65, margin: '0 0 16px 0' },
   projectLink: { fontSize: 13, color: '#2263ff', fontWeight: 600 },
 
   cta: {
-    position: 'relative', overflow: 'hidden',
-    background: '#f3f5f8', borderTop: '1px solid #e2e6ec',
+    position: 'relative',
+    background: '#f8fafc', borderTop: '1px solid #e2e8f0',
     padding: '80px 32px', textAlign: 'center',
-  },
-  ctaGlow: {
-    position: 'absolute', inset: 0,
-    background: 'radial-gradient(ellipse 700px 300px at 50% 50%, rgba(34,99,255,0.08) 0%, transparent 70%)',
-    pointerEvents: 'none',
   },
   ctaInner: {
     position: 'relative', zIndex: 1, maxWidth: 520, margin: '0 auto',
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
   },
   ctaTitle: {
-    fontSize: 32, fontWeight: 800, color: '#16202c',
+    fontSize: 32, fontWeight: 800, color: '#0f172a',
     margin: 0, letterSpacing: '-1px',
   },
-  ctaSub: { fontSize: 16, color: '#5b6675', margin: 0, lineHeight: 1.6 },
+  ctaSub: { fontSize: 16, color: '#475569', margin: 0, lineHeight: 1.6 },
   ctaBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 8,
-    background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)',
-    color: 'white', textDecoration: 'none', borderRadius: 10,
+    background: '#2263ff',
+    color: 'white', textDecoration: 'none', borderRadius: 8,
     padding: '12px 28px', fontSize: 15, fontWeight: 600,
-    boxShadow: '0 4px 24px rgba(34,99,255,0.3)', marginTop: 4,
+    marginTop: 4,
   },
 
   footer: {
-    background: '#ffffff', borderTop: '1px solid #e2e6ec', padding: '24px 32px',
+    background: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '24px 32px',
   },
   footerInner: {
     maxWidth: 1000, margin: '0 auto',
     display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' as const, gap: 8,
   },
-  footerText: { fontSize: 13, color: '#8b96a5' },
+  footerText: { fontSize: 13, color: '#475569' },
 }

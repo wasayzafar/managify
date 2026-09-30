@@ -147,7 +147,6 @@ export default function PricingPage() {
 
 			{/* ── HERO ── */}
 			<section style={s.hero}>
-				<div style={s.heroBg} />
 				<div style={s.heroContent}>
 					<div style={s.badge}>
 						<PiSparkleDuotone size={13} />
@@ -229,9 +228,9 @@ export default function PricingPage() {
 										</li>
 									))}
 									{plan.excluded.map(f => (
-										<li key={f} style={{ ...s.featureRow, color: '#8b96a5' }}>
+										<li key={f} style={{ ...s.featureRow, color: '#94a3b8' }}>
 											<span style={s.xIconWrap}><PiXCircleDuotone size={14} /></span>
-											<span style={{ textDecoration: 'line-through', textDecorationColor: '#cbd3dd' }}>{f}</span>
+											<span style={{ textDecoration: 'line-through', textDecorationColor: '#cbd5e1' }}>{f}</span>
 										</li>
 									))}
 								</ul>
@@ -263,12 +262,11 @@ const CSS = `
 @keyframes pp-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 
 .pp-card {
-	animation: pp-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+	animation: pp-rise 0.4s ease both;
 }
 .pp-card:hover {
-	transform: translateY(-4px);
-	border-color: #cbd3dd;
-	box-shadow: 0 28px 60px rgba(15,23,42,0.14);
+	border-color: #cbd5e1;
+	box-shadow: 0 4px 12px rgba(15,23,42,0.06);
 }
 .pp-card.pp-card-featured:hover {
 	border-color: #2263ff;
@@ -279,14 +277,14 @@ const CSS = `
 }
 .pp-cta-primary:hover:not(:disabled) {
 	transform: translateY(-1px);
-	box-shadow: 0 6px 40px rgba(34,99,255,0.45);
+	box-shadow: 0 4px 12px rgba(34,99,255,0.3);
 }
 .pp-cta-primary:active:not(:disabled) { transform: translateY(0); }
 .pp-cta-secondary:hover:not(:disabled) {
-	background: #f3f5f8;
-	border-color: #cbd3dd;
+	background: #f8fafc;
+	border-color: #cbd5e1;
 }
-.pp-nav-login:hover { background: #e8ecf2; border-color: #cbd3dd; }
+.pp-nav-login:hover { background: #e2e8f0; border-color: #cbd5e1; }
 
 .pp-cta-primary:focus-visible, .pp-cta-secondary:focus-visible, .pp-nav-login:focus-visible {
 	outline: 2px solid #2263ff;
@@ -295,7 +293,6 @@ const CSS = `
 
 @media (prefers-reduced-motion: reduce) {
 	.pp-card { animation: none; }
-	.pp-card:hover { transform: none; }
 	.pp-cta-primary:hover:not(:disabled), .pp-cta-secondary:hover:not(:disabled) { transform: none; }
 }
 `
@@ -303,7 +300,7 @@ const CSS = `
 const s: Record<string, React.CSSProperties> = {
 	page: {
 		background: '#ffffff',
-		color: '#16202c',
+		color: '#0f172a',
 		fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
 		minHeight: '100vh',
 	},
@@ -317,101 +314,94 @@ const s: Record<string, React.CSSProperties> = {
 		display: 'flex', alignItems: 'center', justifyContent: 'space-between',
 	},
 	navBrand: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-	navBrandName: { fontSize: 18, fontWeight: 700, color: '#16202c', letterSpacing: '-0.3px' },
+	navBrandName: { fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' },
 	navLogin: {
-		fontSize: 14, fontWeight: 600, color: '#16202c', textDecoration: 'none',
-		background: '#eef1f5', border: '1px solid #cbd3dd', borderRadius: 8, padding: '7px 18px',
+		fontSize: 14, fontWeight: 600, color: '#0f172a', textDecoration: 'none',
+		background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '7px 18px',
 	},
-	hero: { position: 'relative', paddingTop: 150, paddingBottom: 56, overflow: 'hidden' },
-	heroBg: {
-		position: 'absolute', inset: 0,
-		background: 'radial-gradient(ellipse 800px 500px at 50% 0%, rgba(34,99,255,0.08) 0%, transparent 70%)',
-		pointerEvents: 'none',
-	},
+	hero: { position: 'relative', paddingTop: 150, paddingBottom: 56 },
 	heroContent: {
 		maxWidth: 700, margin: '0 auto', padding: '0 32px',
 		display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative',
 	},
 	badge: {
 		display: 'inline-flex', alignItems: 'center', gap: 7,
-		background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.25)',
+		background: '#eff4ff', border: '1px solid #dbe6fe',
 		borderRadius: 99, padding: '5px 14px', fontSize: 12, fontWeight: 600,
 		color: '#2263ff', letterSpacing: '0.5px', marginBottom: 24, textTransform: 'uppercase',
 	},
 	heroH1: {
 		fontSize: 'clamp(32px, 5vw, 52px)', fontWeight: 800, lineHeight: 1.15,
-		letterSpacing: '-1.5px', color: '#16202c', margin: '0 0 18px 0',
+		letterSpacing: '-1.5px', color: '#0f172a', margin: '0 0 18px 0',
 	},
 	heroAccent: {
-		background: 'linear-gradient(90deg, #2263ff, #1a4fd4)',
-		WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+		color: '#2263ff',
 	},
-	heroSub: { fontSize: 16, lineHeight: 1.7, color: '#5b6675', maxWidth: 520, margin: 0 },
+	heroSub: { fontSize: 16, lineHeight: 1.7, color: '#475569', maxWidth: 520, margin: 0 },
 
 	plansSection: { maxWidth: 980, margin: '0 auto', padding: '0 32px 100px', position: 'relative' },
 	checkoutErrorBanner: {
-		maxWidth: 700, margin: '0 auto 28px', padding: '12px 16px', borderRadius: 10,
-		background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)',
+		maxWidth: 700, margin: '0 auto 28px', padding: '12px 16px', borderRadius: 8,
+		background: '#fef2f2', border: '1px solid #fecaca',
 		color: '#dc2626', fontSize: 13.5, lineHeight: 1.5, textAlign: 'center',
 	},
 	plansGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, alignItems: 'stretch' },
 	planCard: {
 		position: 'relative', display: 'flex', flexDirection: 'column',
 		background: '#ffffff',
-		border: '1px solid #e2e6ec', borderRadius: 18,
-		padding: 32, boxShadow: '0 20px 48px rgba(15,23,42,0.08)',
+		border: '1px solid #e2e8f0', borderRadius: 12,
+		padding: 32,
 	},
-	planCardFeatured: { border: '1px solid #aec3f7' },
+	planCardFeatured: { border: '1px solid #2263ff' },
 	popularBadge: {
 		position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
 		display: 'inline-flex', alignItems: 'center', gap: 5,
-		background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)', color: '#fff',
+		background: '#2263ff', color: '#fff',
 		fontSize: 11, fontWeight: 700, padding: '5px 14px', borderRadius: 999, letterSpacing: '0.4px',
-		boxShadow: '0 4px 20px rgba(34,99,255,0.35)', whiteSpace: 'nowrap',
+		whiteSpace: 'nowrap',
 	},
 	planIconWrap: {
 		display: 'flex', alignItems: 'center', justifyContent: 'center',
-		width: 34, height: 34, borderRadius: 9, color: '#2263ff',
-		background: 'rgba(34,99,255,0.08)', flexShrink: 0,
+		width: 34, height: 34, borderRadius: 8, color: '#2263ff',
+		background: '#eff4ff', flexShrink: 0,
 	},
-	planName: { margin: 0, fontSize: 21, fontWeight: 700, color: '#16202c', letterSpacing: '-0.2px' },
-	planTagline: { margin: '0 0 24px', color: '#5b6675', fontSize: 13.5, lineHeight: 1.55, minHeight: 40 },
+	planName: { margin: 0, fontSize: 21, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.2px' },
+	planTagline: { margin: '0 0 24px', color: '#475569', fontSize: 13.5, lineHeight: 1.55, minHeight: 40 },
 	priceBlock: { marginBottom: 24, minHeight: 78 },
-	planPrice: { fontSize: 36, fontWeight: 800, color: '#16202c', letterSpacing: '-0.5px' },
-	planInterval: { color: '#5b6675', fontSize: 14 },
-	billedNote: { color: '#8b96a5', fontSize: 12, marginTop: 4 },
+	planPrice: { fontSize: 36, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px' },
+	planInterval: { color: '#475569', fontSize: 14 },
+	billedNote: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
 	trialBadge: {
 		display: 'inline-flex', alignItems: 'center', gap: 5, color: '#16a34a',
 		fontSize: 12.5, fontWeight: 700, marginBottom: 7,
 	},
-	thenLabel: { color: '#5b6675', fontSize: 14 },
-	planLoading: { display: 'flex', alignItems: 'center', gap: 6, color: '#5b6675', fontSize: 15, fontWeight: 600 },
-	divider: { height: 1, background: 'linear-gradient(90deg, transparent, #e2e6ec, transparent)' },
+	thenLabel: { color: '#475569', fontSize: 14 },
+	planLoading: { display: 'flex', alignItems: 'center', gap: 6, color: '#475569', fontSize: 15, fontWeight: 600 },
+	divider: { height: 1, background: '#e2e8f0' },
 	featureRow: { display: 'flex', alignItems: 'flex-start', gap: 9, marginBottom: 12, fontSize: 13.5, color: '#334155', lineHeight: 1.4 },
 	checkIconWrap: {
 		display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
-		width: 18, height: 18, borderRadius: '50%', background: 'rgba(22,163,74,0.1)', color: '#16a34a',
+		width: 18, height: 18, borderRadius: '50%', background: '#f0fdf4', color: '#16a34a',
 	},
 	xIconWrap: {
 		display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
-		width: 18, height: 18, borderRadius: '50%', background: 'rgba(139,150,165,0.15)', color: '#8b96a5',
+		width: 18, height: 18, borderRadius: '50%', background: '#f1f5f9', color: '#94a3b8',
 	},
 	trustRow: {
 		marginTop: 'auto', paddingTop: 24, display: 'flex', alignItems: 'center', gap: 7,
-		color: '#8b96a5', fontSize: 12,
+		color: '#94a3b8', fontSize: 12,
 	},
-	footnote: { textAlign: 'center', color: '#8b96a5', fontSize: 12.5, marginTop: 44, lineHeight: 1.6, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' },
-	footnoteLink: { color: '#5b6675', textDecoration: 'underline' },
+	footnote: { textAlign: 'center', color: '#94a3b8', fontSize: 12.5, marginTop: 44, lineHeight: 1.6, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' },
+	footnoteLink: { color: '#475569', textDecoration: 'underline' },
 
 	ctaPrimary: {
 		display: 'inline-flex', alignItems: 'center', gap: 8,
-		background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)', color: 'white',
-		border: 'none', borderRadius: 10, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
-		boxShadow: '0 4px 32px rgba(34,99,255,0.3)',
+		background: '#2263ff', color: 'white',
+		border: 'none', borderRadius: 8, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
 	},
 	ctaSecondary: {
 		display: 'inline-flex', alignItems: 'center', gap: 8,
 		background: 'transparent', color: '#334155',
-		border: '1px solid #cbd3dd', borderRadius: 10, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
+		border: '1px solid #cbd5e1', borderRadius: 8, padding: '13px 20px', fontSize: 14.5, fontWeight: 700,
 	},
 }

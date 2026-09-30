@@ -5,7 +5,7 @@ import {
   FiDollarSign, FiUsers, FiCreditCard, FiShoppingCart,
   FiCheckCircle, FiArrowRight, FiZap, FiShield, FiGlobe,
   FiPieChart, FiLayers, FiActivity, FiSmartphone, FiTool,
-  FiGrid, FiBox, FiMail, FiMessageSquare, FiSettings
+  FiGrid, FiBox, FiMail, FiMessageSquare, FiSettings, FiShoppingBag
 } from 'react-icons/fi'
 
 // ── Animated counter ──────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ const industries = [
     color: '#3b82f6',
   },
   {
-    icon: '👔',
+    icon: <FiShoppingBag size={24} />,
     name: 'Garment & Apparel',
     desc: 'Manage clothing stock by size and variant, track seasonal inventory, and generate vendor purchase orders.',
     tags: ['Variants', 'Seasonal Stock', 'PO Management'],
@@ -182,21 +182,20 @@ export default function LandingPage() {
           </Link>
           <div style={s.navLinks}>
             <div className="pub-nav-feature-links">
-              <a href="#features" style={s.navLink}>Features</a>
-              <a href="#industries" style={s.navLink}>Industries</a>
-              <a href="#custom" style={s.navLink}>Custom Solutions</a>
-              <a href="#why" style={s.navLink}>Why Managify</a>
-              <Link to="/pricing" style={s.navLink}>Pricing</Link>
-              <Link to="/contact" style={s.navLink}>Contact</Link>
+              <a href="#features" className="pub-nav-link" style={s.navLink}>Features</a>
+              <a href="#industries" className="pub-nav-link" style={s.navLink}>Industries</a>
+              <a href="#custom" className="pub-nav-link" style={s.navLink}>Custom Solutions</a>
+              <a href="#why" className="pub-nav-link" style={s.navLink}>Why Managify</a>
+              <Link to="/pricing" className="pub-nav-link" style={s.navLink}>Pricing</Link>
+              <Link to="/contact" className="pub-nav-link" style={s.navLink}>Contact</Link>
             </div>
-            <Link to="/login" style={s.navLogin}>Sign In</Link>
+            <Link to="/login" className="pub-nav-login" style={s.navLogin}>Sign In</Link>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ── */}
       <section style={s.hero}>
-        <div style={s.heroBg} />
         <div style={s.heroContent} className="pub-hero-content">
           <div style={s.badge}>
             <FiZap size={12} />
@@ -211,11 +210,11 @@ export default function LandingPage() {
             fast, browser-based system built for store owners who mean business.
           </p>
           <div style={s.heroCtas}>
-            <Link to="/pricing" style={s.ctaPrimary}>
+            <Link to="/pricing" className="pub-cta-primary" style={s.ctaPrimary}>
               Get Started
               <FiArrowRight size={16} />
             </Link>
-            <a href="#features" style={s.ctaSecondary}>
+            <a href="#features" className="pub-cta-secondary" style={s.ctaSecondary}>
               Explore Features
             </a>
           </div>
@@ -270,7 +269,7 @@ export default function LandingPage() {
           </div>
           <div style={s.featureGrid} className="pub-feature-grid">
             {features.map(f => (
-              <div key={f.title} style={s.featureCard}>
+              <div key={f.title} className="pub-card" style={s.featureCard}>
                 <div style={s.featureIconWrap}>{f.icon}</div>
                 <h3 style={s.featureTitle}>{f.title}</h3>
                 <p style={s.featureDesc}>{f.desc}</p>
@@ -281,7 +280,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── INDUSTRIES ── */}
-      <section id="industries" style={{ ...s.section, background: '#f3f5f8' }} className="pub-section">
+      <section id="industries" style={{ ...s.section, background: '#f8fafc' }} className="pub-section">
         <div style={s.sectionInner} className="pub-section-inner">
           <div style={s.sectionHead}>
             <p style={s.sectionEyebrow}>Who we serve</p>
@@ -292,11 +291,9 @@ export default function LandingPage() {
           </div>
           <div style={s.industryGrid} className="pub-industry-grid">
             {industries.map(ind => (
-              <div key={ind.name} style={s.industryCard}>
+              <div key={ind.name} className="pub-card" style={s.industryCard}>
                 <div style={{ ...s.industryIcon, color: ind.color, background: `${ind.color}20`, border: `1px solid ${ind.color}35` }}>
-                  {typeof ind.icon === 'string'
-                    ? <span style={{ fontSize: 22 }}>{ind.icon}</span>
-                    : ind.icon}
+                  {ind.icon}
                 </div>
                 <h3 style={s.industryName}>{ind.name}</h3>
                 <p style={s.industryDesc}>{ind.desc}</p>
@@ -327,23 +324,23 @@ export default function LandingPage() {
                 our team builds exactly what you need — custom modules, reports, integrations, and branding.
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
-                <a href="mailto:nativeedge.studio@gmail.com" style={s.ctaPrimary}>
+                <a href="mailto:nativeedge.studio@gmail.com" className="pub-cta-primary" style={s.ctaPrimary}>
                   <FiMail size={15} />
                   Email Us
                 </a>
-                <a href="https://wa.me/923134805858" target="_blank" rel="noopener noreferrer" style={s.ctaSecondary}>
+                <a href="https://wa.me/923134805858" target="_blank" rel="noopener noreferrer" className="pub-cta-secondary" style={s.ctaSecondary}>
                   <FiMessageSquare size={15} />
                   WhatsApp
                 </a>
               </div>
-              <p style={{ marginTop: 20, fontSize: 13, color: '#8b96a5' }}>
+              <p style={{ marginTop: 20, fontSize: 13, color: '#475569' }}>
                 Usually respond within 24 hours · Free consultation
               </p>
             </div>
             {/* Right grid */}
             <div style={{ flex: '1 1 380px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }} className="pub-custom-grid">
               {customItems.map(item => (
-                <div key={item.title} style={s.customCard}>
+                <div key={item.title} className="pub-card" style={s.customCard}>
                   <div style={s.customIcon}>{item.icon}</div>
                   <div style={s.customTitle}>{item.title}</div>
                   <div style={s.customDesc}>{item.desc}</div>
@@ -355,7 +352,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── WHY ── */}
-      <section id="why" style={{ ...s.section, background: '#f3f5f8' }} className="pub-section">
+      <section id="why" style={{ ...s.section, background: '#f8fafc' }} className="pub-section">
         <div style={s.sectionInner} className="pub-section-inner">
           <div style={s.sectionHead}>
             <p style={s.sectionEyebrow}>Why Managify</p>
@@ -363,7 +360,7 @@ export default function LandingPage() {
           </div>
           <div style={s.whyGrid} className="pub-why-grid">
             {whyItems.map(w => (
-              <div key={w.title} style={s.whyCard}>
+              <div key={w.title} className="pub-card" style={s.whyCard}>
                 <div style={s.whyIconWrap}>{w.icon}</div>
                 <div>
                   <div style={s.whyTitle}>{w.title}</div>
@@ -377,13 +374,12 @@ export default function LandingPage() {
 
       {/* ── CTA BANNER ── */}
       <section style={s.ctaBanner} className="pub-cta-banner">
-        <div style={s.ctaBannerGlow} />
         <div style={s.ctaBannerInner}>
           <h2 style={s.ctaBannerTitle}>Ready to take control of your store?</h2>
           <p style={s.ctaBannerSub}>
             Sign in and start managing inventory, billing, and profits from day one.
           </p>
-          <Link to="/login" style={s.ctaPrimary}>
+          <Link to="/login" className="pub-cta-primary" style={s.ctaPrimary}>
             Open Dashboard
             <FiArrowRight size={16} />
           </Link>
@@ -399,13 +395,13 @@ export default function LandingPage() {
           </div>
           <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={s.footerPowered}>
             <img src="./nativeedge.png" alt="NativeEdge Studio" width={18} style={{ borderRadius: 4, verticalAlign: 'middle' }} />
-            {' '}Powered by <strong style={{ color: '#5b6675' }}>NativeEdge Studio</strong>
+            {' '}Powered by <strong style={{ color: '#475569' }}>NativeEdge Studio</strong>
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' as const }}>
-            <Link to="/contact" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Contact</Link>
-            <Link to="/privacy" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Privacy Policy</Link>
-            <Link to="/terms" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Terms of Service</Link>
-            <Link to="/refund-policy" style={{ fontSize: 13, color: '#8b96a5', textDecoration: 'none' }}>Refund Policy</Link>
+            <Link to="/contact" className="pub-nav-link" style={{ fontSize: 13, color: '#475569', textDecoration: 'none' }}>Contact</Link>
+            <Link to="/privacy" className="pub-nav-link" style={{ fontSize: 13, color: '#475569', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link to="/terms" className="pub-nav-link" style={{ fontSize: 13, color: '#475569', textDecoration: 'none' }}>Terms of Service</Link>
+            <Link to="/refund-policy" className="pub-nav-link" style={{ fontSize: 13, color: '#475569', textDecoration: 'none' }}>Refund Policy</Link>
             <p style={s.footerCopy}>&copy; {new Date().getFullYear()} Managify. All rights reserved.</p>
           </div>
         </div>
@@ -418,7 +414,7 @@ export default function LandingPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     background: '#ffffff',
-    color: '#16202c',
+    color: '#0f172a',
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
     overflowX: 'hidden',
@@ -451,7 +447,7 @@ const s: Record<string, React.CSSProperties> = {
   navBrandName: {
     fontSize: 18,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
     letterSpacing: '-0.3px',
   },
   navLinks: {
@@ -461,18 +457,17 @@ const s: Record<string, React.CSSProperties> = {
   },
   navLink: {
     fontSize: 14,
-    color: '#5b6675',
+    color: '#475569',
     textDecoration: 'none',
     fontWeight: 500,
-    transition: 'color 0.2s',
   },
   navLogin: {
     fontSize: 14,
     fontWeight: 600,
-    color: '#16202c',
+    color: '#0f172a',
     textDecoration: 'none',
-    background: '#eef1f5',
-    border: '1px solid #cbd3dd',
+    background: '#f1f5f9',
+    border: '1px solid #cbd5e1',
     borderRadius: 8,
     padding: '7px 18px',
   },
@@ -482,16 +477,6 @@ const s: Record<string, React.CSSProperties> = {
     position: 'relative',
     paddingTop: 130,
     paddingBottom: 80,
-    overflow: 'hidden',
-  },
-  heroBg: {
-    position: 'absolute',
-    inset: 0,
-    background: `
-      radial-gradient(ellipse 800px 600px at 60% 10%, rgba(34,99,255,0.08) 0%, transparent 70%),
-      radial-gradient(ellipse 600px 400px at 10% 80%, rgba(34,99,255,0.05) 0%, transparent 70%)
-    `,
-    pointerEvents: 'none',
   },
   heroContent: {
     maxWidth: 900,
@@ -522,18 +507,16 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     lineHeight: 1.1,
     letterSpacing: '-2px',
-    color: '#16202c',
+    color: '#0f172a',
     margin: '0 0 24px 0',
   },
   heroAccent: {
-    background: 'linear-gradient(90deg, #2263ff, #1a4fd4)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    color: '#2263ff',
   },
   heroSub: {
     fontSize: 18,
     lineHeight: 1.7,
-    color: '#5b6675',
+    color: '#475569',
     maxWidth: 600,
     margin: '0 0 40px 0',
   },
@@ -548,15 +531,14 @@ const s: Record<string, React.CSSProperties> = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 8,
-    background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)',
+    background: '#2263ff',
     color: 'white',
     textDecoration: 'none',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: '13px 28px',
     fontSize: 15,
     fontWeight: 600,
-    boxShadow: '0 4px 32px rgba(34,99,255,0.3)',
-    transition: 'transform 0.15s, box-shadow 0.15s',
+    boxShadow: '0 1px 2px rgba(15,23,42,0.08)',
   },
   ctaSecondary: {
     display: 'inline-flex',
@@ -565,12 +547,11 @@ const s: Record<string, React.CSSProperties> = {
     background: 'transparent',
     color: '#334155',
     textDecoration: 'none',
-    borderRadius: 10,
+    borderRadius: 8,
     padding: '13px 28px',
     fontSize: 15,
     fontWeight: 600,
-    border: '1px solid #cbd3dd',
-    transition: 'background 0.15s, color 0.15s',
+    border: '1px solid #cbd5e1',
   },
 
   // Hero preview card
@@ -578,18 +559,18 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%',
     maxWidth: 700,
     background: '#ffffff',
-    border: '1px solid #e2e6ec',
-    borderRadius: 16,
+    border: '1px solid #e2e8f0',
+    borderRadius: 12,
     overflow: 'hidden',
-    boxShadow: '0 32px 64px rgba(15,23,42,0.12)',
+    boxShadow: '0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)',
   },
   heroCardHeader: {
     display: 'flex',
     alignItems: 'center',
     gap: 7,
     padding: '12px 16px',
-    background: '#f3f5f8',
-    borderBottom: '1px solid #e2e6ec',
+    background: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0',
   },
   heroCardDot: {
     width: 10,
@@ -599,7 +580,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroCardTitle: {
     fontSize: 12,
-    color: '#8b96a5',
+    color: '#475569',
     marginLeft: 6,
     fontWeight: 500,
   },
@@ -608,11 +589,11 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroStatCard: {
     padding: '20px 18px',
-    borderRight: '1px solid #e2e6ec',
+    borderRight: '1px solid #e2e8f0',
   },
   heroStatLabel: {
     fontSize: 11,
-    color: '#8b96a5',
+    color: '#475569',
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
@@ -631,14 +612,14 @@ const s: Record<string, React.CSSProperties> = {
 
   // Stats strip
   statsStrip: {
-    background: '#f3f5f8',
-    borderTop: '1px solid #e2e6ec',
-    borderBottom: '1px solid #e2e6ec',
+    background: '#f8fafc',
+    borderTop: '1px solid #e2e8f0',
+    borderBottom: '1px solid #e2e8f0',
   },
   statItem: {
     padding: '36px 24px',
     textAlign: 'center',
-    borderRight: '1px solid #e2e6ec',
+    borderRight: '1px solid #e2e8f0',
   },
   statValue: {
     fontSize: 40,
@@ -649,7 +630,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   statLabel: {
     fontSize: 13,
-    color: '#5b6675',
+    color: '#475569',
     fontWeight: 500,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
@@ -679,13 +660,13 @@ const s: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: 'clamp(28px, 4vw, 42px)',
     fontWeight: 800,
-    color: '#16202c',
+    color: '#0f172a',
     margin: '0 0 16px 0',
     letterSpacing: '-1px',
   },
   sectionDesc: {
     fontSize: 17,
-    color: '#5b6675',
+    color: '#475569',
     maxWidth: 600,
     margin: '0 auto',
     lineHeight: 1.65,
@@ -696,18 +677,16 @@ const s: Record<string, React.CSSProperties> = {
   },
   featureCard: {
     background: '#ffffff',
-    border: '1px solid #e2e6ec',
-    borderRadius: 14,
+    border: '1px solid #e2e8f0',
+    borderRadius: 12,
     padding: '28px 24px',
-    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
-    transition: 'border-color 0.2s, transform 0.2s, box-shadow 0.2s',
   },
   featureIconWrap: {
-    width: 46,
-    height: 46,
-    background: 'rgba(34,99,255,0.08)',
-    border: '1px solid rgba(34,99,255,0.18)',
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    background: '#eff4ff',
+    border: '1px solid #dbe6fe',
+    borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -717,12 +696,12 @@ const s: Record<string, React.CSSProperties> = {
   featureTitle: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
     margin: '0 0 10px 0',
   },
   featureDesc: {
     fontSize: 14,
-    color: '#5b6675',
+    color: '#475569',
     lineHeight: 1.65,
     margin: 0,
   },
@@ -735,16 +714,14 @@ const s: Record<string, React.CSSProperties> = {
   },
   industryCard: {
     background: '#ffffff',
-    border: '1px solid #e2e6ec',
-    borderRadius: 16,
+    border: '1px solid #e2e8f0',
+    borderRadius: 12,
     padding: '28px 24px',
-    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
-    transition: 'border-color 0.2s, transform 0.2s, box-shadow 0.2s',
   },
   industryIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 10,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -754,12 +731,12 @@ const s: Record<string, React.CSSProperties> = {
   industryName: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
     margin: '0 0 10px',
   },
   industryDesc: {
     fontSize: 14,
-    color: '#5b6675',
+    color: '#475569',
     lineHeight: 1.65,
     margin: '0 0 16px',
   },
@@ -780,17 +757,16 @@ const s: Record<string, React.CSSProperties> = {
   // Custom solutions
   customCard: {
     background: '#ffffff',
-    border: '1px solid #e2e6ec',
-    borderRadius: 12,
+    border: '1px solid #e2e8f0',
+    borderRadius: 10,
     padding: '18px 18px',
-    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
   customIcon: {
-    width: 36,
-    height: 36,
-    background: 'rgba(34,99,255,0.08)',
-    border: '1px solid rgba(34,99,255,0.18)',
-    borderRadius: 9,
+    width: 32,
+    height: 32,
+    background: '#eff4ff',
+    border: '1px solid #dbe6fe',
+    borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -800,12 +776,12 @@ const s: Record<string, React.CSSProperties> = {
   customTitle: {
     fontSize: 14,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
     marginBottom: 6,
   },
   customDesc: {
     fontSize: 13,
-    color: '#5b6675',
+    color: '#475569',
     lineHeight: 1.55,
   },
 
@@ -817,16 +793,15 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'flex-start',
     gap: 14,
     background: '#ffffff',
-    border: '1px solid #e2e6ec',
-    borderRadius: 12,
+    border: '1px solid #e2e8f0',
+    borderRadius: 10,
     padding: '20px 20px',
-    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
   },
   whyIconWrap: {
-    width: 36,
-    height: 36,
-    background: 'rgba(34,99,255,0.08)',
-    borderRadius: 9,
+    width: 32,
+    height: 32,
+    background: '#eff4ff',
+    borderRadius: 8,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -837,30 +812,23 @@ const s: Record<string, React.CSSProperties> = {
   whyTitle: {
     fontSize: 14,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
     marginBottom: 5,
   },
   whyDesc: {
     fontSize: 13,
-    color: '#5b6675',
+    color: '#475569',
     lineHeight: 1.55,
   },
 
   // CTA banner
   ctaBanner: {
     position: 'relative',
-    overflow: 'hidden',
-    background: '#f3f5f8',
-    borderTop: '1px solid #e2e6ec',
-    borderBottom: '1px solid #e2e6ec',
+    background: '#f8fafc',
+    borderTop: '1px solid #e2e8f0',
+    borderBottom: '1px solid #e2e8f0',
     padding: '96px 32px',
     textAlign: 'center',
-  },
-  ctaBannerGlow: {
-    position: 'absolute',
-    inset: 0,
-    background: 'radial-gradient(ellipse 800px 400px at 50% 50%, rgba(34,99,255,0.1) 0%, transparent 70%)',
-    pointerEvents: 'none',
   },
   ctaBannerInner: {
     position: 'relative',
@@ -875,13 +843,13 @@ const s: Record<string, React.CSSProperties> = {
   ctaBannerTitle: {
     fontSize: 'clamp(26px, 4vw, 40px)',
     fontWeight: 800,
-    color: '#16202c',
+    color: '#0f172a',
     margin: 0,
     letterSpacing: '-1px',
   },
   ctaBannerSub: {
     fontSize: 17,
-    color: '#5b6675',
+    color: '#475569',
     margin: 0,
     lineHeight: 1.6,
   },
@@ -889,7 +857,7 @@ const s: Record<string, React.CSSProperties> = {
   // Footer
   footer: {
     background: '#ffffff',
-    borderTop: '1px solid #e2e6ec',
+    borderTop: '1px solid #e2e8f0',
     padding: '40px 32px',
   },
   footerInner: {
@@ -909,11 +877,11 @@ const s: Record<string, React.CSSProperties> = {
   footerBrandName: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#16202c',
+    color: '#0f172a',
   },
   footerPowered: {
     fontSize: 13,
-    color: '#8b96a5',
+    color: '#475569',
     margin: 0,
     textDecoration: 'none',
     display: 'flex',
@@ -922,7 +890,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   footerCopy: {
     fontSize: 13,
-    color: '#8b96a5',
+    color: '#475569',
     margin: 0,
   },
 }

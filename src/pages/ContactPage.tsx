@@ -81,15 +81,14 @@ export default function ContactPage() {
             <span style={s.navBrandName}>Managify</span>
           </Link>
           <div style={s.navLinks}>
-            <Link to="/welcome" style={s.navLink}>Home</Link>
-            <Link to="/login" style={s.navLogin}>Sign In</Link>
+            <Link to="/welcome" className="pub-nav-link" style={s.navLink}>Home</Link>
+            <Link to="/login" className="pub-nav-login" style={s.navLogin}>Sign In</Link>
           </div>
         </div>
       </nav>
 
       {/* ── HERO ── */}
       <section style={s.hero}>
-        <div style={s.heroBg} />
         <div style={s.heroContent} className="pub-hero-content">
           <p style={s.eyebrow}>Get in touch</p>
           <h1 style={s.heroTitle}>Contact NativeEdge Studio</h1>
@@ -123,7 +122,7 @@ export default function ContactPage() {
                 {contactDetails.map(d => (
                   <a key={d.label} href={d.href}
                     target={d.label === 'Address' || d.label === 'WhatsApp' ? '_blank' : undefined}
-                    rel="noopener noreferrer" style={s.contactItem}>
+                    rel="noopener noreferrer" className="pub-card" style={s.contactItem}>
                     <div style={{
                       ...s.contactIcon,
                       ...(d.label === 'WhatsApp' ? {
@@ -209,7 +208,7 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <button type="submit" disabled={status === 'sending'} className="pub-contact-submit" style={{ ...s.submitBtn, opacity: status === 'sending' ? 0.7 : 1 }}>
+                <button type="submit" disabled={status === 'sending'} className="pub-contact-submit pub-cta-primary" style={{ ...s.submitBtn, opacity: status === 'sending' ? 0.7 : 1 }}>
                   <FiSend size={15} />
                   {status === 'sending' ? 'Sending…' : 'Send Message'}
                 </button>
@@ -242,9 +241,9 @@ export default function ContactPage() {
           </div>
           <a href="https://nativeedgestudio.space" target="_blank" rel="noopener noreferrer" style={s.footerPowered}>
             <img src="./nativeedge.png" alt="NativeEdge Studio" width={16} style={{ borderRadius: 3, verticalAlign: 'middle' }} />
-            {' '}Powered by <strong style={{ color: '#5b6675' }}>NativeEdge Studio</strong>
+            {' '}Powered by <strong style={{ color: '#475569' }}>NativeEdge Studio</strong>
           </a>
-          <Link to="/founder" style={s.founderBtn}>About the Founder</Link>
+          <Link to="/founder" className="pub-nav-link" style={s.founderBtn}>About the Founder</Link>
           <p style={s.footerCopy}>&copy; {new Date().getFullYear()} Managify. All rights reserved.</p>
         </div>
       </footer>
@@ -255,7 +254,7 @@ export default function ContactPage() {
 const s: Record<string, React.CSSProperties> = {
   page: {
     background: '#ffffff',
-    color: '#16202c',
+    color: '#0f172a',
     fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
   },
@@ -273,24 +272,18 @@ const s: Record<string, React.CSSProperties> = {
     height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
   navBrand: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-  navBrandName: { fontSize: 18, fontWeight: 700, color: '#16202c', letterSpacing: '-0.3px' },
+  navBrandName: { fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' },
   navLinks: { display: 'flex', alignItems: 'center', gap: 28 },
-  navLink: { fontSize: 14, color: '#5b6675', textDecoration: 'none', fontWeight: 500 },
+  navLink: { fontSize: 14, color: '#475569', textDecoration: 'none', fontWeight: 500 },
   navLogin: {
-    fontSize: 14, fontWeight: 600, color: '#16202c', textDecoration: 'none',
-    background: '#eef1f5', border: '1px solid #cbd3dd', borderRadius: 8, padding: '7px 18px',
+    fontSize: 14, fontWeight: 600, color: '#0f172a', textDecoration: 'none',
+    background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '7px 18px',
   },
 
   hero: {
     position: 'relative',
     paddingTop: 140,
     paddingBottom: 64,
-    overflow: 'hidden',
-  },
-  heroBg: {
-    position: 'absolute', inset: 0,
-    background: 'radial-gradient(ellipse 700px 400px at 50% 0%, rgba(34,99,255,0.07) 0%, transparent 70%)',
-    pointerEvents: 'none',
   },
   heroContent: {
     position: 'relative', zIndex: 1,
@@ -303,10 +296,10 @@ const s: Record<string, React.CSSProperties> = {
   heroTitle: {
     fontSize: 'clamp(28px, 5vw, 52px)',
     fontWeight: 800, letterSpacing: '-1.5px',
-    color: '#16202c', margin: '0 0 20px 0',
+    color: '#0f172a', margin: '0 0 20px 0',
   },
   heroSub: {
-    fontSize: 17, lineHeight: 1.7, color: '#5b6675', margin: 0,
+    fontSize: 17, lineHeight: 1.7, color: '#475569', margin: 0,
   },
 
   main: { padding: '64px 0 80px' },
@@ -316,51 +309,50 @@ const s: Record<string, React.CSSProperties> = {
 
   detailsCol: {},
   detailsCard: {
-    background: '#ffffff', border: '1px solid #e2e6ec',
-    borderRadius: 16, padding: '32px 28px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+    background: '#ffffff', border: '1px solid #e2e8f0',
+    borderRadius: 12, padding: '32px 28px',
   },
   studioBrand: {
     display: 'flex', alignItems: 'center', gap: 14,
     textDecoration: 'none', marginBottom: 24,
   },
-  studioName: { fontSize: 17, fontWeight: 700, color: '#16202c', marginBottom: 3 },
+  studioName: { fontSize: 17, fontWeight: 700, color: '#0f172a', marginBottom: 3 },
   studioTagline: { fontSize: 12, color: '#2263ff' },
-  detailsIntro: { fontSize: 14, color: '#5b6675', lineHeight: 1.7, margin: '0 0 28px 0' },
+  detailsIntro: { fontSize: 14, color: '#475569', lineHeight: 1.7, margin: '0 0 28px 0' },
 
   contactList: { display: 'flex', flexDirection: 'column', gap: 6 },
   contactItem: {
     display: 'flex', alignItems: 'flex-start', gap: 16,
     textDecoration: 'none',
-    background: '#f8fafc', border: '1px solid #e2e6ec',
-    borderRadius: 12, padding: '16px 18px',
-    transition: 'border-color 0.2s',
+    background: '#f8fafc', border: '1px solid #e2e8f0',
+    borderRadius: 10, padding: '16px 18px',
   },
   contactIcon: {
-    width: 40, height: 40, borderRadius: 10,
-    background: 'rgba(34,99,255,0.08)', border: '1px solid rgba(34,99,255,0.18)',
+    width: 40, height: 40, borderRadius: 8,
+    background: '#eff4ff', border: '1px solid #dbe6fe',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#2263ff', flexShrink: 0,
   },
-  contactLabel: { fontSize: 11, fontWeight: 700, color: '#8b96a5', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 },
+  contactLabel: { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 },
   contactValue: { fontSize: 14, color: '#334155', fontWeight: 500, lineHeight: 1.5 },
 
   formCol: {},
   formCard: {
-    background: '#ffffff', border: '1px solid #e2e6ec',
-    borderRadius: 16, padding: '36px 32px', boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+    background: '#ffffff', border: '1px solid #e2e8f0',
+    borderRadius: 12, padding: '36px 32px',
   },
-  formTitle: { fontSize: 22, fontWeight: 700, color: '#16202c', margin: '0 0 6px 0', letterSpacing: '-0.5px' },
-  formSub: { fontSize: 14, color: '#5b6675', margin: '0 0 28px 0' },
+  formTitle: { fontSize: 22, fontWeight: 700, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.5px' },
+  formSub: { fontSize: 14, color: '#475569', margin: '0 0 28px 0' },
 
   successBox: {
     display: 'flex', alignItems: 'center', gap: 10,
-    background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.25)',
+    background: '#f0fdf4', border: '1px solid #bbf7d0',
     borderRadius: 8, padding: '10px 14px',
     fontSize: 13, color: '#16a34a', marginBottom: 20,
   },
   errorBox: {
     display: 'flex', alignItems: 'center', gap: 10,
-    background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)',
+    background: '#fef2f2', border: '1px solid #fecaca',
     borderRadius: 8, padding: '10px 14px',
     fontSize: 13, color: '#dc2626', marginBottom: 20,
   },
@@ -368,50 +360,50 @@ const s: Record<string, React.CSSProperties> = {
   form: { display: 'flex', flexDirection: 'column', gap: 20 },
   row: {},
   fieldGroup: { display: 'flex', flexDirection: 'column', gap: 7 },
-  label: { fontSize: 13, fontWeight: 600, color: '#5b6675', letterSpacing: '0.2px' },
+  label: { fontSize: 13, fontWeight: 600, color: '#475569', letterSpacing: '0.2px' },
   input: {
-    width: '100%', background: '#f3f5f8',
-    border: '1px solid #cbd3dd', borderRadius: 10,
-    color: '#16202c', fontSize: 14,
+    width: '100%', background: '#f8fafc',
+    border: '1px solid #cbd5e1', borderRadius: 8,
+    color: '#0f172a', fontSize: 14,
     padding: '11px 14px', outline: 'none',
     boxSizing: 'border-box', fontFamily: 'inherit',
   },
   textarea: { minHeight: 130, resize: 'vertical' as const },
   submitBtn: {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    background: 'linear-gradient(135deg, #2263ff 0%, #1a4fd4 100%)',
-    color: 'white', border: 'none', borderRadius: 10,
+    background: '#2263ff',
+    color: 'white', border: 'none', borderRadius: 8,
     padding: '13px 28px', fontSize: 15, fontWeight: 600,
-    cursor: 'pointer', boxShadow: '0 4px 24px rgba(34,99,255,0.3)',
+    cursor: 'pointer',
     alignSelf: 'flex-start' as const,
   },
 
   mapStrip: {
-    background: '#f3f5f8', borderTop: '1px solid #e2e6ec', borderBottom: '1px solid #e2e6ec',
+    background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0',
     padding: '18px 32px',
   },
   mapInner: {
     maxWidth: 1100, margin: '0 auto',
     display: 'flex', alignItems: 'center', gap: 12,
   },
-  mapText: { fontSize: 14, color: '#5b6675', flex: 1 },
+  mapText: { fontSize: 14, color: '#475569', flex: 1 },
   mapLink: {
     display: 'inline-flex', alignItems: 'center', gap: 5,
     fontSize: 13, color: '#2263ff', textDecoration: 'none', fontWeight: 600, flexShrink: 0,
   },
 
-  footer: { background: '#ffffff', borderTop: '1px solid #e2e6ec', padding: '32px 32px' },
+  footer: { background: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '32px 32px' },
   footerInner: {
     maxWidth: 1100, margin: '0 auto',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14,
   },
   footerBrand: { display: 'flex', alignItems: 'center', gap: 8 },
-  footerBrandName: { fontSize: 15, fontWeight: 700, color: '#16202c' },
-  footerPowered: { fontSize: 13, color: '#8b96a5', margin: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 },
-  footerCopy: { fontSize: 13, color: '#8b96a5', margin: 0 },
+  footerBrandName: { fontSize: 15, fontWeight: 700, color: '#0f172a' },
+  footerPowered: { fontSize: 13, color: '#475569', margin: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 },
+  footerCopy: { fontSize: 13, color: '#475569', margin: 0 },
   founderBtn: {
-    fontSize: 11, color: '#8b96a5', textDecoration: 'none',
-    border: '1px solid #e2e6ec', borderRadius: 6,
+    fontSize: 11, color: '#475569', textDecoration: 'none',
+    border: '1px solid #e2e8f0', borderRadius: 6,
     padding: '3px 9px', fontWeight: 500,
   },
 }
