@@ -18,10 +18,13 @@ export const queryKeys = {
 }
 
 // Items queries
-export const useItems = () => {
+type QueryOptions = { enabled?: boolean }
+
+export const useItems = (options: QueryOptions = {}) => {
   return useQuery({
     queryKey: queryKeys.items,
     queryFn: () => db.listItems(),
+    enabled: options.enabled ?? true,
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 10 * 60 * 1000, // 10 minutes
     retry: (failureCount, error) => {
@@ -44,10 +47,11 @@ export const useItemBySku = (sku: string) => {
 }
 
 // Purchases queries
-export const usePurchases = () => {
+export const usePurchases = (options: QueryOptions = {}) => {
   return useQuery({
     queryKey: queryKeys.purchases,
     queryFn: () => db.listPurchases(),
+    enabled: options.enabled ?? true,
     staleTime: 2 * 60 * 1000, // 2 minutes
     cacheTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
@@ -60,10 +64,11 @@ export const usePurchases = () => {
 }
 
 // Sales queries
-export const useSales = () => {
+export const useSales = (options: QueryOptions = {}) => {
   return useQuery({
     queryKey: queryKeys.sales,
     queryFn: () => db.listSales(),
+    enabled: options.enabled ?? true,
     staleTime: 2 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
@@ -93,10 +98,11 @@ export const useSalesByDateRange = (startDate: string, endDate: string) => {
 // key, so switching branches actually refetches rather than reusing another
 // branch's totals. Pass nothing (as the header's low-stock badge does) to
 // get the all-branches total, matching the pre-branch-feature behavior.
-export const useInventory = (branchId?: string | null, mainBranchId?: string | null) => {
+export const useInventory = (branchId?: string | null, mainBranchId?: string | null, options: QueryOptions = {}) => {
   return useQuery({
     queryKey: [...queryKeys.inventory, branchId ?? 'all'],
     queryFn: () => db.inventory(branchId, mainBranchId),
+    enabled: options.enabled ?? true,
     staleTime: 1 * 60 * 1000, // 1 minute
     cacheTime: 5 * 60 * 1000,
   })
@@ -105,10 +111,11 @@ export const useInventory = (branchId?: string | null, mainBranchId?: string | n
 // Stock transfers (branch-to-branch, pending manager/owner approval) —
 // short staleTime since the notification bell and the inventory transfer
 // panel both need to reflect an approval/receipt from another device quickly.
-export const useStockTransfers = () => {
+export const useStockTransfers = (options: QueryOptions = {}) => {
   return useQuery({
     queryKey: queryKeys.stockTransfers,
     queryFn: () => db.listStockTransfers(),
+    enabled: options.enabled ?? true,
     staleTime: 30 * 1000,
     cacheTime: 5 * 60 * 1000,
   })

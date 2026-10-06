@@ -61,7 +61,7 @@ export default function FounderPage() {
         <section style={s.hero}>
           <div style={s.heroInner} className="pub-founder-hero-inner">
             <div style={s.photoWrap}>
-              <img src="./me.jpg" alt="Wasay Zafar" style={s.photo} />
+              <img src="./me.jpg" alt="Wasay Zafar" width={180} height={180} decoding="async" style={s.photo} />
             </div>
 
             <div style={s.heroText}>

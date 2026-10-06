@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useDataPrefetch } from '../hooks/useDataPrefetch'
 import { SEO } from '../components/SEO'
@@ -176,7 +176,9 @@ export default function App() {
 			)}
 			<main className="main-content">
 				<Header />
-				<Outlet />
+				<Suspense fallback={<div style={{ minHeight: '50vh' }} />}>
+					<Outlet />
+				</Suspense>
 			</main>
 		</div>
 	)

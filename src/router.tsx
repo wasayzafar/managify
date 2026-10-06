@@ -1,39 +1,44 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/useAuth';
 import { BranchProvider } from './auth/BranchContext';
 import { supabase } from './supabase';
-import Login from './pages/Login';
-import LandingPage from './pages/LandingPage';
-import ContactPage from './pages/ContactPage';
-import FounderPage from './pages/FounderPage';
 import App from './ui/App';
-import DashboardPage from './pages/DashboardPage';
-import InventoryPage from './pages/InventoryPage';
-import ItemsPage from './pages/ItemsPage';
-import PurchasesPage from './pages/PurchasesPage';
-import SalesPage from './pages/SalesPage';
-import BillingPage from './pages/BillingPage';
-import ProfitLossPage from './pages/ProfitLossPage';
-import DailySalesPage from './pages/DailySalesPage';
-import ScanPage from './pages/ScanPage';
-import CreditsPage from './pages/CreditsPage';
-import EmployeesPage from './pages/EmployeesPage';
-import ExpensesPage from './pages/ExpensesPage';
-import SuppliersPage from './pages/SuppliersPage';
-import SettingsPage from './pages/SettingsPage'
-import AssetsPage from './pages/AssetsPage';
-import BranchesPage from './pages/BranchesPage';
-import StaffPage from './pages/StaffPage';
-import TaxesPage from './pages/TaxesPage';
-import AdminPage from './pages/AdminPage';
-import CheckoutTestPage from './pages/CheckoutTestPage';
-import PricingPage from './pages/PricingPage';
-import RegisterPage from './pages/RegisterPage';
-import TermsPage from './pages/TermsPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import RefundPolicyPage from './pages/RefundPolicyPage';
+
+const Login = lazy(() => import('./pages/Login'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const FounderPage = lazy(() => import('./pages/FounderPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const InventoryPage = lazy(() => import('./pages/InventoryPage'));
+const ItemsPage = lazy(() => import('./pages/ItemsPage'));
+const PurchasesPage = lazy(() => import('./pages/PurchasesPage'));
+const SalesPage = lazy(() => import('./pages/SalesPage'));
+const BillingPage = lazy(() => import('./pages/BillingPage'));
+const ProfitLossPage = lazy(() => import('./pages/ProfitLossPage'));
+const DailySalesPage = lazy(() => import('./pages/DailySalesPage'));
+const ScanPage = lazy(() => import('./pages/ScanPage'));
+const CreditsPage = lazy(() => import('./pages/CreditsPage'));
+const EmployeesPage = lazy(() => import('./pages/EmployeesPage'));
+const ExpensesPage = lazy(() => import('./pages/ExpensesPage'));
+const SuppliersPage = lazy(() => import('./pages/SuppliersPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const AssetsPage = lazy(() => import('./pages/AssetsPage'));
+const BranchesPage = lazy(() => import('./pages/BranchesPage'));
+const StaffPage = lazy(() => import('./pages/StaffPage'));
+const TaxesPage = lazy(() => import('./pages/TaxesPage'));
+const CheckoutTestPage = lazy(() => import('./pages/CheckoutTestPage'));
+
+function RouteFallback() {
+  return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', color: 'var(--text-muted)' }}>Loading…</div>;
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -65,43 +70,45 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export function AppRouter() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/welcome" element={<LandingPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/founder" element={<FounderPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/privacy" element={<PrivacyPolicyPage />} />
-        <Route path="/refund-policy" element={<RefundPolicyPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/*" element={
-          <ProtectedRoute>
-            <App />
-          </ProtectedRoute>
-        }>
-          <Route index element={<DashboardPage />} />
-          <Route path="inventory" element={<InventoryPage />} />
-          <Route path="items" element={<ItemsPage />} />
-          <Route path="purchases" element={<PurchasesPage />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="billing" element={<BillingPage />} />
-          <Route path="profit-loss" element={<ProfitLossPage />} />
-          <Route path="daily-sales" element={<DailySalesPage />} />
-          <Route path="scan" element={<ScanPage />} />
-          <Route path="credits" element={<CreditsPage />} />
-          <Route path="employees" element={<EmployeesPage />} />
-          <Route path="expenses" element={<ExpensesPage />} />
-          <Route path="suppliers" element={<SuppliersPage />} />
-          <Route path="assets" element={<AssetsPage />} />
-          <Route path="branches" element={<BranchesPage />} />
-          <Route path="staff" element={<StaffPage />} />
-          <Route path="taxes" element={<TaxesPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="checkout-test" element={<CheckoutTestPage />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/welcome" element={<LandingPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/founder" element={<FounderPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <App />
+            </ProtectedRoute>
+          }>
+            <Route index element={<DashboardPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="items" element={<ItemsPage />} />
+            <Route path="purchases" element={<PurchasesPage />} />
+            <Route path="sales" element={<SalesPage />} />
+            <Route path="billing" element={<BillingPage />} />
+            <Route path="profit-loss" element={<ProfitLossPage />} />
+            <Route path="daily-sales" element={<DailySalesPage />} />
+            <Route path="scan" element={<ScanPage />} />
+            <Route path="credits" element={<CreditsPage />} />
+            <Route path="employees" element={<EmployeesPage />} />
+            <Route path="expenses" element={<ExpensesPage />} />
+            <Route path="suppliers" element={<SuppliersPage />} />
+            <Route path="assets" element={<AssetsPage />} />
+            <Route path="branches" element={<BranchesPage />} />
+            <Route path="staff" element={<StaffPage />} />
+            <Route path="taxes" element={<TaxesPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="checkout-test" element={<CheckoutTestPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </AuthProvider>
   );
 }

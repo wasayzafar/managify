@@ -49,11 +49,28 @@ export default function Header() {
 	const [isFullscreen, setIsFullscreen] = useState(false)
 	const searchRef = useRef<HTMLInputElement>(null)
 
-	const { data: items = [] } = useItems()
-	const { data: purchases = [] } = usePurchases()
-	const { data: sales = [] } = useSales()
-	const { data: inventory = [] } = useInventory()
-	const { data: stockTransfers = [] } = useStockTransfers()
+	// Only search fetches the catalog, and only once the user starts typing.
+	// The notification sources read whatever another page already cached and
+	// are refreshed when the bell is opened, so the header itself never pulls
+	// full purchase/sales history on every page load.
+	const itemsQuery = useItems({ enabled: query.trim().length > 0 })
+	const purchasesQuery = usePurchases({ enabled: false })
+	const salesQuery = useSales({ enabled: false })
+	const inventoryQuery = useInventory(undefined, undefined, { enabled: false })
+	const transfersQuery = useStockTransfers({ enabled: false })
+	const items = itemsQuery.data ?? []
+	const purchases = purchasesQuery.data ?? []
+	const sales = salesQuery.data ?? []
+	const inventory = inventoryQuery.data ?? []
+	const stockTransfers = transfersQuery.data ?? []
+
+	useEffect(() => {
+		if (!notifOpen) return
+		if (purchasesQuery.isStale) purchasesQuery.refetch()
+		if (salesQuery.isStale) salesQuery.refetch()
+		if (inventoryQuery.isStale) inventoryQuery.refetch()
+		if (transfersQuery.isStale) transfersQuery.refetch()
+	}, [notifOpen])
 
 	const label = user?.displayName || user?.email || 'Account'
 	const initial = label.charAt(0).toUpperCase()

@@ -7,22 +7,15 @@ export function useDataPrefetch() {
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    // Prefetch critical data on app load
+    // Only the small store profile is needed on every page; the full item
+    // catalog is fetched by the pages that actually use it.
     const prefetchCriticalData = async () => {
       try {
-        // Prefetch items and store info as they're used across multiple pages
-        await Promise.all([
-          queryClient.prefetchQuery({
-            queryKey: queryKeys.items,
-            queryFn: () => db.listItems(),
-            staleTime: 5 * 60 * 1000,
-          }),
-          queryClient.prefetchQuery({
-            queryKey: queryKeys.storeInfo,
-            queryFn: () => db.getStoreInfo(),
-            staleTime: 10 * 60 * 1000,
-          })
-        ])
+        await queryClient.prefetchQuery({
+          queryKey: queryKeys.storeInfo,
+          queryFn: () => db.getStoreInfo(),
+          staleTime: 10 * 60 * 1000,
+        })
       } catch (error) {
         console.warn('Failed to prefetch critical data:', error)
       }
