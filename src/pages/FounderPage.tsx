@@ -1,3 +1,4 @@
+import { useLandingFont } from '../utils/landingFont'
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { FiGithub, FiLinkedin, FiGlobe, FiCode, FiLayers, FiZap, FiTwitter } from 'react-icons/fi'
@@ -25,6 +26,7 @@ const projects = [
 ]
 
 export default function FounderPage() {
+  useLandingFont()
   return (
     <>
       {/* SEO structured data */}
@@ -45,7 +47,7 @@ export default function FounderPage() {
         description: 'Software developer and founder of NativeEdge Studio, building practical digital products for businesses.',
       })}} />
 
-      <div style={s.page}>
+      <div className="pub-page" style={s.page}>
         {/* Minimal nav */}
         <nav style={s.nav}>
           <div style={s.navInner} className="pub-nav-inner">
@@ -186,7 +188,7 @@ const s: Record<string, React.CSSProperties> = {
   page: {
     background: '#ffffff',
     color: '#0f172a',
-    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+    fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
   },
 
@@ -200,9 +202,9 @@ const s: Record<string, React.CSSProperties> = {
     height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
   navBrand: { display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' },
-  navBrandName: { fontSize: 16, fontWeight: 700, color: '#0f172a' },
+  navBrandName: { fontSize: 16, fontWeight: 600, color: '#0f172a' },
   navContact: {
-    fontSize: 13, fontWeight: 600, color: '#0f172a', textDecoration: 'none',
+    fontSize: 13, fontWeight: 500, color: '#0f172a', textDecoration: 'none',
     background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 7, padding: '6px 16px',
   },
 
@@ -223,11 +225,11 @@ const s: Record<string, React.CSSProperties> = {
 
   heroText: { flex: 1, minWidth: 280 },
   eyebrow: {
-    fontSize: 12, fontWeight: 700, color: '#2263ff',
+    fontSize: 12, fontWeight: 600, color: '#2263ff',
     textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 12,
   },
   name: {
-    fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 800,
+    fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 600,
     letterSpacing: '-2px', color: '#0f172a', margin: '0 0 16px 0',
   },
   tagline: {
@@ -237,7 +239,7 @@ const s: Record<string, React.CSSProperties> = {
   socialBtn: {
     display: 'inline-flex', alignItems: 'center', gap: 7,
     background: '#ffffff', border: '1px solid #e2e8f0',
-    borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600,
+    borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 500,
     color: '#334155', textDecoration: 'none',
   },
   socialBtnPrimary: {
@@ -249,7 +251,7 @@ const s: Record<string, React.CSSProperties> = {
   twoCol: {
   },
   sectionTitle: {
-    fontSize: 20, fontWeight: 700, color: '#0f172a',
+    fontSize: 20, fontWeight: 600, color: '#0f172a',
     margin: '0 0 20px 0', letterSpacing: '-0.5px',
   },
 
@@ -258,7 +260,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 12, padding: '28px 24px',
   },
   bioPara: { fontSize: 15, lineHeight: 1.75, color: '#475569', margin: '0 0 16px 0' },
-  inlineLink: { color: '#2263ff', textDecoration: 'none', fontWeight: 600 },
+  inlineLink: { color: '#2263ff', textDecoration: 'none', fontWeight: 500 },
 
   skillsCard: {
     background: '#ffffff', border: '1px solid #e2e8f0',
@@ -269,7 +271,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'inline-flex', alignItems: 'center', gap: 6,
     background: '#f8fafc', border: '1px solid #e2e8f0',
     borderRadius: 99, padding: '5px 12px',
-    fontSize: 12, fontWeight: 600, color: '#475569',
+    fontSize: 12, fontWeight: 500, color: '#475569',
   },
 
   projectGrid: { marginTop: 8 },
@@ -284,9 +286,9 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#2263ff', marginBottom: 16,
   },
-  projectName: { fontSize: 17, fontWeight: 700, color: '#0f172a', margin: '0 0 10px 0' },
+  projectName: { fontSize: 17, fontWeight: 600, color: '#0f172a', margin: '0 0 10px 0' },
   projectDesc: { fontSize: 14, color: '#475569', lineHeight: 1.65, margin: '0 0 16px 0' },
-  projectLink: { fontSize: 13, color: '#2263ff', fontWeight: 600 },
+  projectLink: { fontSize: 13, color: '#2263ff', fontWeight: 500 },
 
   cta: {
     position: 'relative',
@@ -298,7 +300,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
   },
   ctaTitle: {
-    fontSize: 32, fontWeight: 800, color: '#0f172a',
+    fontSize: 32, fontWeight: 600, color: '#0f172a',
     margin: 0, letterSpacing: '-1px',
   },
   ctaSub: { fontSize: 16, color: '#475569', margin: 0, lineHeight: 1.6 },
@@ -306,7 +308,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'inline-flex', alignItems: 'center', gap: 8,
     background: '#2263ff',
     color: 'white', textDecoration: 'none', borderRadius: 8,
-    padding: '12px 28px', fontSize: 15, fontWeight: 600,
+    padding: '12px 28px', fontSize: 15, fontWeight: 500,
     marginTop: 4,
   },
 

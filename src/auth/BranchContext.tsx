@@ -15,7 +15,7 @@ import { useAuth } from './useAuth'
 import { supabase } from '../supabase'
 
 export type BranchRole = 'owner' | 'manager' | 'staff'
-export type StorePlan = 'pro' | 'max'
+export type StorePlan = 'pro' | 'max' | 'none'
 
 export type Branch = {
 	id: string
@@ -29,7 +29,7 @@ interface BranchContextType {
 	loading: boolean
 	storeId: string | null
 	role: BranchRole
-	/** Store-wide subscription tier — same for the owner and every staff member. Defaults to 'max' while it loads so nothing is gated before we know for sure. */
+	/** Store-wide subscription tier — same for the owner and every staff member. 'none' means no paid plan yet. */
 	plan: StorePlan
 	/** Fixed assigned branch for staff/manager; null for an owner (sees all branches). */
 	myBranchId: string | null
@@ -60,7 +60,7 @@ export const BranchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 	const [loading, setLoading] = useState(true)
 	const [storeId, setStoreId] = useState<string | null>(null)
 	const [role, setRole] = useState<BranchRole>('owner')
-	const [plan, setPlan] = useState<StorePlan>('max')
+	const [plan, setPlan] = useState<StorePlan>('none')
 	const [myBranchId, setMyBranchId] = useState<string | null>(null)
 	const [branches, setBranches] = useState<Branch[]>([])
 	const [currentBranchId, setCurrentBranchIdState] = useState<string | 'all' | null>(null)
@@ -97,7 +97,7 @@ export const BranchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			setLoading(false)
 			setStoreId(null)
 			setRole('owner')
-			setPlan('max')
+			setPlan('none')
 			setMyBranchId(null)
 			setBranches([])
 			setCurrentBranchIdState(null)
@@ -124,7 +124,7 @@ export const BranchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 			cachedStoreId = resolvedStoreId
 			setStoreId(resolvedStoreId)
 			setRole(resolvedRole)
-			setPlan((registryRow?.plan as StorePlan) || 'max')
+			setPlan((registryRow?.plan as StorePlan) || 'none')
 			setMyBranchId(resolvedMyBranchId)
 			setBranches(list)
 

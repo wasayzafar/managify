@@ -1,3 +1,4 @@
+import { useLandingFont } from '../utils/landingFont'
 import React, { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import emailjs, { init } from '@emailjs/browser'
@@ -40,6 +41,7 @@ const contactDetails = [
 ]
 
 export default function ContactPage() {
+  useLandingFont()
   const formRef = useRef<HTMLFormElement>(null)
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -72,7 +74,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div style={s.page}>
+    <div className="pub-page" style={s.page}>
       {/* ── NAV ── */}
       <nav style={s.nav}>
         <div style={s.navInner} className="pub-nav-inner">
@@ -255,7 +257,7 @@ const s: Record<string, React.CSSProperties> = {
   page: {
     background: '#ffffff',
     color: '#0f172a',
-    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+    fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
   },
 
@@ -272,11 +274,11 @@ const s: Record<string, React.CSSProperties> = {
     height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   },
   navBrand: { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' },
-  navBrandName: { fontSize: 18, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' },
+  navBrandName: { fontSize: 18, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.3px' },
   navLinks: { display: 'flex', alignItems: 'center', gap: 28 },
   navLink: { fontSize: 14, color: '#475569', textDecoration: 'none', fontWeight: 500 },
   navLogin: {
-    fontSize: 14, fontWeight: 600, color: '#0f172a', textDecoration: 'none',
+    fontSize: 14, fontWeight: 500, color: '#0f172a', textDecoration: 'none',
     background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 8, padding: '7px 18px',
   },
 
@@ -290,12 +292,12 @@ const s: Record<string, React.CSSProperties> = {
     maxWidth: 700, margin: '0 auto', padding: '0 32px', textAlign: 'center',
   },
   eyebrow: {
-    fontSize: 12, fontWeight: 700, color: '#2263ff',
+    fontSize: 12, fontWeight: 600, color: '#2263ff',
     textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 14,
   },
   heroTitle: {
     fontSize: 'clamp(28px, 5vw, 52px)',
-    fontWeight: 800, letterSpacing: '-1.5px',
+    fontWeight: 600, letterSpacing: '-1.5px',
     color: '#0f172a', margin: '0 0 20px 0',
   },
   heroSub: {
@@ -316,7 +318,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', gap: 14,
     textDecoration: 'none', marginBottom: 24,
   },
-  studioName: { fontSize: 17, fontWeight: 700, color: '#0f172a', marginBottom: 3 },
+  studioName: { fontSize: 17, fontWeight: 600, color: '#0f172a', marginBottom: 3 },
   studioTagline: { fontSize: 12, color: '#2263ff' },
   detailsIntro: { fontSize: 14, color: '#475569', lineHeight: 1.7, margin: '0 0 28px 0' },
 
@@ -333,7 +335,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     color: '#2263ff', flexShrink: 0,
   },
-  contactLabel: { fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 },
+  contactLabel: { fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 5 },
   contactValue: { fontSize: 14, color: '#334155', fontWeight: 500, lineHeight: 1.5 },
 
   formCol: {},
@@ -341,7 +343,7 @@ const s: Record<string, React.CSSProperties> = {
     background: '#ffffff', border: '1px solid #e2e8f0',
     borderRadius: 12, padding: '36px 32px',
   },
-  formTitle: { fontSize: 22, fontWeight: 700, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.5px' },
+  formTitle: { fontSize: 22, fontWeight: 600, color: '#0f172a', margin: '0 0 6px 0', letterSpacing: '-0.5px' },
   formSub: { fontSize: 14, color: '#475569', margin: '0 0 28px 0' },
 
   successBox: {
@@ -360,7 +362,7 @@ const s: Record<string, React.CSSProperties> = {
   form: { display: 'flex', flexDirection: 'column', gap: 20 },
   row: {},
   fieldGroup: { display: 'flex', flexDirection: 'column', gap: 7 },
-  label: { fontSize: 13, fontWeight: 600, color: '#475569', letterSpacing: '0.2px' },
+  label: { fontSize: 13, fontWeight: 500, color: '#475569', letterSpacing: '0.2px' },
   input: {
     width: '100%', background: '#f8fafc',
     border: '1px solid #cbd5e1', borderRadius: 8,
@@ -373,7 +375,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     background: '#2263ff',
     color: 'white', border: 'none', borderRadius: 8,
-    padding: '13px 28px', fontSize: 15, fontWeight: 600,
+    padding: '13px 28px', fontSize: 15, fontWeight: 500,
     cursor: 'pointer',
     alignSelf: 'flex-start' as const,
   },
@@ -389,7 +391,7 @@ const s: Record<string, React.CSSProperties> = {
   mapText: { fontSize: 14, color: '#475569', flex: 1 },
   mapLink: {
     display: 'inline-flex', alignItems: 'center', gap: 5,
-    fontSize: 13, color: '#2263ff', textDecoration: 'none', fontWeight: 600, flexShrink: 0,
+    fontSize: 13, color: '#2263ff', textDecoration: 'none', fontWeight: 500, flexShrink: 0,
   },
 
   footer: { background: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '32px 32px' },
@@ -398,7 +400,7 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14,
   },
   footerBrand: { display: 'flex', alignItems: 'center', gap: 8 },
-  footerBrandName: { fontSize: 15, fontWeight: 700, color: '#0f172a' },
+  footerBrandName: { fontSize: 15, fontWeight: 600, color: '#0f172a' },
   footerPowered: { fontSize: 13, color: '#475569', margin: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 },
   footerCopy: { fontSize: 13, color: '#475569', margin: 0 },
   founderBtn: {

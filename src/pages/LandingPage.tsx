@@ -1,3 +1,5 @@
+import { useLandingFont } from '../utils/landingFont'
+import PublicNav from '../components/PublicNav'
 import React, { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -97,42 +99,36 @@ const industries = [
     name: 'Mobile Phone Shops',
     desc: 'IMEI tracking, warranty dates, per-unit serial numbers, and credit sale management built right in.',
     tags: ['IMEI Tracking', 'Warranty', 'Credit Sales'],
-    color: '#3b82f6',
   },
   {
     icon: <FiShoppingBag size={24} />,
     name: 'Garment & Apparel',
     desc: 'Manage clothing stock by size and variant, track seasonal inventory, and generate vendor purchase orders.',
     tags: ['Variants', 'Seasonal Stock', 'PO Management'],
-    color: '#8b5cf6',
   },
   {
     icon: <FiSettings size={24} />,
     name: 'Electronics & Computers',
     desc: 'Component-level inventory, SKU-based billing, vendor credit tracking, and detailed profit reports.',
     tags: ['SKU Billing', 'Vendor Credits', 'Profit Reports'],
-    color: '#06b6d4',
   },
   {
     icon: <FiGrid size={24} />,
     name: 'Supermarkets & Grocery',
     desc: 'High-volume billing, barcode scanning, category-based expense tracking, and bulk purchase imports.',
     tags: ['Barcode Scan', 'Bulk Billing', 'Categories'],
-    color: '#22c55e',
   },
   {
     icon: <FiTool size={24} />,
     name: 'Auto Parts & Hardware',
     desc: 'Part number catalogues, multi-vendor purchases, restock alerts, and customer credit ledgers.',
     tags: ['Part Catalogue', 'Multi-vendor', 'Ledger'],
-    color: '#f59e0b',
   },
   {
     icon: <FiBox size={24} />,
     name: 'General Retail',
     desc: 'Any product, any category. Managify adapts to your workflow — thermal or A4 printing, in any currency.',
     tags: ['Any Category', 'Multi-currency', 'Flexible'],
-    color: '#ec4899',
   },
 ]
 
@@ -171,55 +167,40 @@ const customItems = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  useLandingFont()
   return (
-    <div style={s.page}>
+    <div className="pub-page" style={s.page}>
       {/* ── NAV ── */}
-      <nav style={s.nav}>
-        <div style={s.navInner} className="pub-nav-inner">
-          <Link to="/welcome" style={s.navBrand}>
-            <img src="./logo.png" alt="Managify" width={30} style={{ borderRadius: 7 }} />
-            <span style={s.navBrandName}>Managify</span>
-          </Link>
-          <div style={s.navLinks}>
-            <div className="pub-nav-feature-links">
-              <a href="#features" className="pub-nav-link" style={s.navLink}>Features</a>
-              <a href="#industries" className="pub-nav-link" style={s.navLink}>Industries</a>
-              <a href="#custom" className="pub-nav-link" style={s.navLink}>Custom Solutions</a>
-              <a href="#why" className="pub-nav-link" style={s.navLink}>Why Managify</a>
-              <Link to="/pricing" className="pub-nav-link" style={s.navLink}>Pricing</Link>
-              <Link to="/contact" className="pub-nav-link" style={s.navLink}>Contact</Link>
-            </div>
-            <Link to="/login" className="pub-nav-login" style={s.navLogin}>Sign In</Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNav anchorPrefix="" />
 
       {/* ── HERO ── */}
       <section style={s.hero}>
+        <div style={s.heroBand} />
         <div style={s.heroContent} className="pub-hero-content">
-          <div style={s.badge}>
-            <FiZap size={12} />
-            <span>Store Management, Reimagined</span>
+          <div style={{ ...s.announce, animationDelay: '0ms' }} className="lp-rise">
+            <span style={s.newTag}>New</span>
+            <span style={s.announceText}>Multi-branch, staff accounts and barcode labels are here</span>
           </div>
-          <h1 style={s.heroH1}>
+          <h1 style={{ ...s.heroH1, animationDelay: '80ms' }} className="lp-rise">
             The complete platform<br />
             for <span style={s.heroAccent}>modern retail</span>
           </h1>
-          <p style={s.heroSub}>
+          <p style={{ ...s.heroSub, animationDelay: '160ms' }} className="lp-rise">
             Inventory, billing, sales analytics, and profit tracking — unified in one
             fast, browser-based system built for store owners who mean business.
           </p>
-          <div style={s.heroCtas}>
-            <Link to="/pricing" className="pub-cta-primary" style={s.ctaPrimary}>
+          <div style={{ ...s.heroCtas, animationDelay: '240ms' }} className="lp-rise">
+            <Link to="/register" className="pub-cta-primary" style={s.ctaPrimary}>
               Get Started
               <FiArrowRight size={16} />
             </Link>
             <a href="#features" className="pub-cta-secondary" style={s.ctaSecondary}>
-              Explore Features
+              Learn more
             </a>
           </div>
 
-          {/* Hero preview card */}
+          {/* Mockup frame around the sales preview card */}
+          <div style={{ ...s.mockupFrame, animationDelay: '320ms' }} className="lp-rise">
           <div style={s.heroCard}>
             <div style={s.heroCardHeader}>
               <span style={s.heroCardDot} />
@@ -241,6 +222,7 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
           </div>
         </div>
       </section>
@@ -292,14 +274,14 @@ export default function LandingPage() {
           <div style={s.industryGrid} className="pub-industry-grid">
             {industries.map(ind => (
               <div key={ind.name} className="pub-card" style={s.industryCard}>
-                <div style={{ ...s.industryIcon, color: ind.color, background: `${ind.color}20`, border: `1px solid ${ind.color}35` }}>
+                <div style={s.industryIcon}>
                   {ind.icon}
                 </div>
                 <h3 style={s.industryName}>{ind.name}</h3>
                 <p style={s.industryDesc}>{ind.desc}</p>
                 <div style={s.tagRow}>
                   {ind.tags.map(t => (
-                    <span key={t} style={{ ...s.tag, color: ind.color, borderColor: `${ind.color}45`, background: `${ind.color}16` }}>{t}</span>
+                    <span key={t} style={s.tag}>{t}</span>
                   ))}
                 </div>
               </div>
@@ -415,70 +397,29 @@ const s: Record<string, React.CSSProperties> = {
   page: {
     background: '#ffffff',
     color: '#0f172a',
-    fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
+    fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
     minHeight: '100vh',
     overflowX: 'hidden',
   },
 
   // Nav
-  nav: {
-    position: 'fixed',
-    top: 0, left: 0, right: 0,
-    zIndex: 100,
-    background: 'rgba(255,255,255,0.85)',
-    backdropFilter: 'blur(12px)',
-    borderBottom: '1px solid rgba(0,0,0,0.06)',
-  },
-  navInner: {
-    maxWidth: 1200,
-    margin: '0 auto',
-    padding: '0 32px',
-    height: 64,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  navBrand: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    textDecoration: 'none',
-  },
-  navBrandName: {
-    fontSize: 18,
-    fontWeight: 700,
-    color: '#0f172a',
-    letterSpacing: '-0.3px',
-  },
-  navLinks: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 32,
-  },
-  navLink: {
-    fontSize: 14,
-    color: '#475569',
-    textDecoration: 'none',
-    fontWeight: 500,
-  },
-  navLogin: {
-    fontSize: 14,
-    fontWeight: 600,
-    color: '#0f172a',
-    textDecoration: 'none',
-    background: '#f1f5f9',
-    border: '1px solid #cbd5e1',
-    borderRadius: 8,
-    padding: '7px 18px',
-  },
-
   // Hero
   hero: {
     position: 'relative',
-    paddingTop: 130,
+    paddingTop: 150,
     paddingBottom: 80,
+    overflow: 'hidden',
+  },
+  heroBand: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: 620,
+    background: 'linear-gradient(180deg, #eff6ff 0%, #dbeafe 45%, rgba(219,234,254,0) 100%)',
+    pointerEvents: 'none',
   },
   heroContent: {
+    position: 'relative',
+    zIndex: 1,
     maxWidth: 900,
     margin: '0 auto',
     padding: '0 32px',
@@ -487,24 +428,46 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     textAlign: 'center',
   },
-  badge: {
+  announce: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 7,
-    background: 'rgba(34,99,255,0.08)',
-    border: '1px solid rgba(34,99,255,0.25)',
-    borderRadius: 99,
-    padding: '5px 14px',
-    fontSize: 12,
-    fontWeight: 600,
-    color: '#2263ff',
-    letterSpacing: '0.5px',
+    gap: 10,
+    background: '#ffffff',
+    border: '1px solid #e2e8f0',
+    borderRadius: 999,
+    padding: '4px 14px 4px 4px',
+    boxShadow: '0 4px 14px rgba(37,99,235,0.12)',
     marginBottom: 28,
+  },
+  newTag: {
+    background: '#2563eb',
+    color: '#ffffff',
+    borderRadius: 999,
+    padding: '3px 9px',
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
+  },
+  announceText: {
+    fontSize: 13.5,
+    fontWeight: 500,
+    color: '#0f172a',
+  },
+  mockupFrame: {
+    width: '100%',
+    maxWidth: 980,
+    marginTop: 56,
+    background: 'rgba(255,255,255,0.55)',
+    backdropFilter: 'blur(12px)',
+    border: '1px solid rgba(255,255,255,0.9)',
+    borderRadius: 20,
+    padding: 16,
+    boxSizing: 'border-box',
   },
   heroH1: {
     fontSize: 'clamp(36px, 6vw, 68px)',
-    fontWeight: 800,
+    fontWeight: 600,
     lineHeight: 1.1,
     letterSpacing: '-2px',
     color: '#0f172a',
@@ -537,7 +500,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     padding: '13px 28px',
     fontSize: 15,
-    fontWeight: 600,
+    fontWeight: 500,
     boxShadow: '0 1px 2px rgba(15,23,42,0.08)',
   },
   ctaSecondary: {
@@ -550,7 +513,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     padding: '13px 28px',
     fontSize: 15,
-    fontWeight: 600,
+    fontWeight: 500,
     border: '1px solid #cbd5e1',
   },
 
@@ -558,6 +521,7 @@ const s: Record<string, React.CSSProperties> = {
   heroCard: {
     width: '100%',
     maxWidth: 700,
+    margin: '0 auto',
     background: '#ffffff',
     border: '1px solid #e2e8f0',
     borderRadius: 12,
@@ -594,20 +558,20 @@ const s: Record<string, React.CSSProperties> = {
   heroStatLabel: {
     fontSize: 11,
     color: '#475569',
-    fontWeight: 600,
+    fontWeight: 500,
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     marginBottom: 8,
   },
   heroStatValue: {
     fontSize: 18,
-    fontWeight: 700,
+    fontWeight: 600,
     marginBottom: 4,
   },
   heroStatChange: {
     fontSize: 11,
     color: '#16a34a',
-    fontWeight: 600,
+    fontWeight: 500,
   },
 
   // Stats strip
@@ -623,7 +587,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   statValue: {
     fontSize: 40,
-    fontWeight: 800,
+    fontWeight: 600,
     color: '#2263ff',
     letterSpacing: '-1px',
     marginBottom: 6,
@@ -651,7 +615,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   sectionEyebrow: {
     fontSize: 12,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#2263ff',
     textTransform: 'uppercase',
     letterSpacing: '1.5px',
@@ -659,7 +623,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   sectionTitle: {
     fontSize: 'clamp(28px, 4vw, 42px)',
-    fontWeight: 800,
+    fontWeight: 600,
     color: '#0f172a',
     margin: '0 0 16px 0',
     letterSpacing: '-1px',
@@ -695,7 +659,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   featureTitle: {
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#0f172a',
     margin: '0 0 10px 0',
   },
@@ -722,6 +686,9 @@ const s: Record<string, React.CSSProperties> = {
     width: 44,
     height: 44,
     borderRadius: 10,
+    background: '#eff4ff',
+    border: '1px solid #dbe6fe',
+    color: '#2263ff',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -730,7 +697,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   industryName: {
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#0f172a',
     margin: '0 0 10px',
   },
@@ -747,10 +714,12 @@ const s: Record<string, React.CSSProperties> = {
   },
   tag: {
     fontSize: 11,
-    fontWeight: 600,
+    fontWeight: 500,
     padding: '3px 10px',
     borderRadius: 99,
-    border: '1px solid',
+    border: '1px solid #dbe6fe',
+    background: '#eff4ff',
+    color: '#2263ff',
     letterSpacing: '0.3px',
   },
 
@@ -775,7 +744,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   customTitle: {
     fontSize: 14,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#0f172a',
     marginBottom: 6,
   },
@@ -811,7 +780,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   whyTitle: {
     fontSize: 14,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#0f172a',
     marginBottom: 5,
   },
@@ -842,7 +811,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   ctaBannerTitle: {
     fontSize: 'clamp(26px, 4vw, 40px)',
-    fontWeight: 800,
+    fontWeight: 600,
     color: '#0f172a',
     margin: 0,
     letterSpacing: '-1px',
@@ -876,7 +845,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   footerBrandName: {
     fontSize: 16,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#0f172a',
   },
   footerPowered: {

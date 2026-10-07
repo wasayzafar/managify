@@ -1,3 +1,4 @@
+import { useLandingFont } from '../utils/landingFont'
 import React, { useEffect, useState } from 'react'
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { useNavigate, Link } from 'react-router-dom'
@@ -10,6 +11,7 @@ import {
 const RESEND_COOLDOWN_SECONDS = 30
 
 const Login: React.FC = () => {
+  useLandingFont()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -93,7 +95,7 @@ const Login: React.FC = () => {
   ]
 
   return (
-    <div className="lp-shell">
+    <div className="pub-page lp-shell">
 
       {/* ── Left branding panel (desktop only) ── */}
       <div className="lp-left">
@@ -135,7 +137,7 @@ const Login: React.FC = () => {
           {/* Mobile-only logo (hidden on desktop where left panel shows) */}
           <Link to="/welcome" className="lp-mobile-brand">
             <img src="./logo.png" alt="Managify" width={32} style={{ borderRadius: 7 }} />
-            <span style={{ fontSize: 20, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.3px' }}>Managify</span>
+            <span style={{ fontSize: 20, fontWeight: 600, color: '#0f172a', letterSpacing: '-0.3px' }}>Managify</span>
           </Link>
 
           <div style={s.formHeader}>
@@ -248,7 +250,7 @@ const Login: React.FC = () => {
           ) : (
             <p style={s.registerLink}>
               Don't have an account?{' '}
-              <Link to="/pricing" style={{ color: '#2263ff', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/register" style={{ color: '#2263ff', textDecoration: 'none', fontWeight: 500 }}>
                 Sign up
               </Link>
             </p>
@@ -278,7 +280,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   brandName: {
     fontSize: 22,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#0f172a',
     letterSpacing: '-0.3px',
   },
@@ -290,7 +292,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   heroH1: {
     fontSize: 44,
-    fontWeight: 800,
+    fontWeight: 600,
     lineHeight: 1.15,
     color: '#0f172a',
     margin: '0 0 20px 0',
@@ -345,7 +347,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   formTitle: {
     fontSize: 28,
-    fontWeight: 700,
+    fontWeight: 600,
     color: '#0f172a',
     margin: '0 0 6px 0',
     letterSpacing: '-0.5px',
@@ -398,7 +400,7 @@ const s: Record<string, React.CSSProperties> = {
     minWidth: 0,
     color: '#2263ff',
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
     cursor: 'pointer',
   },
   eyeBtn: {
@@ -424,7 +426,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   label: {
     fontSize: 13,
-    fontWeight: 600,
+    fontWeight: 500,
     color: '#475569',
     letterSpacing: '0.2px',
   },
@@ -461,7 +463,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     padding: '14px',
     fontSize: 15,
-    fontWeight: 600,
+    fontWeight: 500,
     cursor: 'pointer',
     marginTop: 4,
     transition: 'opacity 0.15s ease, box-shadow 0.15s ease',

@@ -1,8 +1,8 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/useAuth';
-import { BranchProvider } from './auth/BranchContext';
+import { BranchProvider, useBranch } from './auth/BranchContext';
 import { supabase } from './supabase';
 import App from './ui/App';
 
@@ -64,7 +64,35 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   );
 
-  return <BranchProvider>{children}</BranchProvider>;
+  return <BranchProvider><PlanGate>{children}</PlanGate></BranchProvider>;
+}
+
+function PlanGate({ children }: { children: React.ReactNode }) {
+  const { plan, role } = useBranch();
+  const { logout } = useAuth();
+  if (plan !== 'none') return <>{children}</>;
+
+  const isOwner = role === 'owner';
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 32, gap: 14, textAlign: 'center', background: 'var(--bg)', color: 'var(--text)' }}>
+      <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>
+        {isOwner ? 'Choose a plan to get started' : 'This store has no active plan'}
+      </h2>
+      <p style={{ margin: 0, maxWidth: 420, color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6 }}>
+        {isOwner
+          ? 'Your account is ready. Pick Pro or Max and start your free trial to open the app.'
+          : 'Ask the store owner to choose a plan before you can use Managify.'}
+      </p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {isOwner && (
+          <Link to="/pricing" style={{ padding: '10px 18px', borderRadius: 8, background: 'var(--accent)', color: '#fff', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+            View plans
+          </Link>
+        )}
+        <button className="secondary" onClick={() => logout()}>Sign out</button>
+      </div>
+    </div>
+  );
 }
 
 export function AppRouter() {
