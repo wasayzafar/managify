@@ -15,7 +15,17 @@ import { useAuth } from './useAuth'
 import { supabase } from '../supabase'
 
 export type BranchRole = 'owner' | 'manager' | 'staff'
-export type StorePlan = 'pro' | 'max' | 'none'
+export type StorePlan = 'pro' | 'max' | 'restaurant' | 'bakery' | 'none'
+
+// Restaurant and Bakery are custom-priced plans sold above Max, but they
+// carry the same in-app entitlements as Max (multi-branch, staff, barcode
+// labels) — only Pro is actually restricted. Gating checks call this instead
+// of comparing against 'max' directly, so a new full-access plan doesn't
+// need its own line in every gated page.
+const FULL_ACCESS_PLANS = new Set<StorePlan>(['max', 'restaurant', 'bakery'])
+export function hasFullAccess(plan: StorePlan): boolean {
+	return FULL_ACCESS_PLANS.has(plan)
+}
 
 export type Branch = {
 	id: string

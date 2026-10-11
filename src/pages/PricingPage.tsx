@@ -10,13 +10,17 @@ import {
 	PiCheckBold, PiXDuotone, PiSpinnerGapBold, PiSparkleDuotone, PiCrownDuotone, PiShieldCheckDuotone,
 } from 'react-icons/pi'
 
-type PlanKey = 'pro' | 'max'
+type PlanKey = 'pro' | 'max' | 'restaurant' | 'bakery'
+
+const PLAN_ORDER: PlanKey[] = ['pro', 'max', 'restaurant', 'bakery']
 
 const CLIENT_TOKEN = import.meta.env.VITE_PADDLE_CLIENT_TOKEN as string | undefined
 const PADDLE_ENV = ((import.meta.env.VITE_PADDLE_ENV as string | undefined) || 'sandbox') as 'sandbox' | 'production'
 const PRICE_IDS: Record<PlanKey, string | undefined> = {
 	pro: import.meta.env.VITE_PADDLE_PRICE_ID_PRO as string | undefined,
 	max: import.meta.env.VITE_PADDLE_PRICE_ID_MAX as string | undefined,
+	restaurant: import.meta.env.VITE_PADDLE_PRICE_ID_RESTAURANT as string | undefined,
+	bakery: import.meta.env.VITE_PADDLE_PRICE_ID_BAKERY as string | undefined,
 }
 
 function formatTrial(frequency: number, interval: string): string {
@@ -55,6 +59,30 @@ const PLANS: Record<PlanKey, {
 			{ text: 'Barcode label generation', icon: <PiBarcodeDuotone size={20} /> },
 		],
 		includes: ['Everything in Pro, plus:', 'Items, purchases & inventory', 'Billing & invoicing', 'Expenses & assets', 'Profit & loss and daily sales reports'],
+		excluded: [],
+	},
+	restaurant: {
+		name: 'Restaurant POS',
+		description: 'A custom-configured point of sale for restaurants and cafés, with dedicated setup for your menu and locations.',
+		popular: false,
+		features: [
+			{ text: 'Unlimited branches', icon: <PiBriefcaseDuotone size={20} /> },
+			{ text: 'Staff accounts with roles', icon: <PiUsersThreeDuotone size={20} /> },
+			{ text: 'Fast counter & order billing', icon: <PiReceiptDuotone size={20} /> },
+		],
+		includes: ['Everything in Max, plus:', 'Menu items set up as your catalog', 'Dedicated onboarding for restaurant workflows'],
+		excluded: [],
+	},
+	bakery: {
+		name: 'Bakery Production & POS',
+		description: 'A custom-configured system for bakeries, tracking ingredients, finished goods, and daily sales.',
+		popular: false,
+		features: [
+			{ text: 'Ingredient purchases & inventory', icon: <PiDatabaseDuotone size={20} /> },
+			{ text: 'Finished goods labeling', icon: <PiBarcodeDuotone size={20} /> },
+			{ text: 'Unlimited branches', icon: <PiBriefcaseDuotone size={20} /> },
+		],
+		includes: ['Everything in Max, plus:', 'Dedicated onboarding for ingredient & finished-goods tracking', 'Staff accounts with roles'],
 		excluded: [],
 	},
 }
@@ -112,7 +140,7 @@ export default function PricingPage() {
 
 	useEffect(() => {
 		if (!paddle) return
-		(['pro', 'max'] as PlanKey[]).forEach(key => {
+		PLAN_ORDER.forEach(key => {
 			const priceId = PRICE_IDS[key]
 			if (!priceId) return
 			paddle.PricePreview({ items: [{ priceId, quantity: 1 }] }).then(res => {
@@ -175,7 +203,7 @@ export default function PricingPage() {
 				)}
 
 				<div style={s.plansGrid}>
-					{(['pro', 'max'] as PlanKey[]).map((key, i) => {
+					{PLAN_ORDER.map((key, i) => {
 						const plan = PLANS[key]
 						const price = prices[key]
 						const configured = !!PRICE_IDS[key]
@@ -328,7 +356,7 @@ const s: Record<string, React.CSSProperties> = {
 	},
 	heroSub: { fontSize: 16, lineHeight: 1.65, color: '#475569', maxWidth: 560, margin: '0 auto' },
 
-	plansSection: { maxWidth: 920, margin: '0 auto', padding: '0 24px' },
+	plansSection: { maxWidth: 1180, margin: '0 auto', padding: '0 24px' },
 	checkoutErrorBanner: {
 		maxWidth: 700, margin: '0 auto 24px', padding: '12px 16px', borderRadius: 8,
 		background: '#fef2f2', border: '1px solid #fecaca',

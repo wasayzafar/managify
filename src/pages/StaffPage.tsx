@@ -3,7 +3,7 @@ import { getIdToken, sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '../firebase'
 import { supabase } from '../supabase'
 import { useAuth } from '../auth/useAuth'
-import { useBranch } from '../auth/BranchContext'
+import { useBranch, hasFullAccess } from '../auth/BranchContext'
 import UpgradeModal from '../components/UpgradeModal'
 import {
 	PiUserPlusDuotone, PiEnvelopeSimpleDuotone, PiBuildingsDuotone, PiShieldCheckDuotone,
@@ -90,7 +90,7 @@ export default function StaffPage() {
 	async function onSubmit(e: React.FormEvent) {
 		e.preventDefault()
 		setFormError('')
-		if (plan !== 'max') { setUpgradePromptOpen(true); return }
+		if (!hasFullAccess(plan)) { setUpgradePromptOpen(true); return }
 		const email = form.email.trim().toLowerCase()
 		if (!email) { setFormError('Enter an email address.'); return }
 		if (!form.branchId) { setFormError('Choose a branch.'); return }
@@ -245,14 +245,14 @@ export default function StaffPage() {
 							<PiWarningCircleDuotone size={15} /> {formError}
 						</div>
 					)}
-					{plan !== 'max' && (
+					{!hasFullAccess(plan) && (
 						<div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, color: 'var(--text-muted)', fontSize: 13 }}>
 							<PiWarningCircleDuotone size={15} /> Staff accounts are a Max plan feature — upgrade to invite your team.
 						</div>
 					)}
 					<div className="form-actions" style={{ marginTop: 12 }}>
 						<button type="submit" disabled={submitting} style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: submitting ? 0.6 : 1 }}>
-							<PiUserPlusDuotone size={15} /> {submitting ? 'Inviting…' : plan !== 'max' ? 'Upgrade to Invite Staff' : 'Invite Staff Member'}
+							<PiUserPlusDuotone size={15} /> {submitting ? 'Inviting…' : !hasFullAccess(plan) ? 'Upgrade to Invite Staff' : 'Invite Staff Member'}
 						</button>
 					</div>
 				</form>

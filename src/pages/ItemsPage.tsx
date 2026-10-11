@@ -2,7 +2,7 @@ import { FormEvent, useMemo, useState, useEffect } from 'react'
 import { db, Item } from '../storage'
 import { supabase } from '../supabase'
 import { auth } from '../firebase'
-import { useBranch } from '../auth/BranchContext'
+import { useBranch, hasFullAccess } from '../auth/BranchContext'
 import { useBarcodeScanner } from '../hooks/useBarcodeScanner'
 import { useItems, usePurchases } from '../hooks/useDataQueries'
 import { usePagination } from '../hooks/usePagination'
@@ -337,7 +337,7 @@ export default function ItemsPage() {
 															onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
 														><PiPencilDuotone size={14} /> Edit</button>
 														<button
-															onMouseDown={() => { plan === 'max' ? setBarcodeTarget(i) : setUpgradePromptOpen(true); setOpenRowMenu(null) }}
+															onMouseDown={() => { hasFullAccess(plan) ? setBarcodeTarget(i) : setUpgradePromptOpen(true); setOpenRowMenu(null) }}
 															style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, cursor: 'pointer' }}
 															onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
 															onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}

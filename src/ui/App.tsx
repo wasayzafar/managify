@@ -21,7 +21,7 @@ export default function App() {
 	const { prefetchPageData } = useDataPrefetch()
 	const { user } = useAuth()
 	const isAdmin = ADMIN_EMAILS.includes(user?.email ?? '')
-	const { role } = useBranch()
+	const { role, plan } = useBranch()
 
 	// Prefetch data based on current route
 	React.useEffect(() => {
@@ -154,12 +154,14 @@ export default function App() {
 					)}
 				</nav>
 
-				<div className="sidebar-upgrade-card">
-					<div className="sidebar-upgrade-icon"><PiCrownDuotone /></div>
-					<div className="sidebar-upgrade-title">Upgrade to Pro</div>
-					<p className="sidebar-upgrade-copy">Unlock advanced reports and powerful features.</p>
-					<button type="button" className="sidebar-upgrade-btn"><PiRocketDuotone size={14} /> Upgrade Now</button>
-				</div>
+				{role === 'owner' && plan === 'pro' && (
+					<Link to="/pricing" className="sidebar-plan-card">
+						<div className="sidebar-plan-icon"><PiCrownDuotone /></div>
+						<div className="sidebar-plan-title">You're on Pro</div>
+						<p className="sidebar-plan-copy">Upgrade to Max for multiple branches, staff accounts, and barcode labels.</p>
+						<span className="sidebar-plan-btn"><PiRocketDuotone size={14} /> Upgrade to Max</span>
+					</Link>
+				)}
 			</aside>
 			{sidebarOpen && (
 				<div 
