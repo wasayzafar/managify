@@ -1,15 +1,35 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useItems, useSalesByDateRange, useStoreInfo } from '../hooks/useDataQueries'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+import { loadCurrency, formatCurrency } from '../utils/currency'
+
+// Local calendar date, not toISOString() (which converts to UTC first) — in
+// any timezone ahead of UTC, toISOString() on local midnight can roll back
+// to the previous day, so "today" silently defaults to yesterday.
+function toLocalISODate(d: Date): string {
+	const y = d.getFullYear()
+	const m = String(d.getMonth() + 1).padStart(2, '0')
+	const day = String(d.getDate()).padStart(2, '0')
+	return `${y}-${m}-${day}`
+}
 
 export default function DailySalesPage() {
-	const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
-	const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
+	const [startDate, setStartDate] = useState(() => toLocalISODate(new Date()))
+	const [endDate, setEndDate] = useState(() => toLocalISODate(new Date()))
+	const [currency, setCurrency] = useState('PKR')
+
+	useEffect(() => {
+		loadCurrency().then(setCurrency)
+	}, [])
 	// Use optimized React Query hooks
 	const { data: storeInfo = { storeName: 'Managify', phone: '', address: '', email: '', website: '', taxNumber: '', logo: '' } } = useStoreInfo()
 	const { data: items = [] } = useItems()
-	const { data: filteredSales = [], isLoading } = useSalesByDateRange(startDate, endDate)
+	const { data: rawSales = [], isLoading } = useSalesByDateRange(startDate, endDate)
+	// Inventory's "quick stock edit" records a manual stock decrease as a
+	// zero-price sale (invoiceNo 'ADJ') so the quantity still comes off stock
+	// — it's a write-off, not a real sale, and must not appear in this report.
+	const filteredSales = useMemo(() => rawSales.filter(s => s.invoiceNo !== 'ADJ'), [rawSales])
 
 	// Calculate data using useMemo for performance
 	const dailyData = useMemo(() => {
@@ -20,7 +40,10 @@ export default function DailySalesPage() {
 		const itemBreakdown = filteredSales.reduce((acc, sale) => {
 			const item = items.find(i => i.id === sale.itemId)
 			const existing = acc.find(i => i.itemId === sale.itemId)
-			const salePrice = sale.actualPrice || item?.price || 0
+			// ?? not ||: an actual sale can legitimately be fully discounted to
+			// 0, and that must stay 0 — not silently reprice at today's catalog
+			// price, which is also wrong for the item's price has since changed.
+			const salePrice = sale.actualPrice ?? item?.price ?? 0
 			if (existing) {
 				existing.qty += sale.quantity || 0
 				existing.total += (sale.quantity || 0) * salePrice
@@ -152,7 +175,7 @@ export default function DailySalesPage() {
 					<div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
 						<div style={{ flex: 1, padding: '15px', background: '#e8f5e8', border: '1px solid #4caf50', borderRadius: '8px', textAlign: 'center' }}>
 							<h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#2e7d32' }}>TOTAL REVENUE</h3>
-							<div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>price {dailyData.totalRevenue.toFixed(2)}</div>
+							<div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2e7d32' }}>{formatCurrency(dailyData.totalRevenue, currency)}</div>
 						</div>
 						<div style={{ flex: 1, padding: '15px', background: '#e3f2fd', border: '1px solid #2196f3', borderRadius: '8px', textAlign: 'center' }}>
 							<h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#1976d2' }}>TRANSACTIONS</h3>
@@ -178,10 +201,10 @@ export default function DailySalesPage() {
 						<tbody>
 							{dailyData.filteredSales.map(sale => (
 								<tr key={sale.id}>
-									<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{sale.id}</td>
-									<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>Walk-in</td>
+									<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{sale.invoiceNo || sale.id}</td>
+									<td style={{ border: '1px solid #ddd', padding: '10px', fontSize: '13px' }}>{sale.customerName || 'Walk-in'}</td>
 									<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'center', fontSize: '13px' }}>{sale.date ? new Date(sale.date).toLocaleTimeString() : 'N/A'}</td>
-									<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>Qty: {sale.quantity || 0}</td>
+									<td style={{ border: '1px solid #ddd', padding: '10px', textAlign: 'right', fontSize: '13px' }}>{formatCurrency((sale.actualPrice || 0) * (sale.quantity || 0), currency)}</td>
 								</tr>
 							))}
 						</tbody>

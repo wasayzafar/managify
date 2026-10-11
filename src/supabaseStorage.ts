@@ -289,22 +289,29 @@ export const listSales = async (userId: string): Promise<Sale[]> => {
   return data || []
 }
 
+// sale.date is stored as a full timestamp (new Date().toISOString()). A bare
+// 'YYYY-MM-DD' compared against that with .lte() parses as that day's
+// midnight, which excludes every sale from the rest of that day — so a
+// same-day range (the default "today" view) silently matched almost
+// nothing. Expanding bare dates to their day boundaries fixes that; a value
+// that already has a time component (length > 10) is left as-is.
+const startOfDayUTC = (d: string): string => d.length === 10 ? d + 'T00:00:00.000Z' : d
+const endOfDayUTC = (d: string): string => d.length === 10 ? d + 'T23:59:59.999Z' : d
+
 export const listSalesByDateRange = async (userId: string, startDate: string, endDate: string): Promise<Sale[]> => {
   const { data, error } = await supabase
     .from('sales')
     .select('*')
     .eq('user_id', userId)
-    .gte('date', startDate)
-    .lte('date', endDate)
+    .gte('date', startOfDayUTC(startDate))
+    .lte('date', endOfDayUTC(endDate))
     .order('date', { ascending: false })
   if (error) throw error
   return data || []
 }
 
 export const listSalesByDate = async (userId: string, date: string): Promise<Sale[]> => {
-  const startOfDay = date + 'T00:00:00.000Z'
-  const endOfDay = date + 'T23:59:59.999Z'
-  return listSalesByDateRange(userId, startOfDay, endOfDay)
+  return listSalesByDateRange(userId, date, date)
 }
 
 export const addSale = async (userId: string, sale: Omit<Sale, 'id' | 'user_id'>): Promise<string> => {
